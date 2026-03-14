@@ -15,7 +15,7 @@ import { usePageView } from "./hooks/usePageView";
 const NewsPage = lazy(() => import("./pages/News"));
 const NewsDetail = lazy(() => import("./pages/NewsDetail"));
 const ComingSoonPage = lazy(() => import("./pages/ComingSoon"));
-const CommunityPage = lazy(() => import("./pages/Community"));
+
 const OfficialPostsPage = lazy(() => import("./pages/OfficialPosts"));
 const GuidesPage = lazy(() => import("./pages/Guides"));
 const GuideDetail = lazy(() => import("./pages/GuideDetail"));
