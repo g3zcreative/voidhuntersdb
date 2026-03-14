@@ -5,14 +5,14 @@ export interface FeatureFlags {
   guides: boolean;
   tools: boolean;
   database: boolean;
-  community: boolean;
+  
 }
 
 const defaults: FeatureFlags = {
   guides: true,
   tools: false,
   database: false,
-  community: true,
+  
 };
 
 export function useFeatureFlags() {

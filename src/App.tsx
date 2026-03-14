@@ -15,7 +15,7 @@ import { usePageView } from "./hooks/usePageView";
 const NewsPage = lazy(() => import("./pages/News"));
 const NewsDetail = lazy(() => import("./pages/NewsDetail"));
 const ComingSoonPage = lazy(() => import("./pages/ComingSoon"));
-const CommunityPage = lazy(() => import("./pages/Community"));
+
 const OfficialPostsPage = lazy(() => import("./pages/OfficialPosts"));
 const GuidesPage = lazy(() => import("./pages/Guides"));
 const GuideDetail = lazy(() => import("./pages/GuideDetail"));
@@ -69,8 +69,6 @@ function AppRoutes() {
         <Route path="/guides" element={flags.guides ? <GuidesPage /> : comingSoon("Guides", "Community guides and strategies are being prepared.")} />
         <Route path="/guides/:slug" element={flags.guides ? <GuideDetail /> : comingSoon("Guides", "Community guides and strategies are being prepared.")} />
 
-        {/* Community */}
-        <Route path="/community" element={flags.community ? <CommunityPage /> : comingSoon("Community", "The community hub is being set up.")} />
 
         {/* Official Posts */}
         <Route path="/official-posts" element={<OfficialPostsPage />} />
