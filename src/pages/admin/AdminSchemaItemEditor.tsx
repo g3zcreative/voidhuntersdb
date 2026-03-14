@@ -19,7 +19,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Upload, Loader2, X } from "lucide-react";
+import { compressImage, compressedExtension } from "@/lib/image-utils";
 
 function slugify(text: string): string {
   return text
