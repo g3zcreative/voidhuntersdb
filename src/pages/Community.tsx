@@ -5,13 +5,13 @@ import { SEO } from "@/components/SEO";
 
 const discordLinks = [
   {
-    name: "Official Godforge Discord",
-    description: "The official Discord server run by Fateless Games. Get news, updates, and chat with the devs.",
+    name: "Official Void Hunters Discord",
+    description: "The official Discord server run by Artifex Mundi. Get news, updates, and chat with the devs.",
     url: "/discord",
     icon: <MessageSquare className="h-6 w-6" />,
   },
   {
-    name: "GodforgeHub Community Discord",
+    name: "VoidHuntersDB Community Discord",
     description: "Our community-run Discord for guides, theorycrafting, and discussion.",
     url: "/discord",
     icon: <MessageSquare className="h-6 w-6" />,
