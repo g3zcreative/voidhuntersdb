@@ -31,11 +31,31 @@ export default function AdminSchemaData() {
   const table = tableName ? getTable(tableName) : undefined;
 
   const visibleFields = table?.fields.filter((f) => !isAutoField(f)) || [];
-  const tableColumns = table?.fields.filter((f) => {
+  const allTableColumns = table?.fields.filter((f) => {
     if (f.name === "id") return false;
     if (["created_at", "updated_at"].includes(f.name)) return false;
     return true;
   }) || [];
+
+  const storageKey = `admin-hidden-cols-${tableName}`;
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const tableColumns = allTableColumns.filter((c) => !hiddenColumns.has(c.name));
+
+  const toggleColumn = (name: string) => {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      localStorage.setItem(storageKey, JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const { data: rows, isLoading: rowsLoading } = useQuery({
     queryKey: ["schema-data", tableName],
