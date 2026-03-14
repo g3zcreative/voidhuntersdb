@@ -217,6 +217,81 @@ export default function AdminDocs() {
             <p><strong className="text-foreground">Note:</strong> Any new published content (news articles, heroes, guides, etc.) is automatically included the next time Google fetches the sitemap. No action needed from you.</p>
           </AccordionContent>
         </AccordionItem>
+        <AccordionItem value="entity-editor">
+          <AccordionTrigger className="text-base font-semibold">
+            Entity Editor Guide
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+            <p>
+              The <strong className="text-foreground">Entity Editor</strong> is a visual schema designer for planning database tables and relationships before writing SQL. Access it via <strong className="text-foreground">Admin → Entity Editor</strong>.
+            </p>
+
+            <p><strong className="text-foreground">Getting started:</strong></p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Click <strong className="text-foreground">Add Entity</strong> to create a new table node on the canvas</li>
+              <li>Click the table name to rename it (e.g. <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">heroes</code>)</li>
+              <li>Use <strong className="text-foreground">Add Column</strong> to define fields — set name, type, nullable, and primary key</li>
+              <li>Drag from a source handle (right side) to a target handle (left side) on another entity to create a <strong className="text-foreground">foreign key</strong> relationship</li>
+              <li>Name your schema at the top and click <strong className="text-foreground">Save</strong> to persist it</li>
+            </ol>
+
+            <p><strong className="text-foreground">Example — modeling Robin "The Spitfire":</strong></p>
+            <p>
+              Imagine you're designing the schema to store a Void Hunter unit like Robin. Here's what the in-game data looks like:
+            </p>
+            <div className="bg-muted rounded-md p-4 text-xs space-y-1 font-mono">
+              <p className="text-foreground font-semibold">Robin "The Spitfire"</p>
+              <p>Rarity: Rare (★★★, 1 awakened)</p>
+              <p>Role: Attacker | Region: Archlands | Race: Elf | Class: Sharpshooter</p>
+              <p>Level: 34 | Power: 2007</p>
+              <p>ATK: 767 | DEF: 289 | HP: 3446 | SPD: 183</p>
+            </div>
+
+            <p>You would create these entities in the editor:</p>
+
+            <p><strong className="text-foreground">1. <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">heroes</code> table:</strong></p>
+            <div className="bg-muted rounded-md p-3 text-xs font-mono space-y-0.5">
+              <p>id — uuid (PK)</p>
+              <p>name — text → "Robin"</p>
+              <p>subtitle — text → "The Spitfire"</p>
+              <p>slug — text → "robin"</p>
+              <p>rarity — integer → 3</p>
+              <p>stats — jsonb → {`{"atk":767,"def":289,"hp":3446,"spd":183}`}</p>
+              <p>faction_id — uuid (FK → factions.id) → Archlands</p>
+              <p>archetype_id — uuid (FK → archetypes.id) → Attacker</p>
+              <p>allegiance_id — uuid (FK → allegiances.id) → Elf</p>
+            </div>
+
+            <p><strong className="text-foreground">2. Reference tables</strong> (factions, archetypes, allegiances):</p>
+            <div className="bg-muted rounded-md p-3 text-xs font-mono space-y-0.5">
+              <p>id — uuid (PK)</p>
+              <p>name — text → e.g. "Archlands", "Attacker", "Elf"</p>
+              <p>slug — text → e.g. "archlands", "attacker", "elf"</p>
+            </div>
+
+            <p><strong className="text-foreground">3. FK relationships:</strong> Drag edges from <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">heroes.faction_id</code> → <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">factions.id</code>, and similarly for archetypes and allegiances.</p>
+
+            <p><strong className="text-foreground">Best practices:</strong></p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong className="text-foreground">Always include an <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">id</code> (uuid, PK)</strong> as the first column on every table</li>
+              <li><strong className="text-foreground">Add <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">created_at</code> and <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">updated_at</code></strong> (timestamptz) for audit trails</li>
+              <li><strong className="text-foreground">Use reference tables</strong> instead of raw strings for repeated values (factions, archetypes, rarities)</li>
+              <li><strong className="text-foreground">Use <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">jsonb</code></strong> for flexible nested data like stats — avoids wide tables with many nullable numeric columns</li>
+              <li><strong className="text-foreground">Name tables in plural snake_case</strong> (e.g. <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">hero_builds</code>, <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">armor_sets</code>)</li>
+              <li><strong className="text-foreground">Keep FK column names consistent</strong> — use <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">faction_id</code> not <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">factionId</code> or <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">faction</code></li>
+              <li><strong className="text-foreground">Review the exported SQL</strong> via <strong className="text-foreground">Export SQL</strong> before applying — the editor generates <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">CREATE TABLE</code> + RLS + FK statements</li>
+              <li><strong className="text-foreground">Save schemas often</strong> — they persist to the database and can be reloaded from the dropdown</li>
+            </ul>
+
+            <p><strong className="text-foreground">Keyboard shortcuts &amp; tips:</strong></p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Drag the canvas to pan, scroll to zoom</li>
+              <li>Click an entity to select it; drag to reposition</li>
+              <li>Delete an edge by selecting it and pressing <kbd className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">Backspace</kbd></li>
+              <li>Use <strong className="text-foreground">Clear</strong> to reset the canvas for a fresh schema</li>
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
       </Accordion>
     </div>
   );
