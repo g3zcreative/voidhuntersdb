@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Flame, Clock, Newspaper, BookOpen, MessageSquare, ArrowRight, Lock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Flame, Clock, Newspaper, BookOpen, MessageSquare, ArrowRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
@@ -69,21 +69,21 @@ const Index = () => {
 
   return (
     <Layout>
-      <SEO rawTitle="Godforge Database, News and Guides | GodforgeHub.com" description="A community information hub for Godforge by Fateless Games. Database, guides, news, tools, and more." url="/" />
+      <SEO rawTitle="Void Hunters Hub | News, Guides & More" description="Your community hub for Void Hunters. News, guides, official posts, and more — all in one place." url="/" />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-godforge-ember/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="container relative py-16 md:py-24 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm">
             <Flame className="h-4 w-4" />
             Early Access — More features coming soon
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-            Godforge<span className="text-primary">Hub</span>
+            Void<span className="text-primary">Hunters</span> Hub
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Your ultimate information hub for <strong className="text-foreground">Godforge</strong> by Fateless Games.
-            News, official posts, roadmap, and more — all in one place.
+            Your ultimate information hub for <strong className="text-foreground">Void Hunters</strong>.
+            News, official posts, guides, and more — all in one place.
           </p>
           <div className="flex gap-3 justify-center">
             <Button asChild>
@@ -99,35 +99,22 @@ const Index = () => {
       {/* Quick Links */}
       <section className="container py-10">
         <h2 className="font-display text-lg font-semibold text-muted-foreground mb-4">Explore</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {[
-            { name: "Heroes", href: "/database/heroes", unlocked: true },
-            { name: "Imprints", href: "/database/imprints", unlocked: true },
-            { name: "Weapons", href: "/database/weapons", unlocked: true },
-            { name: "Skills", href: "/database/skills", unlocked: true },
-            { name: "Mechanics", href: "/database/mechanics", unlocked: true },
-            { name: "Guides", href: "/guides", unlocked: true },
-          ].map((item) =>
-            item.unlocked ? (
-              <Link
-                key={item.name}
-                to={item.href}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg bg-card border border-border hover:border-primary/40 transition-colors"
-              >
-                <ArrowRight className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">{item.name}</span>
-              </Link>
-            ) : (
-              <div
-                key={item.name}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg bg-card border border-border opacity-60 cursor-not-allowed"
-              >
-                <Lock className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground">{item.name}</span>
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-muted-foreground/30 text-muted-foreground/60">Coming Soon</Badge>
-              </div>
-            )
-          )}
+            { name: "News", href: "/news" },
+            { name: "Guides", href: "/guides" },
+            { name: "Official Posts", href: "/official-posts" },
+            { name: "Community", href: "/community" },
+          ].map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-card border border-border hover:border-primary/40 transition-colors"
+            >
+              <ArrowRight className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">{item.name}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
