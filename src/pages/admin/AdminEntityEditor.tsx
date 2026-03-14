@@ -233,7 +233,7 @@ export default function AdminEntityEditor() {
       },
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [setNodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField]);
+  }, [setNodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode]);
 
   const handleSave = async () => {
     if (!user) return;
