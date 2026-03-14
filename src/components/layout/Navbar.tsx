@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, User, Shield, LogOut } from "lucide-react";
+import { Search, Menu, X, User, Shield, LogOut, Database, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +34,7 @@ export function Navbar() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const { tables } = useSchemaRegistry();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -48,6 +51,31 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 ml-4">
+          {/* Database dropdown */}
+          {tables.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-secondary hover:text-foreground ${
+                    location.pathname.startsWith("/database")
+                      ? "text-primary bg-secondary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <Database className="h-3.5 w-3.5" />
+                  Database
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-44">
+                {tables.map((t) => (
+                  <DropdownMenuItem key={t.name} onClick={() => navigate(`/database/${t.name}`)}>
+                    {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -131,6 +159,26 @@ export function Navbar() {
       {/* Mobile nav */}
       {mobileOpen && (
         <nav className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1 bg-background">
+          {tables.length > 0 && (
+            <>
+              <p className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">Database</p>
+              {tables.map((t) => (
+                <Link
+                  key={t.name}
+                  to={`/database/${t.name}`}
+                  onClick={() => setMobileOpen(false)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    location.pathname === `/database/${t.name}`
+                      ? "text-primary bg-secondary"
+                      : "text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                </Link>
+              ))}
+              <Separator className="my-1" />
+            </>
+          )}
           {navItems.map((item) => (
             <Link
               key={item.href}

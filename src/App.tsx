@@ -23,6 +23,8 @@ const ChangelogPage = lazy(() => import("./pages/Changelog"));
 const RoadmapPage = lazy(() => import("./pages/Roadmap"));
 const AuthPage = lazy(() => import("./pages/Auth"));
 const DiscordRedirect = lazy(() => import("./pages/Discord"));
+const DatabaseList = lazy(() => import("./pages/DatabaseList"));
+const DatabaseDetail = lazy(() => import("./pages/DatabaseDetail"));
 
 // Admin pages (heavy -- always lazy)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -77,6 +79,8 @@ function AppRoutes() {
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/roadmap" element={<RoadmapPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/database/:tableName" element={<DatabaseList />} />
+        <Route path="/database/:tableName/:slug" element={<DatabaseDetail />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/analytics" replace />} />
           <Route path="analytics" element={<AdminAnalytics />} />
