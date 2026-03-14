@@ -162,6 +162,24 @@ function JsonFieldEditor({
   );
 }
 
+function isStorageUrl(url: string): boolean {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+  return !!url && url.startsWith(supabaseUrl);
+}
+
+async function downloadAndUploadUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+  const blob = await res.blob();
+  const file = new File([blob], "download", { type: blob.type || "image/png" });
+  const compressed = await compressImage(file);
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${compressedExtension}`;
+  const { error } = await supabase.storage.from("images").upload(path, compressed);
+  if (error) throw error;
+  const { data: urlData } = supabase.storage.from("images").getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
 function ImageUploadField({
   value,
   onChange,
@@ -193,12 +211,37 @@ function ImageUploadField({
     }
   };
 
+  const handlePasteUrl = async (url: string) => {
+    if (!url || isStorageUrl(url) || !url.startsWith("http")) {
+      onChange(url || null);
+      return;
+    }
+    // External URL — download and re-upload
+    setUploading(true);
+    try {
+      const storedUrl = await downloadAndUploadUrl(url);
+      onChange(storedUrl);
+      toast({ title: "Image saved", description: "External image downloaded and stored." });
+    } catch (err: any) {
+      toast({ title: "Download failed", description: err.message, variant: "destructive" });
+      onChange(url); // Fallback to external URL
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Input
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
+          onBlur={(e) => {
+            const url = e.target.value;
+            if (url && url.startsWith("http") && !isStorageUrl(url)) {
+              handlePasteUrl(url);
+            }
+          }}
           placeholder="Image URL or upload..."
           className="flex-1"
         />
@@ -212,8 +255,18 @@ function ImageUploadField({
           </Button>
         )}
       </div>
-      {value && (
-        <img src={value} alt="Preview" className="h-24 w-24 rounded-md object-cover border border-border" />
+      {uploading && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <Loader2 className="h-3 w-3 animate-spin" /> Downloading and saving image...
+        </p>
+      )}
+      {value && !uploading && (
+        <div className="space-y-1">
+          <img src={value} alt="Preview" className="h-24 w-24 rounded-md object-cover border border-border" />
+          {isStorageUrl(value) && (
+            <p className="text-xs text-muted-foreground">✓ Stored in your database</p>
+          )}
+        </div>
       )}
     </div>
   );
