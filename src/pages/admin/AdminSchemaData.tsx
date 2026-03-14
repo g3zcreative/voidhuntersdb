@@ -117,7 +117,6 @@ export default function AdminSchemaData() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold">{displayLabel}</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</p>
         </div>
         <Button onClick={() => navigate(`/admin/data/${tableName}/new`)}>
           <Plus className="h-4 w-4 mr-2" />
