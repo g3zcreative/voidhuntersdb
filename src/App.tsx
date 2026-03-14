@@ -39,6 +39,8 @@ const AdminDocs = lazy(() => import("./pages/admin/AdminDocs"));
 const AdminAuthors = lazy(() => import("./pages/admin/AdminAuthors"));
 const AdminSeo = lazy(() => import("./pages/admin/AdminSeo"));
 const AdminEntityEditor = lazy(() => import("./pages/admin/AdminEntityEditor"));
+const AdminSchemaData = lazy(() => import("./pages/admin/AdminSchemaData"));
+const AdminSchemaItemEditor = lazy(() => import("./pages/admin/AdminSchemaItemEditor"));
 
 const queryClient = new QueryClient();
 
@@ -90,6 +92,8 @@ function AppRoutes() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="docs" element={<AdminDocs />} />
           <Route path="entity-editor" element={<AdminEntityEditor />} />
+          <Route path="data/:tableName" element={<AdminSchemaData />} />
+          <Route path="data/:tableName/:id" element={<AdminSchemaItemEditor />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -10,9 +10,10 @@ import {
 import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
-  Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database,
+  Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
 
 
 const contentItems = [
@@ -42,10 +43,39 @@ function AdminSidebar() {
   const collapsed = state === "collapsed";
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const { schemas } = useSchemaRegistry();
+
+  // Build dynamic collection nav items from deployed schemas
+  const collectionItems = schemas.flatMap((s) =>
+    s.tables.map((t) => ({
+      title: t.label.charAt(0).toUpperCase() + t.label.slice(1),
+      url: `/admin/data/${t.name}`,
+      icon: Layers,
+    }))
+  );
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
+        {collectionItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Collections</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {collectionItems.map((item) => (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} className="hover:bg-muted/50" activeClassName="bg-muted text-primary font-medium">
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         <SidebarGroup>
           <SidebarGroupLabel>Content</SidebarGroupLabel>
           <SidebarGroupContent>

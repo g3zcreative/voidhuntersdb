@@ -59,18 +59,19 @@ export default function AdminEntityEditor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [schemaName, setSchemaName] = useState("Untitled Schema");
   const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
-  const [schemas, setSchemas] = useState<{ id: string; name: string }[]>([]);
+  const [schemas, setSchemas] = useState<{ id: string; name: string; deployed: boolean }[]>([]);
   const [saving, setSaving] = useState(false);
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
+  const [deployed, setDeployed] = useState(false);
 
   // Load saved schemas list
   useEffect(() => {
     supabase
       .from("entity_definitions")
-      .select("id, name")
+      .select("id, name, deployed")
       .order("updated_at", { ascending: false })
       .then(({ data }) => {
-        if (data) setSchemas(data);
+        if (data) setSchemas(data as any);
       });
   }, []);
 
@@ -238,9 +239,9 @@ export default function AdminEntityEditor() {
       toast({ title: "Schema saved" });
       const { data: list } = await supabase
         .from("entity_definitions")
-        .select("id, name")
+        .select("id, name, deployed")
         .order("updated_at", { ascending: false });
-      if (list) setSchemas(list);
+      if (list) setSchemas(list as any);
     } catch {
       toast({ title: "Save failed", variant: "destructive" });
     }
@@ -257,6 +258,7 @@ export default function AdminEntityEditor() {
 
     setSelectedSchemaId(data.id);
     setSchemaName(data.name);
+    setDeployed((data as any).deployed ?? false);
 
     const schema = data.schema as unknown as { nodes: any[]; edges: Edge[] };
     const loadedNodes: Node[] = (schema.nodes || []).map((n: any) => ({
@@ -278,6 +280,25 @@ export default function AdminEntityEditor() {
     setEdges([]);
     setSelectedSchemaId(null);
     setSchemaName("Untitled Schema");
+    setDeployed(false);
+  };
+
+  const handleDeploy = async () => {
+    if (!selectedSchemaId) {
+      toast({ title: "Save the schema first", variant: "destructive" });
+      return;
+    }
+    const newState = !deployed;
+    const { error } = await supabase
+      .from("entity_definitions")
+      .update({ deployed: newState } as any)
+      .eq("id", selectedSchemaId);
+    if (error) {
+      toast({ title: "Deploy failed", variant: "destructive" });
+      return;
+    }
+    setDeployed(newState);
+    toast({ title: newState ? "Schema deployed — tables now appear in Collections" : "Schema undeployed" });
   };
 
   // SQL generation
@@ -330,6 +351,8 @@ export default function AdminEntityEditor() {
         onSave={handleSave}
         onExportSQL={() => setSqlDialogOpen(true)}
         onClear={handleClear}
+        onDeploy={selectedSchemaId ? handleDeploy : undefined}
+        deployed={deployed}
         saving={saving}
         schemas={schemas}
         selectedSchemaId={selectedSchemaId}

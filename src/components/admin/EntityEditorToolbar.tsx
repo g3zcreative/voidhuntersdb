@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Save, Download, FolderOpen, FileCode, Trash2 } from "lucide-react";
+import { Plus, Save, Download, FolderOpen, FileCode, Trash2, Rocket } from "lucide-react";
 
 interface EntityEditorToolbarProps {
   schemaName: string;
@@ -10,6 +10,8 @@ interface EntityEditorToolbarProps {
   onSave: () => void;
   onExportSQL: () => void;
   onClear: () => void;
+  onDeploy?: () => void;
+  deployed?: boolean;
   saving: boolean;
   schemas: { id: string; name: string }[];
   selectedSchemaId: string | null;
@@ -23,6 +25,8 @@ export function EntityEditorToolbar({
   onSave,
   onExportSQL,
   onClear,
+  onDeploy,
+  deployed,
   saving,
   schemas,
   selectedSchemaId,
@@ -74,6 +78,18 @@ export function EntityEditorToolbar({
       </Button>
 
       <div className="ml-auto" />
+
+      {onDeploy && (
+        <Button
+          variant={deployed ? "outline" : "default"}
+          size="sm"
+          onClick={onDeploy}
+          className="h-8"
+        >
+          <Rocket className="h-3.5 w-3.5 mr-1.5" />
+          {deployed ? "Deployed" : "Deploy"}
+        </Button>
+      )}
 
       <Button size="sm" onClick={onSave} disabled={saving} className="h-8">
         <Save className="h-3.5 w-3.5 mr-1.5" />
