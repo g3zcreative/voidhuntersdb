@@ -239,9 +239,9 @@ export default function AdminEntityEditor() {
       toast({ title: "Schema saved" });
       const { data: list } = await supabase
         .from("entity_definitions")
-        .select("id, name")
+        .select("id, name, deployed")
         .order("updated_at", { ascending: false });
-      if (list) setSchemas(list);
+      if (list) setSchemas(list as any);
     } catch {
       toast({ title: "Save failed", variant: "destructive" });
     }
