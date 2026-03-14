@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { label: "News", href: "/news" },
   { label: "Guides", href: "/guides" },
   { label: "Official Posts", href: "/official-posts" },
-  { label: "Community", href: "/community" },
+  
 ];
 
 export function Navbar() {

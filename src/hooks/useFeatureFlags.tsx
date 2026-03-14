@@ -12,7 +12,7 @@ const defaults: FeatureFlags = {
   guides: true,
   tools: false,
   database: false,
-  community: true,
+  
 };
 
 export function useFeatureFlags() {

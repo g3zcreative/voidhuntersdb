@@ -69,8 +69,6 @@ function AppRoutes() {
         <Route path="/guides" element={flags.guides ? <GuidesPage /> : comingSoon("Guides", "Community guides and strategies are being prepared.")} />
         <Route path="/guides/:slug" element={flags.guides ? <GuideDetail /> : comingSoon("Guides", "Community guides and strategies are being prepared.")} />
 
-        {/* Community */}
-        <Route path="/community" element={flags.community ? <CommunityPage /> : comingSoon("Community", "The community hub is being set up.")} />
 
         {/* Official Posts */}
         <Route path="/official-posts" element={<OfficialPostsPage />} />
