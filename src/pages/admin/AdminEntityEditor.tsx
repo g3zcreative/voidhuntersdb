@@ -25,6 +25,10 @@ import EntityNodeComponent, {
 } from "@/components/admin/EntityNode";
 import { EntityEditorToolbar } from "@/components/admin/EntityEditorToolbar";
 import { SQLPreviewDialog } from "@/components/admin/SQLPreviewDialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Json } from "@/integrations/supabase/types";
 
 const NODE_COLORS = [
@@ -63,7 +67,7 @@ export default function AdminEntityEditor() {
   const [saving, setSaving] = useState(false);
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
   const [deployed, setDeployed] = useState(false);
-
+  const [deleteConfirm, setDeleteConfirm] = useState<{ nodeId: string; label: string; hasData: boolean } | null>(null);
   // Load saved schemas list
   useEffect(() => {
     supabase
@@ -143,6 +147,36 @@ export default function AdminEntityEditor() {
     [setNodes]
   );
 
+  const onDeleteNode = useCallback(
+    async (nodeId: string, label: string) => {
+      const tableName = label.replace(/\s+/g, "_").toLowerCase();
+      // Check if the table exists and has data
+      try {
+        const { count, error } = await supabase
+          .from(tableName as any)
+          .select("*", { count: "exact", head: true });
+        if (!error && count && count > 0) {
+          setDeleteConfirm({ nodeId, label: tableName, hasData: true });
+          return;
+        }
+      } catch {
+        // Table may not exist in DB yet — safe to remove from canvas
+      }
+      // No data or table doesn't exist — remove directly
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+    },
+    [setNodes, setEdges]
+  );
+
+  const confirmDeleteNode = useCallback(() => {
+    if (!deleteConfirm) return;
+    setNodes((nds) => nds.filter((n) => n.id !== deleteConfirm.nodeId));
+    setEdges((eds) => eds.filter((e) => e.source !== deleteConfirm.nodeId && e.target !== deleteConfirm.nodeId));
+    setDeleteConfirm(null);
+    toast({ title: `Table "${deleteConfirm.label}" removed from schema` });
+  }, [deleteConfirm, setNodes, setEdges, toast]);
+
   // Inject callbacks into nodes
   const nodesWithCallbacks = useMemo(
     () =>
@@ -154,9 +188,10 @@ export default function AdminEntityEditor() {
           onAddField,
           onRemoveField,
           onUpdateField,
+          onDeleteNode,
         },
       })),
-    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField]
+    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode]
   );
 
   const onConnect = useCallback(
@@ -194,10 +229,11 @@ export default function AdminEntityEditor() {
         onAddField,
         onRemoveField,
         onUpdateField,
+        onDeleteNode,
       },
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [setNodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField]);
+  }, [setNodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -269,6 +305,7 @@ export default function AdminEntityEditor() {
         onAddField,
         onRemoveField,
         onUpdateField,
+        onDeleteNode,
       },
     }));
     setNodes(loadedNodes);
@@ -399,6 +436,28 @@ export default function AdminEntityEditor() {
         onOpenChange={setSqlDialogOpen}
         sql={generateSQL()}
       />
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete table "{deleteConfirm?.label}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.hasData
+                ? "This table contains existing data. Removing it from the schema will NOT drop the database table, but if you re-deploy, the table will no longer be managed. This action cannot be undone."
+                : "This will remove the table from your schema."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteNode}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteConfirm?.hasData ? "Delete Anyway" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
