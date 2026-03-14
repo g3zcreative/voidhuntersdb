@@ -79,11 +79,11 @@ const Index = () => {
             Early Access — More features coming soon
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-            Void<span className="text-primary">Hunters</span> Hub
+            VoidHunters<span className="text-primary">DB</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Your ultimate information hub for <strong className="text-foreground">Void Hunters</strong>.
-            News, official posts, guides, and more — all in one place.
+            The premier source for all things <strong className="text-foreground">Void Hunters</strong>,
+            the upcoming hero collector RPG by Artifex Mundi.
           </p>
           <div className="flex gap-3 justify-center">
             <Button asChild>

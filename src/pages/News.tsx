@@ -36,7 +36,7 @@ const NewsPage = () => {
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <Newspaper className="h-7 w-7 text-primary" /> News
         </h1>
-        <p className="text-muted-foreground mb-6">Latest updates from the world of Godforge.</p>
+        <p className="text-muted-foreground mb-6">Latest updates from the world of Void Hunters.</p>
 
         {isLoading ? (
           <div className="space-y-3">

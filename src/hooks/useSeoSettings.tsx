@@ -8,8 +8,8 @@ export interface SeoSettings {
 }
 
 const defaults: SeoSettings = {
-  siteTitle: "GodforgeHub.com",
-  metaDescription: "A community information hub for Godforge by Fateless Games. Database, guides, news, tools, and more.",
+  siteTitle: "VoidHuntersDB.com",
+  metaDescription: "The premier source for all things Void Hunters, the upcoming hero collector RPG by Artifex Mundi. News, guides, database, and more.",
   ogImage: "",
 };
 

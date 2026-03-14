@@ -209,7 +209,7 @@ export default function AdminDocs() {
             </code>
             <p><strong className="text-foreground">How to submit to Google Search Console:</strong></p>
             <ol className="list-decimal pl-5 space-y-1">
-              <li>Go to <strong className="text-foreground">Google Search Console</strong> and select the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">godforgehub.com</code> property</li>
+              <li>Go to <strong className="text-foreground">Google Search Console</strong> and select the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">voidhuntersdb.com</code> property</li>
               <li>Navigate to <strong className="text-foreground">Sitemaps</strong> in the left sidebar</li>
               <li>Paste the full sitemap URL above into the "Add a new sitemap" field</li>
               <li>Click <strong className="text-foreground">Submit</strong> — Google accepts cross-domain sitemaps for verified properties</li>

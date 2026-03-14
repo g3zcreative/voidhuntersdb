@@ -26,7 +26,7 @@ const CommunityPage = () => {
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <MessageSquare className="h-7 w-7 text-primary" /> Community
         </h1>
-        <p className="text-muted-foreground mb-8">Connect with other Godforge players and stay in the loop.</p>
+        <p className="text-muted-foreground mb-8">Connect with other Void Hunters players and stay in the loop.</p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           {discordLinks.map((link) => (

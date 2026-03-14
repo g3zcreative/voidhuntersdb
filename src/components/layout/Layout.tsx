@@ -13,9 +13,9 @@ export function Layout({ children }: LayoutProps) {
       <footer className="border-t border-border py-8 mt-12">
         <div className="container text-center text-sm text-muted-foreground">
           <p className="font-display font-semibold text-foreground mb-2">
-            Void<span className="text-primary">Hunters</span> Hub
+            VoidHunters<span className="text-primary">DB</span>
           </p>
-          <p>A community information hub for Void Hunters.</p>
+          <p>The premier Void Hunters database & community hub.</p>
           <div className="flex justify-center gap-4 mt-4">
             <Link to="/official-posts" className="hover:text-primary transition-colors">Official Posts</Link>
             <Link to="/changelog" className="hover:text-primary transition-colors">Changelog</Link>
