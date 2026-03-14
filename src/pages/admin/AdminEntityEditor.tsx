@@ -258,6 +258,7 @@ export default function AdminEntityEditor() {
 
     setSelectedSchemaId(data.id);
     setSchemaName(data.name);
+    setDeployed((data as any).deployed ?? false);
 
     const schema = data.schema as unknown as { nodes: any[]; edges: Edge[] };
     const loadedNodes: Node[] = (schema.nodes || []).map((n: any) => ({
