@@ -1,7 +1,9 @@
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import React from "react";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { AdminHeaderProvider, useAdminHeader } from "@/hooks/useAdminHeader";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -11,6 +13,7 @@ import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
   Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
@@ -139,11 +142,34 @@ function AdminSidebar() {
 }
 
 function AdminHeader() {
+  const { breadcrumbs, actions } = useAdminHeader();
+
   return (
     <header className="h-12 flex items-center border-b border-border px-4 gap-4">
       <SidebarTrigger />
-      <span className="font-display font-bold text-sm">Admin</span>
+      {breadcrumbs.length > 0 ? (
+        <nav className="flex items-center gap-1 text-sm">
+          <Link to="/admin" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+            Admin
+          </Link>
+          {breadcrumbs.map((crumb, i) => (
+            <React.Fragment key={i}>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+              {crumb.href ? (
+                <Link to={crumb.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                  {crumb.label}
+                </Link>
+              ) : (
+                <span className="text-foreground font-medium">{crumb.label}</span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+      ) : (
+        <span className="font-display font-bold text-sm">Admin</span>
+      )}
       <div className="ml-auto flex items-center gap-2">
+        {actions}
         <Button variant="ghost" size="sm" asChild>
           <a href="/" target="_blank" rel="noopener noreferrer">
             <ExternalLink className="mr-2 h-3.5 w-3.5" />
@@ -181,15 +207,17 @@ export default function AdminLayout() {
 
   return (
     <SidebarProvider>
-      <div className="h-screen flex w-full overflow-hidden">
-        <AdminSidebar />
-        <div className="flex-1 flex flex-col min-h-0">
-          <AdminHeader />
-          <main className="flex-1 p-6 overflow-auto">
-            <Outlet />
-          </main>
+      <AdminHeaderProvider>
+        <div className="h-screen flex w-full overflow-hidden">
+          <AdminSidebar />
+          <div className="flex-1 flex flex-col min-h-0">
+            <AdminHeader />
+            <main className="flex-1 p-6 overflow-auto">
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
+      </AdminHeaderProvider>
     </SidebarProvider>
   );
 }

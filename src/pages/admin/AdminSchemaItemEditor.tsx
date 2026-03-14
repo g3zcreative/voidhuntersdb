@@ -8,6 +8,7 @@ import {
   fieldTypeToInputType,
   type SchemaField,
 } from "@/hooks/useSchemaRegistry";
+import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Upload, Loader2, X } from "lucide-react";
+import { Save, Upload, Loader2, X } from "lucide-react";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
 
 function slugify(text: string): string {
@@ -297,6 +298,7 @@ export default function AdminSchemaItemEditor() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { setBreadcrumbs, setActions } = useAdminHeader();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
 
@@ -383,6 +385,25 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
+  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+  const singularLabel = displayLabel.replace(/s$/, "");
+
+  // Set header breadcrumbs and actions
+  useEffect(() => {
+    if (!table) return;
+    setBreadcrumbs([
+      { label: displayLabel, href: `/admin/data/${tableName}` },
+      { label: isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`) },
+    ]);
+    setActions(
+      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+        <Save className="h-4 w-4 mr-2" />
+        {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
+      </Button>
+    );
+    return () => { setBreadcrumbs([]); setActions(null); };
+  }, [table, displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending]);
+
   if (registryLoading || (!isNew && itemLoading)) {
     return (
       <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -400,33 +421,8 @@ export default function AdminSchemaItemEditor() {
     );
   }
 
-  const displayLabel = table.label.charAt(0).toUpperCase() + table.label.slice(1);
-  const singularLabel = displayLabel.replace(/s$/, "");
-
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(`/admin/data/${tableName}`)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <p className="text-xs text-muted-foreground">{displayLabel}</p>
-            <h1 className="text-xl font-display font-bold">
-              {isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`)}
-            </h1>
-          </div>
-        </div>
-        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-          <Save className="h-4 w-4 mr-2" />
-          {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
-        </Button>
-      </div>
 
       {/* Basic Info */}
       {basicFields.length > 0 && (
