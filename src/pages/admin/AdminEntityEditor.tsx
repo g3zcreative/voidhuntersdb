@@ -305,6 +305,7 @@ export default function AdminEntityEditor() {
         onAddField,
         onRemoveField,
         onUpdateField,
+        onDeleteNode,
       },
     }));
     setNodes(loadedNodes);
