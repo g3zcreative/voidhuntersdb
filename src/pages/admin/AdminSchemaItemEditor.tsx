@@ -58,7 +58,7 @@ function FkSelect({
         .order("name", { ascending: true })
         .limit(500);
       if (error) throw error;
-      return (data || []) as Array<{ id: string; name?: string; title?: string; slug?: string }>;
+      return (data || []) as unknown as Array<{ id: string; name?: string; title?: string; slug?: string }>;
     },
   });
 
