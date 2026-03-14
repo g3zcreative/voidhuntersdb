@@ -38,6 +38,26 @@ Deno.serve(async (req) => {
     if (!roleData) throw new Error("Not admin");
 
     const body = await req.json();
+
+    // Single URL mode: download one image, return the stored URL
+    if (body.single_url) {
+      const url = body.single_url;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to download: HTTP ${res.status}`);
+      const blob = await res.blob();
+      const ext = url.split(".").pop()?.split("?")[0]?.toLowerCase() || "png";
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const arrayBuffer = await blob.arrayBuffer();
+      const { error: uploadErr } = await supabase.storage
+        .from("images")
+        .upload(path, arrayBuffer, { contentType: blob.type || "image/png" });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = supabase.storage.from("images").getPublicUrl(path);
+      return new Response(JSON.stringify({ newUrl: urlData.publicUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const tableName = body.table || "hunters";
     const column = body.column || "image_url";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
