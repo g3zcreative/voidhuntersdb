@@ -50,6 +50,31 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 ml-4">
+          {/* Database dropdown */}
+          {tables.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-secondary hover:text-foreground ${
+                    location.pathname.startsWith("/database")
+                      ? "text-primary bg-secondary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <Database className="h-3.5 w-3.5" />
+                  Database
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-44">
+                {tables.map((t) => (
+                  <DropdownMenuItem key={t.name} onClick={() => navigate(`/database/${t.name}`)}>
+                    {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {navItems.map((item) => (
             <Link
               key={item.href}
