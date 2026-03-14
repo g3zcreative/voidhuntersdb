@@ -351,6 +351,8 @@ export default function AdminEntityEditor() {
         onSave={handleSave}
         onExportSQL={() => setSqlDialogOpen(true)}
         onClear={handleClear}
+        onDeploy={selectedSchemaId ? handleDeploy : undefined}
+        deployed={deployed}
         saving={saving}
         schemas={schemas}
         selectedSchemaId={selectedSchemaId}
