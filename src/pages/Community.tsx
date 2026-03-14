@@ -5,13 +5,13 @@ import { SEO } from "@/components/SEO";
 
 const discordLinks = [
   {
-    name: "Official Godforge Discord",
-    description: "The official Discord server run by Fateless Games. Get news, updates, and chat with the devs.",
+    name: "Official Void Hunters Discord",
+    description: "The official Discord server run by Artifex Mundi. Get news, updates, and chat with the devs.",
     url: "/discord",
     icon: <MessageSquare className="h-6 w-6" />,
   },
   {
-    name: "GodforgeHub Community Discord",
+    name: "VoidHuntersDB Community Discord",
     description: "Our community-run Discord for guides, theorycrafting, and discussion.",
     url: "/discord",
     icon: <MessageSquare className="h-6 w-6" />,
@@ -21,12 +21,12 @@ const discordLinks = [
 const CommunityPage = () => {
   return (
     <Layout>
-      <SEO title="Community" description="Join the Godforge community — official and fan-run Discord servers, forums, and more." />
+      <SEO title="Community" description="Join the Void Hunters community — official and fan-run Discord servers, forums, and more." />
       <div className="container py-8">
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <MessageSquare className="h-7 w-7 text-primary" /> Community
         </h1>
-        <p className="text-muted-foreground mb-8">Connect with other Godforge players and stay in the loop.</p>
+        <p className="text-muted-foreground mb-8">Connect with other Void Hunters players and stay in the loop.</p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           {discordLinks.map((link) => (

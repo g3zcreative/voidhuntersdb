@@ -30,12 +30,12 @@ const OfficialPostsPage = () => {
 
   return (
     <Layout>
-      <SEO title="Official Posts" description="Official communications from the Godforge development team." />
+      <SEO title="Official Posts" description="Official communications from the Void Hunters development team." />
       <div className="container py-8">
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <MessageSquare className="h-7 w-7 text-primary" /> Official Posts
         </h1>
-        <p className="text-muted-foreground mb-6">Official communications from the Godforge team.</p>
+        <p className="text-muted-foreground mb-6">Official communications from the Void Hunters team.</p>
 
         {isLoading ? (
           <div className="space-y-3">

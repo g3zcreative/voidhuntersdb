@@ -69,7 +69,7 @@ const Index = () => {
 
   return (
     <Layout>
-      <SEO rawTitle="Void Hunters Hub | News, Guides & More" description="Your community hub for Void Hunters. News, guides, official posts, and more — all in one place." url="/" />
+      <SEO rawTitle="VoidHuntersDB.com | Void Hunters Database, News, Guides & More" description="Welcome to VoidHuntersDB.com the premier source for all things Void Hunters, the upcoming hero collector RPG by Artifex Mundi." url="/" />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
@@ -79,11 +79,11 @@ const Index = () => {
             Early Access — More features coming soon
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold mb-4 tracking-tight">
-            Void<span className="text-primary">Hunters</span> Hub
+            VoidHunters<span className="text-primary">DB</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Your ultimate information hub for <strong className="text-foreground">Void Hunters</strong>.
-            News, official posts, guides, and more — all in one place.
+            The premier source for all things <strong className="text-foreground">Void Hunters</strong>,
+            the upcoming hero collector RPG by Artifex Mundi.
           </p>
           <div className="flex gap-3 justify-center">
             <Button asChild>

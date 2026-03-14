@@ -42,7 +42,7 @@ export function Navbar() {
             <span className="font-display font-bold text-primary-foreground text-sm">VH</span>
           </div>
           <span className="font-display font-bold text-lg hidden sm:inline">
-            Void<span className="text-primary">Hunters</span>
+            VoidHunters<span className="text-primary">DB</span>
           </span>
         </Link>
 

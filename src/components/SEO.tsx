@@ -17,7 +17,7 @@ export function SEO({ title, rawTitle, description, image, url, type = "website"
   const fullTitle = rawTitle || (title ? `${title} | ${siteName}` : siteName);
   const desc = description || seo.metaDescription;
   const ogImage = image || seo.ogImage || undefined;
-  const siteUrl = "https://godforgehub.com";
+  const siteUrl = "https://voidhuntersdb.com";
   const canonical = url ? `${siteUrl}${url}` : undefined;
 
   const defaultJsonLd = {

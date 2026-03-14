@@ -32,7 +32,7 @@ const ChangelogPage = () => {
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <History className="h-7 w-7 text-primary" /> Changelog
         </h1>
-        <p className="text-muted-foreground mb-8">See what's new and improved on Godforge Hub.</p>
+        <p className="text-muted-foreground mb-8">See what's new and improved on VoidHuntersDB.</p>
 
         {isLoading ? (
           <div className="space-y-4">

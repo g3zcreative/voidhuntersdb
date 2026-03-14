@@ -41,7 +41,7 @@ const GuidesPage = () => {
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <BookOpen className="h-7 w-7 text-primary" /> Guides
         </h1>
-        <p className="text-muted-foreground mb-6">Community guides and strategies for Godforge.</p>
+        <p className="text-muted-foreground mb-6">Community guides and strategies for Void Hunters.</p>
 
         {isLoading ? (
           <div className="space-y-3">

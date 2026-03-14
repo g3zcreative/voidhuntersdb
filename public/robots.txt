@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://godforgehub.com/sitemap.xml
+Sitemap: https://voidhuntersdb.com/sitemap.xml

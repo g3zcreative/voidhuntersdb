@@ -37,7 +37,7 @@ const RoadmapPage = () => {
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <MapIcon className="h-7 w-7 text-primary" /> Roadmap
         </h1>
-        <p className="text-muted-foreground mb-8">See what's planned, in progress, and completed for Godforge Hub.</p>
+        <p className="text-muted-foreground mb-8">See what's planned, in progress, and completed for VoidHuntersDB.</p>
 
         {isLoading ? (
           <div className="grid md:grid-cols-3 gap-6">
