@@ -13,8 +13,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Trash2, ChevronLeft } from "lucide-react";
+import { Plus, Search, Trash2, Columns3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function AdminSchemaData() {
   const { tableName } = useParams<{ tableName: string }>();
@@ -28,11 +31,31 @@ export default function AdminSchemaData() {
   const table = tableName ? getTable(tableName) : undefined;
 
   const visibleFields = table?.fields.filter((f) => !isAutoField(f)) || [];
-  const tableColumns = table?.fields.filter((f) => {
+  const allTableColumns = table?.fields.filter((f) => {
     if (f.name === "id") return false;
     if (["created_at", "updated_at"].includes(f.name)) return false;
     return true;
   }) || [];
+
+  const storageKey = `admin-hidden-cols-${tableName}`;
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const tableColumns = allTableColumns.filter((c) => !hiddenColumns.has(c.name));
+
+  const toggleColumn = (name: string) => {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      localStorage.setItem(storageKey, JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const { data: rows, isLoading: rowsLoading } = useQuery({
     queryKey: ["schema-data", tableName],
@@ -94,7 +117,6 @@ export default function AdminSchemaData() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold">{displayLabel}</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</p>
         </div>
         <Button onClick={() => navigate(`/admin/data/${tableName}/new`)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -102,14 +124,35 @@ export default function AdminSchemaData() {
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <span className="text-sm text-muted-foreground">{filtered.length} item{filtered.length !== 1 ? "s" : ""}</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Columns3 className="mr-2 h-4 w-4" /> Columns
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {allTableColumns.map((col) => (
+              <DropdownMenuCheckboxItem
+                key={col.id}
+                checked={!hiddenColumns.has(col.name)}
+                onCheckedChange={() => toggleColumn(col.name)}
+              >
+                {col.name}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {rowsLoading ? (
