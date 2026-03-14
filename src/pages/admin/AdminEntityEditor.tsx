@@ -436,6 +436,28 @@ export default function AdminEntityEditor() {
         onOpenChange={setSqlDialogOpen}
         sql={generateSQL()}
       />
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete table "{deleteConfirm?.label}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.hasData
+                ? "This table contains existing data. Removing it from the schema will NOT drop the database table, but if you re-deploy, the table will no longer be managed. This action cannot be undone."
+                : "This will remove the table from your schema."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteNode}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteConfirm?.hasData ? "Delete Anyway" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
