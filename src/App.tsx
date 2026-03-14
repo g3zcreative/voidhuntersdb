@@ -39,6 +39,8 @@ const AdminDocs = lazy(() => import("./pages/admin/AdminDocs"));
 const AdminAuthors = lazy(() => import("./pages/admin/AdminAuthors"));
 const AdminSeo = lazy(() => import("./pages/admin/AdminSeo"));
 const AdminEntityEditor = lazy(() => import("./pages/admin/AdminEntityEditor"));
+const AdminSchemaData = lazy(() => import("./pages/admin/AdminSchemaData"));
+const AdminSchemaItemEditor = lazy(() => import("./pages/admin/AdminSchemaItemEditor"));
 
 const queryClient = new QueryClient();
 
