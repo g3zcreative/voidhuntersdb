@@ -25,6 +25,8 @@ export function EntityEditorToolbar({
   onSave,
   onExportSQL,
   onClear,
+  onDeploy,
+  deployed,
   saving,
   schemas,
   selectedSchemaId,
