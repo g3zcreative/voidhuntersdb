@@ -168,16 +168,14 @@ function isStorageUrl(url: string): boolean {
 }
 
 async function downloadAndUploadUrl(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-  const blob = await res.blob();
-  const file = new File([blob], "download", { type: blob.type || "image/png" });
-  const compressed = await compressImage(file);
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${compressedExtension}`;
-  const { error } = await supabase.storage.from("images").upload(path, compressed);
+  // Use edge function to download externally (avoids CORS)
+  const { data, error } = await supabase.functions.invoke("migrate-images", {
+    body: { single_url: url },
+  });
   if (error) throw error;
-  const { data: urlData } = supabase.storage.from("images").getPublicUrl(path);
-  return urlData.publicUrl;
+  if (data?.error) throw new Error(data.error);
+  if (!data?.newUrl) throw new Error("No URL returned from server");
+  return data.newUrl;
 }
 
 function ImageUploadField({
