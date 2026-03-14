@@ -85,6 +85,82 @@ function FkSelect({
   );
 }
 
+/** Structured key/value editor for JSON fields like stats */
+function JsonFieldEditor({
+  value,
+  onChange,
+}: {
+  value: any;
+  onChange: (val: any) => void;
+}) {
+  // Normalize value to object
+  const obj: Record<string, any> = React.useMemo(() => {
+    if (value && typeof value === "object" && !Array.isArray(value)) return value;
+    if (typeof value === "string") {
+      try { return JSON.parse(value); } catch { /* ignore */ }
+      // Try key:value format
+      const parsed: Record<string, any> = {};
+      value.split(/[,\n]+/).forEach((pair: string) => {
+        const [k, v] = pair.split(":").map((s: string) => s.trim());
+        if (k) parsed[k] = isNaN(Number(v)) ? v : Number(v);
+      });
+      if (Object.keys(parsed).length > 0) return parsed;
+    }
+    return {};
+  }, [value]);
+
+  const entries = Object.entries(obj);
+
+  const update = (oldKey: string, newKey: string, newVal: string) => {
+    const next: Record<string, any> = {};
+    entries.forEach(([k, v]) => {
+      if (k === oldKey) {
+        if (newKey.trim()) next[newKey.trim()] = isNaN(Number(newVal)) ? newVal : Number(newVal);
+      } else {
+        next[k] = v;
+      }
+    });
+    onChange(next);
+  };
+
+  const remove = (key: string) => {
+    const next = { ...obj };
+    delete next[key];
+    onChange(Object.keys(next).length > 0 ? next : null);
+  };
+
+  const addEntry = () => {
+    onChange({ ...obj, "": 0 });
+  };
+
+  return (
+    <div className="space-y-2">
+      {entries.map(([key, val], i) => (
+        <div key={i} className="flex items-center gap-2">
+          <Input
+            placeholder="Key"
+            value={key}
+            onChange={(e) => update(key, e.target.value, String(val))}
+            className="flex-1 font-mono text-xs"
+          />
+          <Input
+            placeholder="Value"
+            value={String(val ?? "")}
+            onChange={(e) => update(key, key, e.target.value)}
+            className="flex-1 font-mono text-xs"
+          />
+          <Button type="button" variant="ghost" size="icon" onClick={() => remove(key)} className="shrink-0">
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={addEntry} className="text-xs">
+        + Add field
+      </Button>
+    </div>
+  );
+}
+
 function ImageUploadField({
   value,
   onChange,
