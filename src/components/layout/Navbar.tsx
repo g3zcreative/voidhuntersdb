@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, User, Shield, LogOut } from "lucide-react";
+import { Search, Menu, X, User, Shield, LogOut, Database, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
 import {
   DropdownMenu,
   DropdownMenuContent,
