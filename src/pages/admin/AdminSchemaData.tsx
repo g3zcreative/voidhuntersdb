@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchemaRegistry, isAutoField } from "@/hooks/useSchemaRegistry";
+import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ export default function AdminSchemaData() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { setBreadcrumbs, setActions } = useAdminHeader();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -86,6 +88,21 @@ export default function AdminSchemaData() {
     },
   });
 
+  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+
+  // Set header breadcrumbs and actions
+  useEffect(() => {
+    if (!table) return;
+    setBreadcrumbs([{ label: displayLabel }]);
+    setActions(
+      <Button size="sm" onClick={() => navigate(`/admin/data/${tableName}/new`)}>
+        <Plus className="h-4 w-4 mr-2" />
+        New {displayLabel.replace(/s$/, "")}
+      </Button>
+    );
+    return () => { setBreadcrumbs([]); setActions(null); };
+  }, [table, displayLabel, tableName]);
+
   if (registryLoading) {
     return <div className="p-6 space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>;
   }
@@ -110,20 +127,8 @@ export default function AdminSchemaData() {
     });
   });
 
-  const displayLabel = table.label.charAt(0).toUpperCase() + table.label.slice(1);
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold">{displayLabel}</h1>
-        </div>
-        <Button onClick={() => navigate(`/admin/data/${tableName}/new`)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New {displayLabel.replace(/s$/, "")}
-        </Button>
-      </div>
-
       <div className="flex items-center gap-3">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
