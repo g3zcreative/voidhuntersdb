@@ -229,6 +229,7 @@ export default function AdminEntityEditor() {
         onAddField,
         onRemoveField,
         onUpdateField,
+        onDeleteNode,
       },
     };
     setNodes((nds) => [...nds, newNode]);
