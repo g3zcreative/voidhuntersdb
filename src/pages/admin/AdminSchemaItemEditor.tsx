@@ -8,6 +8,7 @@ import {
   fieldTypeToInputType,
   type SchemaField,
 } from "@/hooks/useSchemaRegistry";
+import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Upload, Loader2, X } from "lucide-react";
+import { Save, Upload, Loader2, X } from "lucide-react";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
 
 function slugify(text: string): string {
