@@ -1,76 +1,111 @@
 
 
-## Custom Markup for Embedding Game Entity Links in Guides
+# Dynamic Schema-Driven CMS
 
-### Concept
+## Overview
 
-Inspired by Wowhead's markup (e.g. `[item=1234]`, `[spell=5678]`), we define a simple bracket syntax that authors write inside standard Markdown content. Before rendering, a preprocessing step transforms these tokens into interactive links with tooltips and icons.
+Build a CMS system where the Entity Editor schemas automatically generate admin CRUD interfaces and public-facing pages. When a field is added or removed in the Entity Editor, the corresponding forms and tables update immediately -- no code changes needed.
 
-### Proposed Syntax
+The screenshots show Webflow's CMS pattern: a **three-panel layout** with a collection sidebar, item list, and full-page editor. We will adapt this to our existing admin layout.
 
-```text
-[hero:sun-wukong]       → links to /database/heroes/sun-wukong
-[skill:phoenix-strike]  → links to /database/skills/phoenix-strike  (future)
-[item:iron-sword]       → links to /database/items/iron-sword       (future)
-[material:fire-crystal] → links to /database/materials/fire-crystal (future)
-```
-
-Authors write these directly in the Markdown editor. The slug after the colon matches the entity's `slug` column in the database.
-
-### Architecture
+## Architecture
 
 ```text
-Guide Markdown content (stored in DB)
-  │
-  ▼
-preprocessMarkup(content)          ← new utility function
-  │  Regex: /\[(hero|skill|item|material):([a-z0-9-]+)\]/g
-  │  Replaces with custom HTML: <a> with data attributes + inline icon
-  ▼
-MDEditor.Markdown renders HTML     ← already used in GuideDetail
-  │  needs: rehypeRaw plugin to allow inline HTML
-  ▼
-CSS styles for .entity-link         ← styled inline links with hover effects
+entity_definitions (schema JSON)
+        │
+        ▼
+  ┌─────────────────────┐
+  │  useSchemaRegistry() │  ← React hook that loads all saved schemas
+  └─────────┬───────────┘
+            │
+    ┌───────┴────────┐
+    │                │
+    ▼                ▼
+ Admin Routes    Public Routes
+ /admin/data/:table   /database/:table/:slug
+    │                │
+    ▼                ▼
+ SchemaListPage   PublicEntityList
+ SchemaEditPage   PublicEntityDetail
 ```
 
-### Implementation Steps
+## Database Changes
 
-1. **Create `src/lib/guide-markup.ts`** — a pure function `preprocessMarkup(content: string): string`
-   - Uses regex to find all `[type:slug]` tokens
-   - Replaces each with an HTML anchor: `<a href="/database/{type}s/{slug}" class="entity-link entity-link--{type}" data-entity="{type}" data-slug="{slug}">{Display Name}</a>`
-   - For display name: capitalize and de-slugify (e.g. `sun-wukong` → `Sun Wukong`). A future enhancement could batch-fetch names from the DB, but starting with slug-derived names keeps it simple and synchronous.
+1. **No new tables yet** -- the actual game tables (heroes, factions, etc.) are created via the Entity Editor's "Export SQL" flow. The CMS reads `entity_definitions.schema` to know what columns exist and queries the corresponding `public.*` tables dynamically.
 
-2. **Update `GuideDetail.tsx`** — pipe `guide.content` through `preprocessMarkup()` before passing to `MDEditor.Markdown`
-   - Add `rehype-raw` plugin so the injected HTML anchors render correctly (MDEditor.Markdown supports `rehypePlugins` prop)
+2. Add an `is_published` boolean column and a `table_prefix` or `deployed` flag to `entity_definitions` so the system knows which schemas have been deployed to real tables vs. are still drafts.
 
-3. **Add entity link styles to `src/index.css`** — color-coded underlined links
-   - `.entity-link` base: inline, underline, font-medium
-   - `.entity-link--hero`: primary/gold color
-   - `.entity-link--skill`: purple color
-   - `.entity-link--item`: green color
-   - `.entity-link--material`: amber color
-   - Hover: brighten + show a subtle glow
-
-4. **Wire up client-side navigation** — since these are standard `<a href>` tags pointing to internal routes, React Router will handle them naturally with full page transitions. For SPA navigation, we can optionally add a click interceptor component wrapping the markdown output, or simply rely on `<a>` tags (works fine for content pages).
-
-5. **Add a "Markup Reference" section to AdminDocs** — document the syntax for content authors so they know how to use `[hero:slug]` etc.
-
-### Technical Details
-
-- **Regex pattern**: `/\[(hero|skill|item|material):([a-z0-9-]+)\]/g`
-- **rehype-raw**: New dependency needed (`rehype-raw`) to allow raw HTML in Markdown output. MDEditor.Markdown accepts `rehypePlugins={[rehypeRaw]}`.
-- **No DB queries needed at render time** — display names are derived from slugs. This keeps the preprocessor synchronous and avoids waterfall fetches.
-- **Editor preview**: The admin MDEditor could also use the same preprocessor for live preview, but that's a follow-up enhancement.
-
-### Example
-
-Author writes:
-```markdown
-To beat this boss, equip [hero:sun-wukong] with [item:iron-sword] and use [skill:phoenix-strike] for maximum damage.
+**Migration:**
+```sql
+ALTER TABLE public.entity_definitions
+  ADD COLUMN IF NOT EXISTS deployed boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS public_slug text;
 ```
 
-Renders as:
-> To beat this boss, equip **Sun Wukong** with **Iron Sword** and use **Phoenix Strike** for maximum damage.
+## New Files & Components
 
-Where each name is a colored, clickable link to the respective database page.
+### 1. Schema Registry Hook -- `src/hooks/useSchemaRegistry.tsx`
+- Fetches all `entity_definitions` where `deployed = true`
+- Parses each schema's nodes into a flat list of tables with their fields
+- Returns `{ tables, getTable(name), loading }` 
+- Maps Entity Editor field types (`text`, `integer`, `jsonb`, etc.) to form input types (`text`, `number`, `json`, etc.)
+
+### 2. Dynamic Admin List Page -- `src/pages/admin/AdminSchemaData.tsx`
+- Route: `/admin/data/:tableName`
+- Uses `useSchemaRegistry()` to get column definitions for the given table
+- Renders a table view identical to `AdminCrudPage` but driven by schema fields
+- "New Item" button navigates to the full-page editor (not a modal)
+- Row click navigates to edit page
+
+### 3. Full-Page Entity Editor -- `src/pages/admin/AdminSchemaItemEditor.tsx`
+- Route: `/admin/data/:tableName/new` and `/admin/data/:tableName/:id`
+- **Webflow-inspired layout**: back arrow + title at top, "Create draft" / "Save" button top-right
+- Left column: form fields grouped into "Basic info" (name, slug) and "Custom fields" (everything else)
+- Fields are dynamically rendered based on schema:
+  - `text` → Input
+  - `integer` / `numeric` / `bigint` → Number input
+  - `boolean` → Switch
+  - `jsonb` → JSON textarea or key-value editor
+  - `timestamptz` / `date` → Date picker
+  - `uuid` (FK) → Select dropdown that queries the referenced table (derived from edges)
+- Slug auto-generated from name field if both exist
+- Full page, comfortable spacing -- no modal
+
+### 4. Collection Sidebar in Admin Layout
+- Add a new "Collections" sidebar group in `AdminLayout.tsx`
+- Dynamically populated from `useSchemaRegistry()` 
+- Each deployed schema's tables appear as nav items with item counts
+- Example: `Heroes 0 items`, `Factions 3 items`, `Archetypes 5 items`
+
+### 5. Public Pages (Phase 2, outline only)
+- `/database/:tableName` -- public list of published items
+- `/database/:tableName/:slug` -- detail page
+- These will reuse the schema registry to render appropriate columns
+- Marked as a follow-up since the tables are empty and no public design has been decided
+
+## Key Behaviors
+
+- **Schema field removed** → field disappears from create/edit form and table columns automatically (schema is the source of truth)
+- **Schema field added** → new field appears in forms immediately
+- **FK relationships** (edges in the schema) → rendered as select dropdowns that query the referenced table
+- **Primary key & auto-default fields** (id, created_at, updated_at) → hidden from forms, shown read-only in edit mode
+
+## Changes to Existing Files
+
+| File | Change |
+|---|---|
+| `AdminLayout.tsx` | Add dynamic "Collections" sidebar group from schema registry |
+| `App.tsx` | Add routes: `/admin/data/:tableName`, `/admin/data/:tableName/new`, `/admin/data/:tableName/:id` |
+| `AdminEntityEditor.tsx` | Add "Deploy" button that sets `deployed = true` and runs the generated SQL migration |
+| `entity_definitions` table | Add `deployed` and `public_slug` columns |
+
+## Implementation Order
+
+1. DB migration (add `deployed` column)
+2. `useSchemaRegistry` hook
+3. Dynamic list page (`AdminSchemaData`)
+4. Full-page item editor (`AdminSchemaItemEditor`)
+5. Wire routes in `App.tsx`
+6. Dynamic sidebar entries in `AdminLayout`
+7. Deploy button in Entity Editor toolbar
 
