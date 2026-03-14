@@ -196,19 +196,7 @@ function FieldInput({
         />
       );
     case "json":
-      return (
-        <Textarea
-          className="font-mono text-xs min-h-[120px]"
-          value={typeof value === "object" ? JSON.stringify(value, null, 2) : value ?? ""}
-          onChange={(e) => {
-            try {
-              onChange(JSON.parse(e.target.value));
-            } catch {
-              onChange(e.target.value);
-            }
-          }}
-        />
-      );
+      return <JsonFieldEditor value={value} onChange={onChange} />;
     case "textarea":
       return (
         <Textarea
