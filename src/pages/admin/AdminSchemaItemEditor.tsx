@@ -62,8 +62,8 @@ function FkSelect({
     },
   });
 
-  const displayName = (opt: { name?: string; title?: string; slug?: string }) =>
-    opt.name || opt.title || opt.slug || "Unnamed";
+  const displayName = (opt: Record<string, any>) =>
+    opt.name || opt.title || opt.label || opt.slug || "Unnamed";
 
   return (
     <Select value={value || ""} onValueChange={(v) => onChange(v || null)}>
