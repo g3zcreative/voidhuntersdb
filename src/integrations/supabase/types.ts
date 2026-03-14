@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      archetypes: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       authors: {
         Row: {
           avatar_url: string | null
@@ -148,6 +178,95 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      hunters: {
+        Row: {
+          archetype_id: string | null
+          awakening_level: number | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          level: number | null
+          name: string
+          power: number | null
+          race_id: string | null
+          rarity: number | null
+          region_id: string | null
+          role_id: string | null
+          slug: string
+          stats: Json | null
+          subtitle: string | null
+          updated_at: string
+        }
+        Insert: {
+          archetype_id?: string | null
+          awakening_level?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          level?: number | null
+          name: string
+          power?: number | null
+          race_id?: string | null
+          rarity?: number | null
+          region_id?: string | null
+          role_id?: string | null
+          slug: string
+          stats?: Json | null
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archetype_id?: string | null
+          awakening_level?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          level?: number | null
+          name?: string
+          power?: number | null
+          race_id?: string | null
+          rarity?: number | null
+          region_id?: string | null
+          role_id?: string | null
+          slug?: string
+          stats?: Json | null
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_hunters_archetypes"
+            columns: ["archetype_id"]
+            isOneToOne: false
+            referencedRelation: "archetypes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_hunters_races"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "races"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_hunters_regions"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_hunters_roles"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news_articles: {
         Row: {
@@ -325,6 +444,66 @@ export type Database = {
         }
         Relationships: []
       }
+      races: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      regions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       roadmap_items: {
         Row: {
           category: string | null
@@ -360,6 +539,33 @@ export type Database = {
           status?: string
           target_date?: string | null
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
           updated_at?: string
         }
         Relationships: []
