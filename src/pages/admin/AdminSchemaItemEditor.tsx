@@ -85,6 +85,63 @@ function FkSelect({
   );
 }
 
+function ImageUploadField({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  onChange: (val: string | null) => void;
+}) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const { toast } = useToast();
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please select an image.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const compressed = await compressImage(file);
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${compressedExtension}`;
+      const { error } = await supabase.storage.from("images").upload(path, compressed);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("images").getPublicUrl(path);
+      onChange(urlData.publicUrl);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Input
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value || null)}
+          placeholder="Image URL or upload..."
+          className="flex-1"
+        />
+        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+        <Button type="button" variant="outline" size="icon" onClick={() => inputRef.current?.click()} disabled={uploading} title="Upload image">
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+        </Button>
+        {value && (
+          <Button type="button" variant="ghost" size="icon" onClick={() => onChange(null)} title="Clear image">
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      {value && (
+        <img src={value} alt="Preview" className="h-24 w-24 rounded-md object-cover border border-border" />
+      )}
+    </div>
+  );
+}
+
 function FieldInput({
   field,
   value,
@@ -94,6 +151,11 @@ function FieldInput({
   value: any;
   onChange: (val: any) => void;
 }) {
+  // Image URL fields get upload support
+  if (field.name === "image_url" || field.name.endsWith("_image_url")) {
+    return <ImageUploadField value={value} onChange={onChange} />;
+  }
+
   // Check if this is a FK field
   const fkTable = getFkTable(field.name);
   if (fkTable && field.type.toLowerCase() === "uuid") {
