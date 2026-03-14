@@ -147,6 +147,36 @@ export default function AdminEntityEditor() {
     [setNodes]
   );
 
+  const onDeleteNode = useCallback(
+    async (nodeId: string, label: string) => {
+      const tableName = label.replace(/\s+/g, "_").toLowerCase();
+      // Check if the table exists and has data
+      try {
+        const { count, error } = await supabase
+          .from(tableName as any)
+          .select("*", { count: "exact", head: true });
+        if (!error && count && count > 0) {
+          setDeleteConfirm({ nodeId, label: tableName, hasData: true });
+          return;
+        }
+      } catch {
+        // Table may not exist in DB yet — safe to remove from canvas
+      }
+      // No data or table doesn't exist — remove directly
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+    },
+    [setNodes, setEdges]
+  );
+
+  const confirmDeleteNode = useCallback(() => {
+    if (!deleteConfirm) return;
+    setNodes((nds) => nds.filter((n) => n.id !== deleteConfirm.nodeId));
+    setEdges((eds) => eds.filter((e) => e.source !== deleteConfirm.nodeId && e.target !== deleteConfirm.nodeId));
+    setDeleteConfirm(null);
+    toast({ title: `Table "${deleteConfirm.label}" removed from schema` });
+  }, [deleteConfirm, setNodes, setEdges, toast]);
+
   // Inject callbacks into nodes
   const nodesWithCallbacks = useMemo(
     () =>
@@ -158,9 +188,10 @@ export default function AdminEntityEditor() {
           onAddField,
           onRemoveField,
           onUpdateField,
+          onDeleteNode,
         },
       })),
-    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField]
+    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode]
   );
 
   const onConnect = useCallback(
