@@ -1,0 +1,1 @@
+ALTER TABLE public.heroes DROP COLUMN IF EXISTS realm;

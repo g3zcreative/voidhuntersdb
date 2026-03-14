@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS official_posts_discord_message_id_key ON public.official_posts (discord_message_id) WHERE discord_message_id IS NOT NULL;

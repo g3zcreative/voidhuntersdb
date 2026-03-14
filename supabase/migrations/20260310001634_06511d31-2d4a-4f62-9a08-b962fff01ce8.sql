@@ -1,0 +1,1 @@
+ALTER TABLE public.heroes ADD COLUMN image_focal_point text DEFAULT 'top' NOT NULL;

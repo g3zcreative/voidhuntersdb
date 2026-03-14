@@ -1,0 +1,1 @@
+ALTER TABLE public.heroes ADD COLUMN image_zoom numeric NOT NULL DEFAULT 1.5;

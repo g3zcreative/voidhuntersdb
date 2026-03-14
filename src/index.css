@@ -1,0 +1,254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Metric-matched fallback fonts to prevent CLS during web font loading */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Space Grotesk Fallback';
+  src: local('Arial');
+  size-adjust: 110%;
+  ascent-override: 95%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@layer base {
+  :root {
+    --background: 228 12% 8%;
+    --foreground: 210 20% 92%;
+
+    --card: 228 12% 11%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 228 12% 11%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 259 100% 64%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 228 12% 16%;
+    --secondary-foreground: 210 20% 85%;
+
+    --muted: 228 10% 18%;
+    --muted-foreground: 215 12% 55%;
+
+    --accent: 259 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 228 10% 18%;
+    --input: 228 10% 20%;
+    --ring: 259 100% 64%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 228 12% 6%;
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: 259 100% 64%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 12% 14%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 228 10% 16%;
+    --sidebar-ring: 259 100% 64%;
+
+    /* Custom tokens */
+    --godforge-gold: 259 100% 64%;
+    --godforge-gold-dim: 259 60% 48%;
+    --godforge-surface: 228 12% 13%;
+    --godforge-surface-hover: 228 12% 16%;
+    --godforge-ember: 15 85% 55%;
+    --godforge-blue: 210 80% 55%;
+  }
+
+  .dark {
+    /* Already dark-first, but keep for compatibility */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Entity link styles for guide markup */
+.entity-link {
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s, text-shadow 0.15s;
+}
+
+.entity-link--hero {
+  color: hsl(0 0% 65%); /* default/common gray */
+}
+.entity-link--hero:hover {
+  color: hsl(0 0% 75%);
+  text-shadow: 0 0 8px hsl(0 0% 65% / 0.4);
+}
+
+/* Hero rarity colors */
+.entity-link--hero-r5 {
+  color: hsl(30 100% 55%);
+}
+.entity-link--hero-r5:hover {
+  color: hsl(30 100% 65%);
+  text-shadow: 0 0 8px hsl(30 100% 55% / 0.4);
+}
+
+.entity-link--hero-r4 {
+  color: hsl(270 70% 65%);
+}
+.entity-link--hero-r4:hover {
+  color: hsl(270 80% 75%);
+  text-shadow: 0 0 8px hsl(270 70% 65% / 0.4);
+}
+
+.entity-link--hero-r3 {
+  color: hsl(210 80% 60%);
+}
+.entity-link--hero-r3:hover {
+  color: hsl(210 85% 70%);
+  text-shadow: 0 0 8px hsl(210 80% 60% / 0.4);
+}
+
+.entity-link--hero-r2 {
+  color: hsl(140 60% 50%);
+}
+.entity-link--hero-r2:hover {
+  color: hsl(140 70% 60%);
+  text-shadow: 0 0 8px hsl(140 60% 50% / 0.4);
+}
+
+.entity-link--hero-r1 {
+  color: hsl(0 0% 55%);
+}
+.entity-link--hero-r1:hover {
+  color: hsl(0 0% 65%);
+  text-shadow: 0 0 8px hsl(0 0% 55% / 0.4);
+}
+
+.entity-link--skill {
+  color: hsl(270 70% 65%);
+}
+.entity-link--skill:hover {
+  color: hsl(270 80% 75%);
+  text-shadow: 0 0 8px hsl(270 70% 65% / 0.4);
+}
+
+.entity-link--item {
+  color: hsl(150 60% 50%);
+}
+.entity-link--item:hover {
+  color: hsl(150 70% 60%);
+  text-shadow: 0 0 8px hsl(150 60% 50% / 0.4);
+}
+
+.entity-link--mechanic {
+  color: hsl(0 75% 60%);
+}
+.entity-link--mechanic:hover {
+  color: hsl(0 80% 70%);
+  text-shadow: 0 0 8px hsl(0 75% 60% / 0.4);
+}
+
+/* Mechanic subtype colors */
+.entity-link--mechanic-buff {
+  color: hsl(210 100% 60%);
+}
+.entity-link--mechanic-buff:hover {
+  color: hsl(210 100% 70%);
+  text-shadow: 0 0 8px hsl(210 100% 60% / 0.4);
+}
+
+.entity-link--mechanic-debuff {
+  color: hsl(0 75% 60%);
+}
+.entity-link--mechanic-debuff:hover {
+  color: hsl(0 80% 70%);
+  text-shadow: 0 0 8px hsl(0 75% 60% / 0.4);
+}
+
+.entity-link--mechanic-disable {
+  color: hsl(50 100% 55%);
+}
+.entity-link--mechanic-disable:hover {
+  color: hsl(50 100% 65%);
+  text-shadow: 0 0 8px hsl(50 100% 55% / 0.4);
+}
+
+.entity-link--boss-skill {
+  color: hsl(0 70% 60%);
+}
+.entity-link--boss-skill:hover {
+  color: hsl(0 80% 70%);
+  text-shadow: 0 0 8px hsl(0 70% 60% / 0.4);
+}
+
+.entity-link--boss {
+  color: hsl(15 85% 55%);
+}
+.entity-link--boss:hover {
+  color: hsl(15 90% 65%);
+  text-shadow: 0 0 8px hsl(15 85% 55% / 0.4);
+}
+
+/* Entity tooltip */
+.entity-tooltip {
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  box-shadow: 0 8px 24px -4px hsl(0 0% 0% / 0.5);
+  animation: entity-tooltip-in 0.15s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes entity-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-100% + 4px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+}

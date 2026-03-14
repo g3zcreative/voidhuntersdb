@@ -1,0 +1,1 @@
+ALTER TABLE public.heroes ADD COLUMN image_focal_y integer NOT NULL DEFAULT 0;

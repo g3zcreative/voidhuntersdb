@@ -1,0 +1,1 @@
+ALTER TABLE public.news_articles ADD COLUMN video_url text DEFAULT NULL;
