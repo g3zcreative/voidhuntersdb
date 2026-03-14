@@ -23,6 +23,7 @@ export interface EntityNodeData {
   onAddField: (nodeId: string) => void;
   onRemoveField: (nodeId: string, fieldId: string) => void;
   onUpdateField: (nodeId: string, fieldId: string, updates: Partial<EntityField>) => void;
+  onDeleteNode?: (nodeId: string, label: string) => void;
   [key: string]: unknown;
 }
 
