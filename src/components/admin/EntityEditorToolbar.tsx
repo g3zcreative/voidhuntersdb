@@ -10,6 +10,8 @@ interface EntityEditorToolbarProps {
   onSave: () => void;
   onExportSQL: () => void;
   onClear: () => void;
+  onDeploy?: () => void;
+  deployed?: boolean;
   saving: boolean;
   schemas: { id: string; name: string }[];
   selectedSchemaId: string | null;
