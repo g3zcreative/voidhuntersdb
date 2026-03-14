@@ -54,9 +54,20 @@ function EntityNodeComponent({ id, data, selected }: NodeProps) {
         <Input
           value={label as string}
           onChange={(e) => onUpdateLabel(id, e.target.value)}
-          className="h-7 text-sm font-semibold bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="h-7 text-sm font-semibold bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
           placeholder="table_name"
         />
+        {onDeleteNode && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+            onClick={() => onDeleteNode(id, label as string)}
+            title="Delete table"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Handle
           type="target"
           position={Position.Left}
