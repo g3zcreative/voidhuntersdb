@@ -67,7 +67,7 @@ export default function AdminEntityEditor() {
   const [saving, setSaving] = useState(false);
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
   const [deployed, setDeployed] = useState(false);
-
+  const [deleteConfirm, setDeleteConfirm] = useState<{ nodeId: string; label: string; hasData: boolean } | null>(null);
   // Load saved schemas list
   useEffect(() => {
     supabase
