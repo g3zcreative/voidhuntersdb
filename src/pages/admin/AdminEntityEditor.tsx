@@ -280,6 +280,25 @@ export default function AdminEntityEditor() {
     setEdges([]);
     setSelectedSchemaId(null);
     setSchemaName("Untitled Schema");
+    setDeployed(false);
+  };
+
+  const handleDeploy = async () => {
+    if (!selectedSchemaId) {
+      toast({ title: "Save the schema first", variant: "destructive" });
+      return;
+    }
+    const newState = !deployed;
+    const { error } = await supabase
+      .from("entity_definitions")
+      .update({ deployed: newState } as any)
+      .eq("id", selectedSchemaId);
+    if (error) {
+      toast({ title: "Deploy failed", variant: "destructive" });
+      return;
+    }
+    setDeployed(newState);
+    toast({ title: newState ? "Schema deployed — tables now appear in Collections" : "Schema undeployed" });
   };
 
   // SQL generation
