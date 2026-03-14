@@ -16,6 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 
 function slugify(text: string): string {
@@ -27,6 +30,60 @@ function slugify(text: string): string {
     .trim();
 }
 
+/** Detect if a field is a foreign key by name pattern (e.g. role_id → roles table) */
+function getFkTable(fieldName: string): string | null {
+  if (!fieldName.endsWith("_id")) return null;
+  const base = fieldName.slice(0, -3);
+  // Pluralize simply: add "s"
+  return base + "s";
+}
+
+function FkSelect({
+  field,
+  value,
+  onChange,
+  referencedTable,
+}: {
+  field: SchemaField;
+  value: any;
+  onChange: (val: any) => void;
+  referencedTable: string;
+}) {
+  const { data: options = [], isLoading } = useQuery({
+    queryKey: ["fk-options", referencedTable],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from(referencedTable as any)
+        .select("id, name, title, slug")
+        .order("name", { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      return (data || []) as Array<{ id: string; name?: string; title?: string; slug?: string }>;
+    },
+  });
+
+  const displayName = (opt: { name?: string; title?: string; slug?: string }) =>
+    opt.name || opt.title || opt.slug || "Unnamed";
+
+  return (
+    <Select value={value || ""} onValueChange={(v) => onChange(v || null)}>
+      <SelectTrigger>
+        <SelectValue placeholder={isLoading ? "Loading..." : `Select ${field.name.replace(/_id$/, "").replace(/_/g, " ")}...`} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__none__">
+          <span className="text-muted-foreground">None</span>
+        </SelectItem>
+        {options.map((opt) => (
+          <SelectItem key={opt.id} value={opt.id}>
+            {displayName(opt)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function FieldInput({
   field,
   value,
@@ -36,6 +93,19 @@ function FieldInput({
   value: any;
   onChange: (val: any) => void;
 }) {
+  // Check if this is a FK field
+  const fkTable = getFkTable(field.name);
+  if (fkTable && field.type.toLowerCase() === "uuid") {
+    return (
+      <FkSelect
+        field={field}
+        value={value}
+        onChange={(v) => onChange(v === "__none__" ? null : v)}
+        referencedTable={fkTable}
+      />
+    );
+  }
+
   const inputType = fieldTypeToInputType(field.type);
 
   switch (inputType) {
