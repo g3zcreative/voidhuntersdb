@@ -21,7 +21,7 @@ const discordLinks = [
 const CommunityPage = () => {
   return (
     <Layout>
-      <SEO title="Community" description="Join the Godforge community — official and fan-run Discord servers, forums, and more." />
+      <SEO title="Community" description="Join the Void Hunters community — official and fan-run Discord servers, forums, and more." />
       <div className="container py-8">
         <h1 className="font-display text-3xl font-bold mb-2 flex items-center gap-2">
           <MessageSquare className="h-7 w-7 text-primary" /> Community
