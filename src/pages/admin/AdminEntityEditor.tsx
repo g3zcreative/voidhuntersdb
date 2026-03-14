@@ -59,9 +59,10 @@ export default function AdminEntityEditor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [schemaName, setSchemaName] = useState("Untitled Schema");
   const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
-  const [schemas, setSchemas] = useState<{ id: string; name: string }[]>([]);
+  const [schemas, setSchemas] = useState<{ id: string; name: string; deployed: boolean }[]>([]);
   const [saving, setSaving] = useState(false);
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
+  const [deployed, setDeployed] = useState(false);
 
   // Load saved schemas list
   useEffect(() => {
