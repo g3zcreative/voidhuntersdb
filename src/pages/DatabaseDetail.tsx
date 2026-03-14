@@ -73,12 +73,42 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
       return <span className="font-mono">{value}</span>;
     case "datetime":
       return <span>{new Date(value).toLocaleDateString()}</span>;
-    case "json":
+    case "json": {
+      // Parse into key/value object for nice display
+      let obj: Record<string, any> | null = null;
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        obj = value;
+      } else if (typeof value === "string") {
+        try { obj = JSON.parse(value); } catch { /* ignore */ }
+        if (!obj) {
+          const parsed: Record<string, any> = {};
+          value.split(/[,\n]+/).forEach((pair: string) => {
+            const [k, v] = pair.split(":").map((s: string) => s.trim());
+            if (k) parsed[k] = v;
+          });
+          if (Object.keys(parsed).length > 0) obj = parsed;
+        }
+      }
+
+      if (obj && Object.keys(obj).length > 0) {
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {Object.entries(obj).map(([k, v]) => (
+              <div key={k} className="bg-secondary rounded-lg p-3 text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{k}</p>
+                <p className="font-display text-lg font-bold text-foreground">{String(v)}</p>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
       return (
         <pre className="text-xs font-mono bg-secondary rounded-md p-3 overflow-x-auto max-h-48">
-          {JSON.stringify(value, null, 2)}
+          {typeof value === "string" ? value : JSON.stringify(value, null, 2)}
         </pre>
       );
+    }
     default:
       return <span className="whitespace-pre-wrap">{String(value)}</span>;
   }
