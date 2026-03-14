@@ -68,10 +68,10 @@ export default function AdminEntityEditor() {
   useEffect(() => {
     supabase
       .from("entity_definitions")
-      .select("id, name")
+      .select("id, name, deployed")
       .order("updated_at", { ascending: false })
       .then(({ data }) => {
-        if (data) setSchemas(data);
+        if (data) setSchemas(data as any);
       });
   }, []);
 
