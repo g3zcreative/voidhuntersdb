@@ -54,16 +54,16 @@ function FkSelect({
     queryFn: async () => {
       const { data, error } = await supabase
         .from(referencedTable as any)
-        .select("id, name, title, slug")
+        .select("*")
         .order("name", { ascending: true })
         .limit(500);
       if (error) throw error;
-      return (data || []) as unknown as Array<{ id: string; name?: string; title?: string; slug?: string }>;
+      return (data || []) as unknown as Array<Record<string, any>>;
     },
   });
 
-  const displayName = (opt: { name?: string; title?: string; slug?: string }) =>
-    opt.name || opt.title || opt.slug || "Unnamed";
+  const displayName = (opt: Record<string, any>) =>
+    opt.name || opt.title || opt.label || opt.slug || "Unnamed";
 
   return (
     <Select value={value || ""} onValueChange={(v) => onChange(v || null)}>
