@@ -11,7 +11,7 @@ import { NavLink } from "@/components/NavLink";
 import {
   Shield, Swords, Sparkles, FlaskConical, Newspaper,
   BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
-  Users, Settings, FileQuestion, ExternalLink, Stamp, Crosshair, Flag, PenTool, Star, Search, RefreshCw,
+  Users, Settings, FileQuestion, ExternalLink, Stamp, Crosshair, Flag, PenTool, Star, Search, RefreshCw, Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
