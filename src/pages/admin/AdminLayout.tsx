@@ -10,9 +10,10 @@ import {
 import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
-  Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database,
+  Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
 
 
 const contentItems = [
