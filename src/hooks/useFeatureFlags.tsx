@@ -5,7 +5,7 @@ export interface FeatureFlags {
   guides: boolean;
   tools: boolean;
   database: boolean;
-  community: boolean;
+  
 }
 
 const defaults: FeatureFlags = {
