@@ -169,6 +169,7 @@ function AppRoutes() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="docs" element={<AdminDocs />} />
           <Route path="recommendations" element={<AdminRecommendations />} />
+          <Route path="entity-editor" element={<AdminEntityEditor />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

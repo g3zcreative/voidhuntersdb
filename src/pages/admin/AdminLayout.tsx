@@ -50,6 +50,7 @@ const platformItems = [
   { title: "SEO", url: "/admin/seo", icon: Search },
   { title: "Users", url: "/admin/platform", icon: Users },
   { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "Entity Editor", url: "/admin/entity-editor", icon: Database },
   { title: "Docs", url: "/admin/docs", icon: FileQuestion },
 ];
 
