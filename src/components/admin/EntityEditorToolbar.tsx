@@ -79,6 +79,18 @@ export function EntityEditorToolbar({
 
       <div className="ml-auto" />
 
+      {onDeploy && (
+        <Button
+          variant={deployed ? "outline" : "default"}
+          size="sm"
+          onClick={onDeploy}
+          className="h-8"
+        >
+          <Rocket className="h-3.5 w-3.5 mr-1.5" />
+          {deployed ? "Deployed" : "Deploy"}
+        </Button>
+      )}
+
       <Button size="sm" onClick={onSave} disabled={saving} className="h-8">
         <Save className="h-3.5 w-3.5 mr-1.5" />
         {saving ? "Saving..." : "Save"}
