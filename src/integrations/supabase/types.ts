@@ -458,6 +458,33 @@ export type Database = {
           },
         ]
       }
+      entity_definitions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          schema: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name?: string
+          schema?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          schema?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       factions: {
         Row: {
           created_at: string

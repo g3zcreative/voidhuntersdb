@@ -75,6 +75,7 @@ const AdminSeo = lazy(() => import("./pages/admin/AdminSeo"));
 const AdminTeamComps = lazy(() => import("./pages/admin/AdminTeamComps"));
 const AdminDataSync = lazy(() => import("./pages/admin/AdminDataSync"));
 const AdminRecommendations = lazy(() => import("./pages/admin/AdminRecommendations"));
+const AdminEntityEditor = lazy(() => import("./pages/admin/AdminEntityEditor"));
 
 const queryClient = new QueryClient();
 
@@ -168,6 +169,7 @@ function AppRoutes() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="docs" element={<AdminDocs />} />
           <Route path="recommendations" element={<AdminRecommendations />} />
+          <Route path="entity-editor" element={<AdminEntityEditor />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
