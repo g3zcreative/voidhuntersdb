@@ -298,6 +298,7 @@ export default function AdminSchemaItemEditor() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { setBreadcrumbs, setActions } = useAdminHeader();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
 
