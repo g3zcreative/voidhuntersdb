@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, User, Bookmark, Shield, LogOut } from "lucide-react";
+import { Search, Menu, X, User, Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,20 +12,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 
 interface NavItem {
   label: string;
   href: string;
-  comingSoon?: boolean;
 }
 
 const navItems: NavItem[] = [
   { label: "News", href: "/news" },
-  { label: "Database", href: "/database" },
-  { label: "Bosses", href: "/bosses" },
   { label: "Guides", href: "/guides" },
-  { label: "Tools", href: "/tools", comingSoon: true },
+  { label: "Official Posts", href: "/official-posts" },
   { label: "Community", href: "/community" },
 ];
 
@@ -43,39 +39,28 @@ export function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
-            <span className="font-display font-bold text-primary-foreground text-sm">GF</span>
+            <span className="font-display font-bold text-primary-foreground text-sm">VH</span>
           </div>
           <span className="font-display font-bold text-lg hidden sm:inline">
-            Godforge<span className="text-primary">Hub</span>
+            Void<span className="text-primary">Hunters</span>
           </span>
         </Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 ml-4">
-          {navItems.map((item) =>
-            item.comingSoon ? (
-              <span
-                key={item.href}
-                className="px-3 py-2 text-sm font-medium rounded-md text-muted-foreground/50 cursor-not-allowed flex items-center gap-1.5"
-                title="Coming Soon"
-              >
-                {item.label}
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-muted-foreground/30 text-muted-foreground/50">Soon</Badge>
-              </span>
-            ) : (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-secondary hover:text-foreground ${
-                  location.pathname.startsWith(item.href)
-                    ? "text-primary bg-secondary"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {item.label}
-              </Link>
-            )
-          )}
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-secondary hover:text-foreground ${
+                location.pathname.startsWith(item.href)
+                  ? "text-primary bg-secondary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Search */}
@@ -111,9 +96,6 @@ export function Navbar() {
                       <Shield className="mr-2 h-4 w-4" /> Admin Panel
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <Bookmark className="mr-2 h-4 w-4" /> My Collection
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={async () => { await signOut(); navigate("/"); }}>
                     <LogOut className="mr-2 h-4 w-4" /> Sign Out
@@ -149,30 +131,20 @@ export function Navbar() {
       {/* Mobile nav */}
       {mobileOpen && (
         <nav className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1 bg-background">
-          {navItems.map((item) =>
-            item.comingSoon ? (
-              <span
-                key={item.href}
-                className="px-3 py-2 text-sm font-medium rounded-md text-muted-foreground/50 cursor-not-allowed flex items-center gap-1.5"
-              >
-                {item.label}
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-muted-foreground/30 text-muted-foreground/50">Soon</Badge>
-              </span>
-            ) : (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  location.pathname.startsWith(item.href)
-                    ? "text-primary bg-secondary"
-                    : "text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                {item.label}
-              </Link>
-            )
-          )}
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
+              onClick={() => setMobileOpen(false)}
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                location.pathname.startsWith(item.href)
+                  ? "text-primary bg-secondary"
+                  : "text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
       )}
     </header>

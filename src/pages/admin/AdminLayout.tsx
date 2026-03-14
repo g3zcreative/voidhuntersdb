@@ -9,29 +9,13 @@ import {
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
 import {
-  Shield, Swords, Sparkles, FlaskConical, Newspaper,
-  BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
-  Users, Settings, FileQuestion, ExternalLink, Stamp, Crosshair, Flag, PenTool, Star, Search, RefreshCw, Database,
+  Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
+  Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 
 const contentItems = [
-  { title: "Heroes", url: "/admin/heroes", icon: Shield },
-  { title: "Builds", url: "/admin/builds", icon: Star },
-  { title: "Bosses", url: "/admin/bosses", icon: Swords },
-  { title: "Boss Strategies", url: "/admin/boss-strategies", icon: Flag },
-  { title: "Boss Skills", url: "/admin/boss-skills", icon: Sparkles },
-  { title: "Skills", url: "/admin/skills", icon: Sparkles },
-  { title: "Mechanics", url: "/admin/mechanics", icon: FlaskConical },
-  { title: "Imprints", url: "/admin/imprints", icon: Stamp },
-  { title: "Weapons", url: "/admin/weapons", icon: Crosshair },
-  { title: "Factions", url: "/admin/factions", icon: Flag },
-  { title: "Archetypes", url: "/admin/archetypes", icon: Swords },
-  { title: "Affinities", url: "/admin/affinities", icon: Sparkles },
-  { title: "Allegiances", url: "/admin/allegiances", icon: Flag },
-  { title: "Armor Sets", url: "/admin/armor-sets", icon: Shield },
-  { title: "Team Comps", url: "/admin/team-comps", icon: Users },
   { title: "News", url: "/admin/news", icon: Newspaper },
   { title: "Guides", url: "/admin/guides", icon: BookOpen },
   { title: "Official Posts", url: "/admin/official-posts", icon: MessageSquare },
@@ -46,7 +30,6 @@ const insightItems = [
 ];
 
 const platformItems = [
-  { title: "Data Sync", url: "/admin/data-sync", icon: RefreshCw },
   { title: "SEO", url: "/admin/seo", icon: Search },
   { title: "Users", url: "/admin/platform", icon: Users },
   { title: "Settings", url: "/admin/settings", icon: Settings },
@@ -129,10 +112,10 @@ function AdminHeader() {
   return (
     <header className="h-12 flex items-center border-b border-border px-4 gap-4">
       <SidebarTrigger />
-      <span className="font-display font-bold text-sm">GodforgeHub Admin</span>
+      <span className="font-display font-bold text-sm">Admin</span>
       <div className="ml-auto flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <a href="https://godforgehub.com" target="_blank" rel="noopener noreferrer">
+          <a href="/" target="_blank" rel="noopener noreferrer">
             <ExternalLink className="mr-2 h-3.5 w-3.5" />
             View Live Site
           </a>

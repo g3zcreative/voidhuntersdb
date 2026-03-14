@@ -14,10 +14,8 @@ const columns: ColumnConfig[] = [
     required: true,
     type: "select",
     options: [
-      { value: "hero", label: "Hero" },
-      { value: "imprint", label: "Imprint" },
-      { value: "weapon", label: "Weapon" },
-      { value: "skill", label: "Skill" },
+      { value: "guide", label: "Guide" },
+      { value: "news", label: "News" },
     ],
   },
   { key: "title_template", label: "Title Template" },
@@ -26,10 +24,8 @@ const columns: ColumnConfig[] = [
 ];
 
 const variableReference: Record<string, string[]> = {
-  hero: ["name", "element", "class_type", "rarity", "rarity_label", "description", "subtitle", "faction", "archetype"],
-  imprint: ["name", "rarity", "rarity_label", "passive"],
-  weapon: ["name", "rarity", "passive", "faction", "rank"],
-  skill: ["name", "skill_type", "description"],
+  guide: ["title", "category", "author", "excerpt"],
+  news: ["title", "category", "author", "excerpt"],
 };
 
 export default function AdminSeo() {
@@ -97,47 +93,22 @@ export default function AdminSeo() {
     setIndexNowLoading(true);
     setIndexNowResult(null);
     try {
-      // Fetch all slugs from main tables
-      const [heroes, skills, imprints, weapons, armorSets, bosses, news, guides, mechanics] =
-        await Promise.all([
-          supabase.from("heroes").select("slug").order("slug"),
-          supabase.from("skills").select("slug").order("slug"),
-          supabase.from("imprints").select("slug").order("slug"),
-          supabase.from("weapons").select("slug").order("slug"),
-          supabase.from("armor_sets").select("slug").order("slug"),
-          supabase.from("bosses").select("slug").order("slug"),
-          supabase.from("news_articles").select("slug").eq("published", true).order("slug"),
-          supabase.from("guides").select("slug").eq("published", true).order("slug"),
-          supabase.from("mechanics").select("slug").order("slug"),
-        ]);
+      const [news, guides] = await Promise.all([
+        supabase.from("news_articles").select("slug").eq("published", true).order("slug"),
+        supabase.from("guides").select("slug").eq("published", true).order("slug"),
+      ]);
 
       const urls: string[] = [
         "/",
         "/news",
-        "/database",
-        "/database/heroes",
-        "/database/skills",
-        "/database/imprints",
-        "/database/weapons",
-        "/database/armor-sets",
-        "/database/mechanics",
-        "/bosses",
         "/guides",
         "/community",
-        "/tools",
+        "/official-posts",
       ];
 
-      for (const r of heroes.data || []) urls.push(`/database/heroes/${r.slug}`);
-      for (const r of skills.data || []) urls.push(`/database/skills/${r.slug}`);
-      for (const r of imprints.data || []) urls.push(`/database/imprints/${r.slug}`);
-      for (const r of weapons.data || []) urls.push(`/database/weapons/${r.slug}`);
-      for (const r of armorSets.data || []) urls.push(`/database/armor-sets/${r.slug}`);
-      for (const r of bosses.data || []) urls.push(`/bosses/${r.slug}`);
       for (const r of news.data || []) urls.push(`/news/${r.slug}`);
       for (const r of guides.data || []) urls.push(`/guides/${r.slug}`);
-      for (const r of mechanics.data || []) urls.push(`/database/mechanics/${r.slug}`);
 
-      // IndexNow allows max 10,000 per batch
       const { data, error } = await supabase.functions.invoke("index-now", {
         body: { urls },
       });
@@ -187,10 +158,10 @@ export default function AdminSeo() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Notify Bing, Yandex, and other IndexNow-compatible engines about new or updated URLs instantly. Enter URLs (one per line, relative paths like <code className="bg-muted px-1 rounded">/database/heroes/hel</code> work), or ping all content at once.
+            Notify Bing, Yandex, and other IndexNow-compatible engines about new or updated URLs instantly. Enter URLs (one per line, relative paths work), or ping all content at once.
           </p>
           <Textarea
-            placeholder={"/database/heroes/hel\n/news/my-new-article\n/guides/beginner-guide"}
+            placeholder={"/news/my-new-article\n/guides/beginner-guide"}
             value={indexNowUrls}
             onChange={(e) => setIndexNowUrls(e.target.value)}
             rows={4}
@@ -221,7 +192,7 @@ export default function AdminSeo() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Generate a fresh <code className="bg-muted px-1 rounded">sitemap.xml</code> from the database. Copy the output and share it to update the static file at <code className="bg-muted px-1 rounded">public/sitemap.xml</code>.
+            Generate a fresh <code className="bg-muted px-1 rounded">sitemap.xml</code> from the database.
           </p>
           <div className="flex gap-2">
             <Button onClick={regenerateSitemap} disabled={loading} variant="outline">

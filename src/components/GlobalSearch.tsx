@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Sword, Shield, User, Zap, BookOpen, Newspaper, Cog, X } from "lucide-react";
+import { Search, BookOpen, Newspaper, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -8,17 +8,12 @@ import { cn } from "@/lib/utils";
 interface SearchResult {
   id: string;
   name: string;
-  type: "hero" | "weapon" | "imprint" | "skill" | "mechanic" | "guide" | "news";
+  type: "guide" | "news";
   href: string;
   subtitle?: string;
 }
 
 const typeConfig: Record<SearchResult["type"], { icon: React.ReactNode; label: string }> = {
-  hero: { icon: <User className="h-4 w-4" />, label: "Hero" },
-  weapon: { icon: <Sword className="h-4 w-4" />, label: "Weapon" },
-  imprint: { icon: <Shield className="h-4 w-4" />, label: "Imprint" },
-  skill: { icon: <Zap className="h-4 w-4" />, label: "Skill" },
-  mechanic: { icon: <Cog className="h-4 w-4" />, label: "Mechanic" },
   guide: { icon: <BookOpen className="h-4 w-4" />, label: "Guide" },
   news: { icon: <Newspaper className="h-4 w-4" />, label: "News" },
 };
@@ -43,22 +38,12 @@ export function GlobalSearch({ className, mobile }: { className?: string; mobile
     setLoading(true);
     const pattern = `%${q}%`;
 
-    const [heroes, weapons, imprints, skills, mechanics, guides, news] = await Promise.all([
-      supabase.from("heroes").select("id, name, slug").ilike("name", pattern).limit(5),
-      supabase.from("weapons").select("id, name, slug, rarity").ilike("name", pattern).limit(5),
-      supabase.from("imprints").select("id, name, slug").ilike("name", pattern).limit(5),
-      supabase.from("skills").select("id, name, slug, skill_type").ilike("name", pattern).limit(5),
-      supabase.from("mechanics").select("id, name, slug, mechanic_type").ilike("name", pattern).limit(5),
+    const [guides, news] = await Promise.all([
       supabase.from("guides").select("id, title, slug, category").ilike("title", pattern).eq("published", true).limit(5),
       supabase.from("news_articles").select("id, title, slug, category").ilike("title", pattern).eq("published", true).limit(5),
     ]);
 
     const mapped: SearchResult[] = [
-      ...(heroes.data?.map((h) => ({ id: h.id, name: h.name, type: "hero" as const, href: `/database/heroes/${h.slug}` })) || []),
-      ...(weapons.data?.map((w) => ({ id: w.id, name: w.name, type: "weapon" as const, href: `/database/weapons/${w.slug}`, subtitle: w.rarity })) || []),
-      ...(imprints.data?.map((i) => ({ id: i.id, name: i.name, type: "imprint" as const, href: `/database/imprints/${i.slug}` })) || []),
-      ...(skills.data?.map((s) => ({ id: s.id, name: s.name, type: "skill" as const, href: `/database/skills/${s.slug}`, subtitle: s.skill_type })) || []),
-      ...(mechanics.data?.map((m) => ({ id: m.id, name: m.name, type: "mechanic" as const, href: `/database/mechanics/${m.slug}`, subtitle: m.mechanic_type })) || []),
       ...(guides.data?.map((g) => ({ id: g.id, name: g.title, type: "guide" as const, href: `/guides/${g.slug}`, subtitle: g.category })) || []),
       ...(news.data?.map((n) => ({ id: n.id, name: n.title, type: "news" as const, href: `/news/${n.slug}`, subtitle: n.category })) || []),
     ];
@@ -75,7 +60,6 @@ export function GlobalSearch({ className, mobile }: { className?: string; mobile
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, search]);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -109,7 +93,6 @@ export function GlobalSearch({ className, mobile }: { className?: string; mobile
     }
   };
 
-  // Group results by type
   const grouped = results.reduce<Record<string, SearchResult[]>>((acc, r) => {
     if (!acc[r.type]) acc[r.type] = [];
     acc[r.type].push(r);
@@ -123,7 +106,7 @@ export function GlobalSearch({ className, mobile }: { className?: string; mobile
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
       <Input
         ref={inputRef}
-        placeholder={mobile ? "Search..." : "Search Godforge Hub..."}
+        placeholder={mobile ? "Search..." : "Search..."}
         className="pl-9 pr-8 bg-secondary border-border h-9 text-sm"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
