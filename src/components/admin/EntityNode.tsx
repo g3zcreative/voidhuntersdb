@@ -35,7 +35,7 @@ const FIELD_TYPES = [
 function EntityNodeComponent({ id, data, selected }: NodeProps) {
   const {
     label, fields, color,
-    onUpdateLabel, onAddField, onRemoveField, onUpdateField,
+    onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode,
   } = data as unknown as EntityNodeData;
 
   return (
