@@ -385,6 +385,25 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
+  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+  const singularLabel = displayLabel.replace(/s$/, "");
+
+  // Set header breadcrumbs and actions
+  useEffect(() => {
+    if (!table) return;
+    setBreadcrumbs([
+      { label: displayLabel, href: `/admin/data/${tableName}` },
+      { label: isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`) },
+    ]);
+    setActions(
+      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+        <Save className="h-4 w-4 mr-2" />
+        {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
+      </Button>
+    );
+    return () => { setBreadcrumbs([]); setActions(null); };
+  }, [table, displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending]);
+
   if (registryLoading || (!isNew && itemLoading)) {
     return (
       <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -401,24 +420,6 @@ export default function AdminSchemaItemEditor() {
       </div>
     );
   }
-
-  const displayLabel = table.label.charAt(0).toUpperCase() + table.label.slice(1);
-  const singularLabel = displayLabel.replace(/s$/, "");
-
-  // Set header breadcrumbs and actions
-  useEffect(() => {
-    setBreadcrumbs([
-      { label: displayLabel, href: `/admin/data/${tableName}` },
-      { label: isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`) },
-    ]);
-    setActions(
-      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-        <Save className="h-4 w-4 mr-2" />
-        {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
-      </Button>
-    );
-    return () => { setBreadcrumbs([]); setActions(null); };
-  }, [displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending]);
 
   return (
     <div className="max-w-2xl mx-auto">
