@@ -405,30 +405,23 @@ export default function AdminSchemaItemEditor() {
   const displayLabel = table.label.charAt(0).toUpperCase() + table.label.slice(1);
   const singularLabel = displayLabel.replace(/s$/, "");
 
+  // Set header breadcrumbs and actions
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: displayLabel, href: `/admin/data/${tableName}` },
+      { label: isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`) },
+    ]);
+    setActions(
+      <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+        <Save className="h-4 w-4 mr-2" />
+        {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
+      </Button>
+    );
+    return () => { setBreadcrumbs([]); setActions(null); };
+  }, [displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending]);
+
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(`/admin/data/${tableName}`)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <p className="text-xs text-muted-foreground">{displayLabel}</p>
-            <h1 className="text-xl font-display font-bold">
-              {isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`)}
-            </h1>
-          </div>
-        </div>
-        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-          <Save className="h-4 w-4 mr-2" />
-          {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
-        </Button>
-      </div>
 
       {/* Basic Info */}
       {basicFields.length > 0 && (
