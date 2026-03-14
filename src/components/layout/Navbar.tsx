@@ -158,6 +158,26 @@ export function Navbar() {
       {/* Mobile nav */}
       {mobileOpen && (
         <nav className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1 bg-background">
+          {tables.length > 0 && (
+            <>
+              <p className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">Database</p>
+              {tables.map((t) => (
+                <Link
+                  key={t.name}
+                  to={`/database/${t.name}`}
+                  onClick={() => setMobileOpen(false)}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    location.pathname === `/database/${t.name}`
+                      ? "text-primary bg-secondary"
+                      : "text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                </Link>
+              ))}
+              <Separator className="my-1" />
+            </>
+          )}
           {navItems.map((item) => (
             <Link
               key={item.href}
