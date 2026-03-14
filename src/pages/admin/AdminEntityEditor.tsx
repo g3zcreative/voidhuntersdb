@@ -22,10 +22,10 @@ import { useToast } from "@/hooks/use-toast";
 import EntityNodeComponent, {
   type EntityNodeData,
   type EntityField,
-  type EntityNodeType,
 } from "@/components/admin/EntityNode";
 import { EntityEditorToolbar } from "@/components/admin/EntityEditorToolbar";
 import { SQLPreviewDialog } from "@/components/admin/SQLPreviewDialog";
+import type { Json } from "@/integrations/supabase/types";
 
 const NODE_COLORS = [
   "259 100% 64%",
@@ -55,8 +55,8 @@ export default function AdminEntityEditor() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<EntityNodeType>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [schemaName, setSchemaName] = useState("Untitled Schema");
   const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
   const [schemas, setSchemas] = useState<{ id: string; name: string }[]>([]);
@@ -74,7 +74,7 @@ export default function AdminEntityEditor() {
       });
   }, []);
 
-  // Node data callbacks — stable refs
+  // Node data callbacks
   const onUpdateLabel = useCallback(
     (nodeId: string, label: string) => {
       setNodes((nds) =>
@@ -89,20 +89,20 @@ export default function AdminEntityEditor() {
   const onAddField = useCallback(
     (nodeId: string) => {
       setNodes((nds) =>
-        nds.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  fields: [
-                    ...n.data.fields,
-                    { id: createFieldId(), name: "", type: "text", nullable: true, isPrimaryKey: false, defaultValue: "" },
-                  ],
-                },
-              }
-            : n
-        )
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const d = n.data as unknown as EntityNodeData;
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              fields: [
+                ...d.fields,
+                { id: createFieldId(), name: "", type: "text", nullable: true, isPrimaryKey: false, defaultValue: "" },
+              ],
+            },
+          };
+        })
       );
     },
     [setNodes]
@@ -111,11 +111,11 @@ export default function AdminEntityEditor() {
   const onRemoveField = useCallback(
     (nodeId: string, fieldId: string) => {
       setNodes((nds) =>
-        nds.map((n) =>
-          n.id === nodeId
-            ? { ...n, data: { ...n.data, fields: n.data.fields.filter((f) => f.id !== fieldId) } }
-            : n
-        )
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const d = n.data as unknown as EntityNodeData;
+          return { ...n, data: { ...n.data, fields: d.fields.filter((f) => f.id !== fieldId) } };
+        })
       );
     },
     [setNodes]
@@ -124,25 +124,25 @@ export default function AdminEntityEditor() {
   const onUpdateField = useCallback(
     (nodeId: string, fieldId: string, updates: Partial<EntityField>) => {
       setNodes((nds) =>
-        nds.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  fields: n.data.fields.map((f) =>
-                    f.id === fieldId ? { ...f, ...updates } : f
-                  ),
-                },
-              }
-            : n
-        )
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const d = n.data as unknown as EntityNodeData;
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              fields: d.fields.map((f) =>
+                f.id === fieldId ? { ...f, ...updates } : f
+              ),
+            },
+          };
+        })
       );
     },
     [setNodes]
   );
 
-  // Inject callbacks into nodes whenever they change
+  // Inject callbacks into nodes
   const nodesWithCallbacks = useMemo(
     () =>
       nodes.map((n) => ({
@@ -181,7 +181,7 @@ export default function AdminEntityEditor() {
 
   const handleAddEntity = useCallback(() => {
     const id = crypto.randomUUID();
-    const newNode: EntityNodeType = {
+    const newNode: Node = {
       id,
       type: "entity",
       position: { x: 100 + Math.random() * 400, y: 100 + Math.random() * 300 },
@@ -202,19 +202,21 @@ export default function AdminEntityEditor() {
     if (!user) return;
     setSaving(true);
 
-    // Strip callbacks from node data for serialization
+    // Strip callbacks for serialization
     const serializedNodes = nodes.map(({ data, ...rest }) => ({
-      ...rest,
+      id: rest.id,
+      type: rest.type,
+      position: rest.position,
       data: {
-        label: data.label,
-        fields: data.fields,
-        color: data.color,
+        label: (data as any).label,
+        fields: (data as any).fields,
+        color: (data as any).color,
       },
     }));
 
     const payload = {
       name: schemaName,
-      schema: { nodes: serializedNodes, edges },
+      schema: JSON.parse(JSON.stringify({ nodes: serializedNodes, edges })) as Json,
       created_by: user.id,
       updated_at: new Date().toISOString(),
     };
@@ -234,7 +236,6 @@ export default function AdminEntityEditor() {
         if (data) setSelectedSchemaId(data.id);
       }
       toast({ title: "Schema saved" });
-      // Refresh list
       const { data: list } = await supabase
         .from("entity_definitions")
         .select("id, name")
@@ -257,8 +258,8 @@ export default function AdminEntityEditor() {
     setSelectedSchemaId(data.id);
     setSchemaName(data.name);
 
-    const schema = data.schema as { nodes: any[]; edges: Edge[] };
-    const loadedNodes: EntityNodeType[] = (schema.nodes || []).map((n: any) => ({
+    const schema = data.schema as unknown as { nodes: any[]; edges: Edge[] };
+    const loadedNodes: Node[] = (schema.nodes || []).map((n: any) => ({
       ...n,
       data: {
         ...n.data,
@@ -284,11 +285,11 @@ export default function AdminEntityEditor() {
     const lines: string[] = [];
 
     for (const node of nodes) {
-      const { label, fields } = node.data;
-      const tableName = label.replace(/\s+/g, "_").toLowerCase();
+      const d = node.data as unknown as EntityNodeData;
+      const tableName = (d.label as string).replace(/\s+/g, "_").toLowerCase();
       lines.push(`CREATE TABLE public.${tableName} (`);
 
-      const colDefs = fields.map((f) => {
+      const colDefs = d.fields.map((f) => {
         let col = `  ${f.name} ${f.type.toUpperCase()}`;
         if (!f.nullable) col += " NOT NULL";
         if (f.isPrimaryKey) col += " PRIMARY KEY";
@@ -300,13 +301,14 @@ export default function AdminEntityEditor() {
       lines.push(`ALTER TABLE public.${tableName} ENABLE ROW LEVEL SECURITY;\n`);
     }
 
-    // FK constraints from edges
     for (const edge of edges) {
       const sourceNode = nodes.find((n) => n.id === edge.source);
       const targetNode = nodes.find((n) => n.id === edge.target);
       if (sourceNode && targetNode) {
-        const srcTable = sourceNode.data.label.replace(/\s+/g, "_").toLowerCase();
-        const tgtTable = targetNode.data.label.replace(/\s+/g, "_").toLowerCase();
+        const srcD = sourceNode.data as unknown as EntityNodeData;
+        const tgtD = targetNode.data as unknown as EntityNodeData;
+        const srcTable = (srcD.label as string).replace(/\s+/g, "_").toLowerCase();
+        const tgtTable = (tgtD.label as string).replace(/\s+/g, "_").toLowerCase();
         lines.push(
           `-- FK: ${srcTable} -> ${tgtTable}`,
           `ALTER TABLE public.${srcTable} ADD CONSTRAINT fk_${srcTable}_${tgtTable}`,

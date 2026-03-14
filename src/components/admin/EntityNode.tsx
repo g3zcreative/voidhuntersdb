@@ -1,5 +1,5 @@
-import { memo, useCallback } from "react";
-import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
+import { memo } from "react";
+import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,17 +23,19 @@ export interface EntityNodeData {
   onAddField: (nodeId: string) => void;
   onRemoveField: (nodeId: string, fieldId: string) => void;
   onUpdateField: (nodeId: string, fieldId: string, updates: Partial<EntityField>) => void;
+  [key: string]: unknown;
 }
-
-export type EntityNodeType = Node<EntityNodeData, "entity">;
 
 const FIELD_TYPES = [
   "uuid", "text", "integer", "bigint", "numeric", "boolean",
   "jsonb", "timestamptz", "date", "timestamp",
 ];
 
-function EntityNodeComponent({ id, data, selected }: NodeProps<EntityNodeType>) {
-  const { label, fields, color, onUpdateLabel, onAddField, onRemoveField, onUpdateField } = data;
+function EntityNodeComponent({ id, data, selected }: NodeProps) {
+  const {
+    label, fields, color,
+    onUpdateLabel, onAddField, onRemoveField, onUpdateField,
+  } = data as unknown as EntityNodeData;
 
   return (
     <div
@@ -49,7 +51,7 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityNodeType>) 
       >
         <GripVertical className="h-3.5 w-3.5 text-muted-foreground cursor-grab" />
         <Input
-          value={label}
+          value={label as string}
           onChange={(e) => onUpdateLabel(id, e.target.value)}
           className="h-7 text-sm font-semibold bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
           placeholder="table_name"
@@ -70,13 +72,13 @@ function EntityNodeComponent({ id, data, selected }: NodeProps<EntityNodeType>) 
 
       {/* Fields */}
       <div className="bg-card p-1.5 space-y-0.5 max-h-[300px] overflow-y-auto">
-        {fields.map((field) => (
+        {(fields as EntityField[]).map((field) => (
           <div
             key={field.id}
             className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-muted/50 group text-xs"
           >
             {field.isPrimaryKey && (
-              <Key className="h-3 w-3 text-yellow-500 shrink-0" />
+              <Key className="h-3 w-3 shrink-0 text-accent" />
             )}
             <Input
               value={field.name}
