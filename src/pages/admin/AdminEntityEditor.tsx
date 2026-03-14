@@ -25,6 +25,10 @@ import EntityNodeComponent, {
 } from "@/components/admin/EntityNode";
 import { EntityEditorToolbar } from "@/components/admin/EntityEditorToolbar";
 import { SQLPreviewDialog } from "@/components/admin/SQLPreviewDialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Json } from "@/integrations/supabase/types";
 
 const NODE_COLORS = [
