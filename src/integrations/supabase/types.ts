@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      buffs: {
+        Row: {
+          affected_stats: Json | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          scaling_info: string | null
+          slug: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          affected_stats?: Json | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          scaling_info?: string | null
+          slug: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          affected_stats?: Json | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          scaling_info?: string | null
+          slug?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       entity_definitions: {
         Row: {
           created_at: string
