@@ -48,10 +48,16 @@ function AdminSidebar() {
   const navigate = useNavigate();
   const { schemas, isJunction } = useSchemaRegistry();
 
-  // Build dynamic collection nav items from deployed schemas (hide junction tables)
+  // Build dynamic collection nav items from deployed schemas (hide junction tables, deduplicate by table name)
+  const seen = new Set<string>();
   const collectionItems = schemas.flatMap((s) =>
     s.tables
       .filter((t) => !isJunction(t.name))
+      .filter((t) => {
+        if (seen.has(t.name)) return false;
+        seen.add(t.name);
+        return true;
+      })
       .map((t) => ({
         title: t.label.charAt(0).toUpperCase() + t.label.slice(1),
         url: `/admin/data/${t.name}`,
