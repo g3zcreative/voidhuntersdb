@@ -275,7 +275,7 @@ function SkillDetailView({ item }: { item: Record<string, any> }) {
       )}
 
       {/* Game-style skill card */}
-      <SkillInfoBox skill={item} />
+      <SkillInfoBox skill={item as any} />
     </div>
   );
 }
