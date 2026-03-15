@@ -220,7 +220,7 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
       <div className="p-4 pb-3 flex items-center gap-3">
         <div className="h-14 w-14 shrink-0 rounded-full border-2 border-[hsl(35,60%,40%)] bg-secondary overflow-hidden shadow-[0_0_12px_hsl(35,60%,30%/0.4)]">
           {skill.icon ? (
-            <img src={skill.icon} alt={skill.name} className="h-full w-full object-cover" />
+            <img src={skill.icon} alt={skill.name} className="h-full w-full object-contain" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs">?</div>
           )}
