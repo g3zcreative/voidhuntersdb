@@ -13,8 +13,11 @@ import { SEO } from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Database } from "lucide-react";
+import { ArrowLeft, Database, Swords, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SkillInfoBox } from "@/components/SkillInfoBox";
+
+/* ── FK helpers ─────────────────────────────────────── */
 
 function fkTableName(fieldName: string) {
   return fieldName.slice(0, -3) + "s";
@@ -55,7 +58,6 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
     return <span className="text-muted-foreground italic">—</span>;
   }
 
-  // FK fields
   if (field.name.endsWith("_id") && field.type.toLowerCase() === "uuid") {
     return <FkValue fieldName={field.name} id={value} />;
   }
@@ -74,20 +76,11 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
     case "datetime":
       return <span>{new Date(value).toLocaleDateString()}</span>;
     case "json": {
-      // Parse into key/value object for nice display
       let obj: Record<string, any> | null = null;
       if (value && typeof value === "object" && !Array.isArray(value)) {
         obj = value;
       } else if (typeof value === "string") {
         try { obj = JSON.parse(value); } catch { /* ignore */ }
-        if (!obj) {
-          const parsed: Record<string, any> = {};
-          value.split(/[,\n]+/).forEach((pair: string) => {
-            const [k, v] = pair.split(":").map((s: string) => s.trim());
-            if (k) parsed[k] = v;
-          });
-          if (Object.keys(parsed).length > 0) obj = parsed;
-        }
       }
 
       if (obj && Object.keys(obj).length > 0) {
@@ -114,6 +107,298 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
   }
 }
 
+/* ── Hunter detail view ──────────────────────────────── */
+
+function HunterDetailView({
+  item,
+  m2mData,
+}: {
+  item: Record<string, any>;
+  m2mData: Record<string, Array<Record<string, any>>>;
+}) {
+  const hunterId = item.id;
+  const tags = m2mData.tags || [];
+
+  // Fetch skills for this hunter
+  const { data: skills } = useQuery({
+    queryKey: ["hunter-skills", hunterId],
+    enabled: !!hunterId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("skills" as any)
+        .select("*")
+        .eq("hunter_id", hunterId)
+        .order("sort_order" as any);
+      if (error) throw error;
+      return (data || []) as Record<string, any>[];
+    },
+  });
+
+  return (
+    <div className="space-y-8">
+      {/* Hero */}
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Image */}
+        <div className="w-full md:w-72 shrink-0">
+          <div className="aspect-[3/4] rounded-lg overflow-hidden border border-border bg-secondary">
+            {item.image_url ? (
+              <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
+                <Shield className="h-16 w-16" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-1">
+            {item.name}
+          </h1>
+          {item.subtitle && (
+            <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
+          )}
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-5">
+              {tags.map((t: any) => (
+                <Link key={t.id} to={`/database/tags/${t.slug || t.id}`}>
+                  <Badge variant="secondary" className="hover:bg-primary/20 transition-colors cursor-pointer">
+                    {t.name}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Stats grid */}
+          {item.stats && typeof item.stats === "object" && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+              {Object.entries(item.stats as Record<string, any>).map(([k, v]) => (
+                <div key={k} className="bg-secondary rounded-lg p-3 text-center">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{k}</p>
+                  <p className="font-display text-xl font-bold text-foreground">{String(v)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Numeric stats row */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Rarity", value: item.rarity },
+              { label: "Level", value: item.level },
+              { label: "Power", value: item.power },
+              { label: "Awakening", value: item.awakening_level },
+            ]
+              .filter((s) => s.value != null)
+              .map((s) => (
+                <div key={s.label} className="bg-secondary rounded-lg p-3 text-center">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{s.label}</p>
+                  <p className="font-display text-xl font-bold text-foreground">{s.value}</p>
+                </div>
+              ))}
+          </div>
+
+          {/* Description */}
+          {item.description && (
+            <div className="mt-5">
+              <p className="text-secondary-foreground leading-relaxed whitespace-pre-wrap">
+                {item.description}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Skills section */}
+      {skills && skills.length > 0 && (
+        <>
+          <Separator />
+          <div>
+            <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+              <Swords className="h-5 w-5 text-primary" />
+              Skills
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {skills.map((skill) => (
+                <Link key={skill.id} to={`/database/skills/${skill.slug || skill.id}`} className="block hover:scale-[1.01] transition-transform">
+                  <SkillInfoBox skill={skill as any} />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ── Skill detail view ──────────────────────────────── */
+
+function SkillDetailView({ item }: { item: Record<string, any> }) {
+  // Fetch parent hunter
+  const { data: hunter } = useQuery({
+    queryKey: ["skill-hunter", item.hunter_id],
+    enabled: !!item.hunter_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("hunters" as any)
+        .select("id, name, slug, image_url")
+        .eq("id", item.hunter_id)
+        .single();
+      if (error) throw error;
+      return data as Record<string, any>;
+    },
+  });
+
+  return (
+    <div className="space-y-8">
+      {/* Parent hunter link */}
+      {hunter && (
+        <Link
+          to={`/database/hunters/${hunter.slug || hunter.id}`}
+          className="inline-flex items-center gap-3 bg-secondary rounded-lg px-4 py-3 hover:bg-muted transition-colors group"
+        >
+          {hunter.image_url && (
+            <img src={hunter.image_url} alt={hunter.name} className="h-10 w-10 rounded-md object-cover border border-border" />
+          )}
+          <div>
+            <p className="text-xs text-muted-foreground">Hunter</p>
+            <p className="font-display font-semibold text-foreground group-hover:text-primary transition-colors">
+              {hunter.name}
+            </p>
+          </div>
+        </Link>
+      )}
+
+      {/* Game-style skill card */}
+      <SkillInfoBox skill={item as any} />
+    </div>
+  );
+}
+
+/* ── Generic detail view (fallback) ──────────────────── */
+
+function GenericDetailView({
+  table,
+  item,
+  m2mData,
+  m2mRelations,
+}: {
+  table: { label: string; fields: SchemaField[] };
+  item: Record<string, any>;
+  m2mData: Record<string, Array<Record<string, any>>>;
+  m2mRelations: Array<{ junctionTable: string; relatedTable: string }>;
+}) {
+  const m2mTableNames = m2mRelations.map((r) => r.relatedTable);
+
+  const displayFields = table.fields.filter(
+    (f) =>
+      !isAutoField(f) &&
+      f.name !== "image_url" &&
+      f.name !== "name" &&
+      f.name !== "title" &&
+      f.name !== "slug" &&
+      !m2mTableNames.includes(f.name)
+  );
+
+  const statFields = displayFields.filter(
+    (f) => fieldTypeToInputType(f.type) === "number" && !f.name.endsWith("_id")
+  );
+  const infoFields = displayFields.filter((f) => !statFields.includes(f));
+
+  const itemName = item.name || item.title || "Unnamed";
+
+  return (
+    <>
+      {/* Hero area */}
+      <div className="flex flex-col md:flex-row gap-8 mb-8">
+        {table.fields.some((f) => f.name === "image_url") && (
+          <div className="w-full md:w-72 shrink-0">
+            <div className="aspect-square rounded-lg overflow-hidden border border-border bg-secondary">
+              {item.image_url ? (
+                <img src={item.image_url} alt={itemName} className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
+                  <Database className="h-16 w-16" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-2">
+            {itemName}
+          </h1>
+          {item.subtitle && (
+            <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
+          )}
+
+          {m2mRelations.map((rel) => {
+            const related = m2mData[rel.relatedTable];
+            if (!related || related.length === 0) return null;
+            return (
+              <div key={rel.junctionTable} className="flex flex-wrap gap-2 mb-4">
+                {related.map((r) => (
+                  <Badge key={r.id} variant="secondary">
+                    {r.name || r.title || r.slug}
+                  </Badge>
+                ))}
+              </div>
+            );
+          })}
+
+          {statFields.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+              {statFields.map((f) => (
+                <div key={f.name} className="bg-secondary rounded-lg p-3 text-center">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                    {f.name.replace(/_/g, " ")}
+                  </p>
+                  <p className="font-display text-xl font-bold text-foreground">
+                    {item[f.name] != null ? item[f.name] : "—"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Separator className="mb-8" />
+
+      <div className="space-y-6">
+        {infoFields.map((field) => {
+          const value = item[field.name];
+          const label = field.name.replace(/_id$/, "").replace(/_/g, " ");
+          const inputType = fieldTypeToInputType(field.type);
+          const isLong =
+            inputType === "textarea" ||
+            inputType === "json" ||
+            (typeof value === "string" && value.length > 200);
+
+          return (
+            <div key={field.name} className={isLong ? "" : "grid grid-cols-3 gap-4 items-start"}>
+              <p className="text-sm font-medium text-muted-foreground capitalize col-span-1 pt-0.5">
+                {label}
+              </p>
+              <div className={isLong ? "mt-1" : "col-span-2"}>
+                <FieldDisplay field={field} value={value} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/* ── Main page ───────────────────────────────────────── */
+
 export default function DatabaseDetail() {
   const { tableName, slug } = useParams<{ tableName: string; slug: string }>();
   const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
@@ -125,13 +410,11 @@ export default function DatabaseDetail() {
     queryKey: ["database-detail", tableName, slug],
     enabled: !!tableName && !!table && !!slug,
     queryFn: async () => {
-      // Try slug first, fall back to id
       let query = supabase.from(tableName as any).select("*").eq("slug", slug!);
       const { data, error } = await query.maybeSingle();
       if (error) throw error;
       if (data) return data as Record<string, any>;
 
-      // Try by id
       const { data: d2, error: e2 } = await supabase
         .from(tableName as any)
         .select("*")
@@ -142,7 +425,6 @@ export default function DatabaseDetail() {
     },
   });
 
-  // Fetch ALL many-to-many related items in a single query to avoid hooks-order issues
   const itemId = item?.id;
   const m2mQuery = useQuery({
     queryKey: ["m2m-detail-all", tableName, itemId, m2mRelations.map((r) => r.junctionTable).join(",")],
@@ -171,25 +453,6 @@ export default function DatabaseDetail() {
     },
   });
   const m2mData = m2mQuery.data || {};
-
-  // Collect FK columns used by m2m relations to hide from direct display
-  const m2mFieldNames = m2mRelations.map((r) => r.relatedTable.replace(/s$/, "") + "_id");
-  const m2mTableNames = m2mRelations.map((r) => r.relatedTable);
-
-  const displayFields = useMemo(
-    () =>
-      (table?.fields || []).filter(
-        (f) => !isAutoField(f) && f.name !== "image_url" && f.name !== "name" && f.name !== "title" && f.name !== "slug"
-          && !m2mTableNames.includes(f.name) // hide raw "tags" uuid field
-      ),
-    [table, m2mTableNames]
-  );
-
-  // Separate stats-like fields (numbers) from others
-  const statFields = displayFields.filter(
-    (f) => fieldTypeToInputType(f.type) === "number" && !f.name.endsWith("_id")
-  );
-  const infoFields = displayFields.filter((f) => !statFields.includes(f));
 
   if (registryLoading || isLoading) {
     return (
@@ -226,6 +489,8 @@ export default function DatabaseDetail() {
 
   const displayLabel = table.label.charAt(0).toUpperCase() + table.label.slice(1);
   const itemName = item.name || item.title || "Unnamed";
+  const isHunter = tableName === "hunters";
+  const isSkill = tableName === "skills";
 
   return (
     <Layout>
@@ -245,90 +510,19 @@ export default function DatabaseDetail() {
           <span className="text-foreground truncate">{itemName}</span>
         </div>
 
-        {/* Hero area */}
-        <div className="flex flex-col md:flex-row gap-8 mb-8">
-          {/* Image */}
-          {table.fields.some((f) => f.name === "image_url") && (
-            <div className="w-full md:w-72 shrink-0">
-              <div className="aspect-square rounded-lg overflow-hidden border border-border bg-secondary">
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={itemName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
-                    <Database className="h-16 w-16" />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Title + stats */}
-          <div className="flex-1 min-w-0">
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-2">
-              {itemName}
-            </h1>
-            {item.subtitle && (
-              <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
-            )}
-
-            {/* Many-to-many badges (e.g. Tags) */}
-            {m2mRelations.map((rel) => {
-              const related = m2mData[rel.relatedTable];
-              if (!related || related.length === 0) return null;
-              return (
-                <div key={rel.junctionTable} className="flex flex-wrap gap-2 mb-4">
-                  {related.map((r) => (
-                    <Badge key={r.id} variant="secondary">
-                      {r.name || r.title || r.slug}
-                    </Badge>
-                  ))}
-                </div>
-              );
-            })}
-
-            {statFields.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
-                {statFields.map((f) => (
-                  <div key={f.name} className="bg-secondary rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                      {f.name.replace(/_/g, " ")}
-                    </p>
-                    <p className="font-display text-xl font-bold text-foreground">
-                      {item[f.name] != null ? item[f.name] : "—"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Separator className="mb-8" />
-
-        {/* Info fields */}
-        <div className="space-y-6">
-          {infoFields.map((field) => {
-            const value = item[field.name];
-            const label = field.name.replace(/_id$/, "").replace(/_/g, " ");
-            const inputType = fieldTypeToInputType(field.type);
-            const isLong = inputType === "textarea" || inputType === "json" || (typeof value === "string" && value.length > 200);
-
-            return (
-              <div key={field.name} className={isLong ? "" : "grid grid-cols-3 gap-4 items-start"}>
-                <p className="text-sm font-medium text-muted-foreground capitalize col-span-1 pt-0.5">
-                  {label}
-                </p>
-                <div className={isLong ? "mt-1" : "col-span-2"}>
-                  <FieldDisplay field={field} value={value} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* Table-specific views */}
+        {isHunter ? (
+          <HunterDetailView item={item} m2mData={m2mData} />
+        ) : isSkill ? (
+          <SkillDetailView item={item} />
+        ) : (
+          <GenericDetailView
+            table={table}
+            item={item}
+            m2mData={m2mData}
+            m2mRelations={m2mRelations}
+          />
+        )}
 
         {/* Metadata */}
         <div className="mt-10 pt-6 border-t border-border text-xs text-muted-foreground space-y-1">
