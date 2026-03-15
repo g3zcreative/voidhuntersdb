@@ -116,9 +116,10 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
 
 export default function DatabaseDetail() {
   const { tableName, slug } = useParams<{ tableName: string; slug: string }>();
-  const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
 
   const table = tableName ? getTable(tableName) : undefined;
+  const m2mRelations = tableName ? getManyToMany(tableName) : [];
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["database-detail", tableName, slug],
