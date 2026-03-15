@@ -116,9 +116,10 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
 
 export default function DatabaseDetail() {
   const { tableName, slug } = useParams<{ tableName: string; slug: string }>();
-  const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
 
   const table = tableName ? getTable(tableName) : undefined;
+  const m2mRelations = tableName ? getManyToMany(tableName) : [];
 
   const { data: item, isLoading } = useQuery({
     queryKey: ["database-detail", tableName, slug],
@@ -141,12 +142,43 @@ export default function DatabaseDetail() {
     },
   });
 
+  // Fetch many-to-many related items (e.g. tags)
+  const m2mQueries = m2mRelations.map((rel) => {
+    const itemId = item?.id;
+    return useQuery({
+      queryKey: ["m2m-detail", rel.junctionTable, rel.relatedTable, itemId],
+      enabled: !!itemId,
+      queryFn: async () => {
+        // Get junction rows
+        const { data: junctions, error: jErr } = await supabase
+          .from(rel.junctionTable as any)
+          .select("*")
+          .eq(rel.junctionFkToSelf, itemId!);
+        if (jErr) throw jErr;
+        if (!junctions || junctions.length === 0) return [];
+
+        const relatedIds = (junctions as any[]).map((j) => j[rel.junctionFkToRelated]);
+        const { data: related, error: rErr } = await supabase
+          .from(rel.relatedTable as any)
+          .select("*")
+          .in("id", relatedIds);
+        if (rErr) throw rErr;
+        return (related || []) as Array<Record<string, any>>;
+      },
+    });
+  });
+
+  // Collect FK columns used by m2m relations to hide from direct display
+  const m2mFieldNames = m2mRelations.map((r) => r.relatedTable.replace(/s$/, "") + "_id");
+  const m2mTableNames = m2mRelations.map((r) => r.relatedTable);
+
   const displayFields = useMemo(
     () =>
       (table?.fields || []).filter(
         (f) => !isAutoField(f) && f.name !== "image_url" && f.name !== "name" && f.name !== "title" && f.name !== "slug"
+          && !m2mTableNames.includes(f.name) // hide raw "tags" uuid field
       ),
-    [table]
+    [table, m2mTableNames]
   );
 
   // Separate stats-like fields (numbers) from others
@@ -239,7 +271,22 @@ export default function DatabaseDetail() {
               <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
             )}
 
-            {/* Stats grid */}
+            {/* Many-to-many badges (e.g. Tags) */}
+            {m2mRelations.map((rel, i) => {
+              const related = m2mQueries[i]?.data;
+              if (!related || related.length === 0) return null;
+              const label = rel.relatedTable.charAt(0).toUpperCase() + rel.relatedTable.slice(1);
+              return (
+                <div key={rel.junctionTable} className="flex flex-wrap gap-2 mb-4">
+                  {related.map((r) => (
+                    <Badge key={r.id} variant="secondary">
+                      {r.name || r.title || r.slug}
+                    </Badge>
+                  ))}
+                </div>
+              );
+            })}
+
             {statFields.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
                 {statFields.map((f) => (
