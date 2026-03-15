@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -7,6 +7,7 @@ import {
   isAutoField,
   fieldTypeToInputType,
   type SchemaField,
+  type ManyToManyRelation,
 } from "@/hooks/useSchemaRegistry";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Save, Upload, Loader2, X } from "lucide-react";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
+import { MultiRefField } from "@/components/admin/MultiRefField";
 
 function slugify(text: string): string {
   return text
@@ -36,7 +38,6 @@ function slugify(text: string): string {
 function getFkTable(fieldName: string): string | null {
   if (!fieldName.endsWith("_id")) return null;
   const base = fieldName.slice(0, -3);
-  // Pluralize simply: add "s"
   return base + "s";
 }
 
@@ -168,7 +169,6 @@ function isStorageUrl(url: string): boolean {
 }
 
 async function downloadAndUploadUrl(url: string): Promise<string> {
-  // Use edge function to download externally (avoids CORS)
   const { data, error } = await supabase.functions.invoke("migrate-images", {
     body: { single_url: url },
   });
@@ -214,7 +214,6 @@ function ImageUploadField({
       onChange(url || null);
       return;
     }
-    // External URL — download and re-upload
     setUploading(true);
     try {
       const storedUrl = await downloadAndUploadUrl(url);
@@ -222,7 +221,7 @@ function ImageUploadField({
       toast({ title: "Image saved", description: "External image downloaded and stored." });
     } catch (err: any) {
       toast({ title: "Download failed", description: err.message, variant: "destructive" });
-      onChange(url); // Fallback to external URL
+      onChange(url);
     } finally {
       setUploading(false);
     }
@@ -348,17 +347,37 @@ export default function AdminSchemaItemEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
 
+  // Multi-ref state: { [relatedTable]: string[] }
+  const [multiRefSelections, setMultiRefSelections] = useState<Record<string, string[]>>({});
+  const [multiRefInitialized, setMultiRefInitialized] = useState(false);
+
   const isNew = id === "new";
   const table = tableName ? getTable(tableName) : undefined;
+  const manyToManyRelations = useMemo(
+    () => (tableName ? getManyToMany(tableName) : []),
+    [tableName, getManyToMany]
+  );
+
+  // Fields that are managed by multi-ref should be hidden from the regular form
+  // e.g., the "tags" uuid field on hunters that's a leftover single-ref
+  const multiRefRelatedTables = useMemo(
+    () => new Set(manyToManyRelations.map((r) => r.relatedTable)),
+    [manyToManyRelations]
+  );
 
   const editableFields = useMemo(
-    () => (table?.fields || []).filter((f) => !isAutoField(f)),
-    [table]
+    () => (table?.fields || []).filter((f) => {
+      if (isAutoField(f)) return false;
+      // Hide fields that share a name with a multi-ref related table (e.g. "tags" field on hunters)
+      if (multiRefRelatedTables.has(f.name)) return false;
+      return true;
+    }),
+    [table, multiRefRelatedTables]
   );
 
   const nameField = editableFields.find((f) => f.name === "name");
@@ -381,12 +400,52 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
+  // Load existing junction rows for multi-ref fields
+  const junctionQueries = manyToManyRelations.map((rel) =>
+    useQuery({
+      queryKey: ["multi-ref-junctions", rel.junctionTable, id],
+      enabled: !isNew && !!id,
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from(rel.junctionTable as any)
+          .select("*")
+          .eq(rel.junctionFkToSelf, id!);
+        if (error) throw error;
+        return { relation: rel, rows: (data || []) as Array<Record<string, any>> };
+      },
+    })
+  );
+
+  // Initialize multi-ref selections from junction rows
+  useEffect(() => {
+    if (multiRefInitialized) return;
+    if (isNew) {
+      const defaults: Record<string, string[]> = {};
+      manyToManyRelations.forEach((rel) => { defaults[rel.relatedTable] = []; });
+      setMultiRefSelections(defaults);
+      setMultiRefInitialized(true);
+      return;
+    }
+    // Wait for all junction queries to load
+    const allLoaded = junctionQueries.every((q) => !q.isLoading);
+    if (!allLoaded) return;
+    const selections: Record<string, string[]> = {};
+    junctionQueries.forEach((q) => {
+      if (q.data) {
+        selections[q.data.relation.relatedTable] = q.data.rows.map(
+          (r) => r[q.data.relation.junctionFkToRelated] as string
+        );
+      }
+    });
+    setMultiRefSelections(selections);
+    setMultiRefInitialized(true);
+  }, [isNew, multiRefInitialized, manyToManyRelations, junctionQueries]);
+
   useEffect(() => {
     if (existingItem && !initialized) {
       setFormData(existingItem as Record<string, any>);
       setInitialized(true);
     } else if (isNew && !initialized) {
-      // Pre-fill defaults
       const defaults: Record<string, any> = {};
       editableFields.forEach((f) => {
         if (f.type === "boolean" || f.type === "bool") defaults[f.name] = false;
@@ -397,7 +456,6 @@ export default function AdminSchemaItemEditor() {
     }
   }, [existingItem, isNew, initialized, editableFields]);
 
-  // Auto-slug from name
   const updateField = (fieldName: string, value: any) => {
     setFormData((prev) => {
       const next = { ...prev, [fieldName]: value };
@@ -408,9 +466,12 @@ export default function AdminSchemaItemEditor() {
     });
   };
 
+  const updateMultiRef = useCallback((relatedTable: string, ids: string[]) => {
+    setMultiRefSelections((prev) => ({ ...prev, [relatedTable]: ids }));
+  }, []);
+
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // Build payload from editable fields only
       const payload: Record<string, any> = {};
       editableFields.forEach((f) => {
         if (formData[f.name] !== undefined) {
@@ -418,16 +479,66 @@ export default function AdminSchemaItemEditor() {
         }
       });
 
+      let itemId = id;
+
       if (isNew) {
-        const { error } = await supabase.from(tableName as any).insert(payload);
+        const { data, error } = await supabase
+          .from(tableName as any)
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
+        itemId = (data as any).id;
       } else {
         const { error } = await supabase.from(tableName as any).update(payload).eq("id", id);
         if (error) throw error;
       }
+
+      // Save multi-ref junction rows
+      for (const rel of manyToManyRelations) {
+        const selectedIds = multiRefSelections[rel.relatedTable] || [];
+
+        // Get current junction rows
+        const { data: currentRows } = await supabase
+          .from(rel.junctionTable as any)
+          .select("*")
+          .eq(rel.junctionFkToSelf, itemId!);
+
+        const currentRelatedIds = new Set(
+          ((currentRows || []) as Array<Record<string, any>>).map((r) => r[rel.junctionFkToRelated] as string)
+        );
+        const desiredIds = new Set(selectedIds);
+
+        // Delete removed
+        const toDelete = [...currentRelatedIds].filter((id) => !desiredIds.has(id));
+        if (toDelete.length > 0) {
+          const { error } = await supabase
+            .from(rel.junctionTable as any)
+            .delete()
+            .eq(rel.junctionFkToSelf, itemId!)
+            .in(rel.junctionFkToRelated, toDelete);
+          if (error) throw error;
+        }
+
+        // Insert added
+        const toInsert = [...desiredIds].filter((id) => !currentRelatedIds.has(id));
+        if (toInsert.length > 0) {
+          const rows = toInsert.map((relId) => ({
+            [rel.junctionFkToSelf]: itemId,
+            [rel.junctionFkToRelated]: relId,
+          }));
+          const { error } = await supabase
+            .from(rel.junctionTable as any)
+            .insert(rows as any);
+          if (error) throw error;
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
+      manyToManyRelations.forEach((rel) => {
+        queryClient.invalidateQueries({ queryKey: ["multi-ref-junctions", rel.junctionTable] });
+      });
       toast({ title: isNew ? "Item created" : "Item saved" });
       navigate(`/admin/data/${tableName}`);
     },
@@ -439,7 +550,6 @@ export default function AdminSchemaItemEditor() {
   const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
   const singularLabel = displayLabel.replace(/s$/, "");
 
-  // Set header breadcrumbs and actions
   useEffect(() => {
     if (!table) return;
     setBreadcrumbs([
@@ -520,6 +630,34 @@ export default function AdminSchemaItemEditor() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Reference Fields (many-to-many via junction tables) */}
+      {manyToManyRelations.length > 0 && (
+        <div className="space-y-4 mt-8">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            Relationships
+          </h2>
+          <div className="space-y-4 bg-card border border-border rounded-lg p-6">
+            {manyToManyRelations.map((rel) => {
+              const label = rel.relatedTable.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+              return (
+                <div key={rel.junctionTable} className="space-y-2">
+                  <Label>{label}</Label>
+                  <MultiRefField
+                    itemId={isNew ? null : id!}
+                    relation={rel}
+                    selectedIds={multiRefSelections[rel.relatedTable] || []}
+                    onChange={(ids) => updateMultiRef(rel.relatedTable, ids)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Select multiple or create new {label.toLowerCase()}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
