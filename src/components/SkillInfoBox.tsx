@@ -28,7 +28,7 @@ interface EffectData {
   scaling_info: string | null;
 }
 
-function BuffPopoverCard({ buff }: { buff: BuffData }) {
+function BuffPopoverCard({ buff }: { buff: EffectData }) {
   const isBuff = buff.type === "buff";
   const affectedStats = buff.affected_stats && typeof buff.affected_stats === "object"
     ? Object.entries(buff.affected_stats)
