@@ -414,7 +414,8 @@ export default function AdminEntityEditor() {
         if (!srcNode || !tgtNode) return null;
         const srcTable = ((srcNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
         const tgtTable = ((tgtNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
-        const sourceColumn = (e.data as any)?.sourceColumn || `${tgtTable}_id`;
+        // Use edge data if available, otherwise derive from source/target handles or label
+        const sourceColumn = (e.data as any)?.sourceColumn || (e as any).label || `${tgtTable}_id`;
         const targetColumn = (e.data as any)?.targetColumn || "id";
         const constraintName = (e.data as any)?.constraintName || `fk_${srcTable}_${sourceColumn}`;
         return { sourceTable: srcTable, sourceColumn, targetTable: tgtTable, targetColumn, constraintName };
