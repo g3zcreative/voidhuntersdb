@@ -427,7 +427,8 @@ export default function AdminEntityEditor() {
             `${tgtTable.replace(/es$/, "")}_id`,                       // matches -> match_id
           ];
           const found = candidates.find((c) => srcFields.some((f) => f.name === c));
-          sourceColumn = found || candidates[1] || `${tgtTable}_id`; // default to singular
+          if (!found) return null; // No matching FK column exists — skip this edge
+          sourceColumn = found;
         }
 
         const targetColumn = (e.data as any)?.targetColumn || "id";
