@@ -44,7 +44,7 @@ export type Database = {
         }
         Relationships: []
       }
-      buffs: {
+      effects: {
         Row: {
           affected_stats: Json | null
           created_at: string
@@ -54,7 +54,7 @@ export type Database = {
           name: string
           scaling_info: string | null
           slug: string
-          type: string
+          type: string | null
           updated_at: string
         }
         Insert: {
@@ -66,7 +66,7 @@ export type Database = {
           name: string
           scaling_info?: string | null
           slug: string
-          type?: string
+          type?: string | null
           updated_at?: string
         }
         Update: {
@@ -78,7 +78,7 @@ export type Database = {
           name?: string
           scaling_info?: string | null
           slug?: string
-          type?: string
+          type?: string | null
           updated_at?: string
         }
         Relationships: []

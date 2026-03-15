@@ -17,7 +17,7 @@ interface SkillData {
   sort_order?: string | null;
 }
 
-interface BuffData {
+interface EffectData {
   id: string;
   name: string;
   slug: string;
@@ -28,7 +28,7 @@ interface BuffData {
   scaling_info: string | null;
 }
 
-function BuffPopoverCard({ buff }: { buff: BuffData }) {
+function BuffPopoverCard({ buff }: { buff: EffectData }) {
   const isBuff = buff.type === "buff";
   const affectedStats = buff.affected_stats && typeof buff.affected_stats === "object"
     ? Object.entries(buff.affected_stats)
@@ -109,10 +109,10 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
   const maxLvl = skill.max_level ?? 5;
 
   const { data: buffs } = useQuery({
-    queryKey: ["buffs"],
+    queryKey: ["effects"],
     queryFn: async () => {
-      const { data } = await supabase.from("buffs").select("*");
-      return (data ?? []) as BuffData[];
+      const { data } = await supabase.from("effects").select("*");
+      return (data ?? []) as EffectData[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -131,7 +131,7 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
   }
 
   // Build a regex from buff names for auto-detection
-  const buffMap = new Map<string, BuffData>();
+  const buffMap = new Map<string, EffectData>();
   const buffRegex = buffs && buffs.length > 0
     ? new RegExp(
         `(${buffs
