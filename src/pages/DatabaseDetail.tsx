@@ -266,7 +266,22 @@ export default function DatabaseDetail() {
               <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
             )}
 
-            {/* Stats grid */}
+            {/* Many-to-many badges (e.g. Tags) */}
+            {m2mRelations.map((rel, i) => {
+              const related = m2mQueries[i]?.data;
+              if (!related || related.length === 0) return null;
+              const label = rel.relatedTable.charAt(0).toUpperCase() + rel.relatedTable.slice(1);
+              return (
+                <div key={rel.junctionTable} className="flex flex-wrap gap-2 mb-4">
+                  {related.map((r) => (
+                    <Badge key={r.id} variant="secondary">
+                      {r.name || r.title || r.slug}
+                    </Badge>
+                  ))}
+                </div>
+              );
+            })}
+
             {statFields.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
                 {statFields.map((f) => (
