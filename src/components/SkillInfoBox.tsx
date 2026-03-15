@@ -35,7 +35,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
     : [];
 
   return (
-    <div className="w-72 space-y-3">
+    <div className="w-72 space-y-3 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2.5">
         <div className={`h-10 w-10 shrink-0 rounded-full border-2 overflow-hidden shadow-md ${
