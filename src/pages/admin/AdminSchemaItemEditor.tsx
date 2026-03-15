@@ -279,7 +279,7 @@ function FieldInput({
   onChange: (val: any) => void;
 }) {
   // Image URL fields get upload support
-  if (field.name === "image_url" || field.name.endsWith("_image_url")) {
+  if (field.name === "image_url" || field.name.endsWith("_image_url") || field.name === "icon") {
     return <ImageUploadField value={value} onChange={onChange} />;
   }
 
