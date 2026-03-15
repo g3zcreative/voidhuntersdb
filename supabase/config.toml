@@ -1,1 +1,7 @@
 project_id = "hgltxhwvdckhohqreupj"
+
+[functions.schema-introspect]
+verify_jwt = false
+
+[functions.schema-deploy]
+verify_jwt = false

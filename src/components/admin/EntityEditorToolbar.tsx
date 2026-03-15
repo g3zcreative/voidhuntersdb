@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Save, Download, FolderOpen, FileCode, Trash2, Rocket } from "lucide-react";
+import { Plus, Save, Download, FolderOpen, FileCode, Trash2, Rocket, RefreshCw } from "lucide-react";
 
 interface EntityEditorToolbarProps {
   schemaName: string;
@@ -11,8 +11,10 @@ interface EntityEditorToolbarProps {
   onExportSQL: () => void;
   onClear: () => void;
   onDeploy?: () => void;
+  onImportFromDB?: () => void;
   deployed?: boolean;
   saving: boolean;
+  importing?: boolean;
   schemas: { id: string; name: string }[];
   selectedSchemaId: string | null;
   onLoadSchema: (id: string) => void;
@@ -26,14 +28,16 @@ export function EntityEditorToolbar({
   onExportSQL,
   onClear,
   onDeploy,
+  onImportFromDB,
   deployed,
   saving,
+  importing,
   schemas,
   selectedSchemaId,
   onLoadSchema,
 }: EntityEditorToolbarProps) {
   return (
-    <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/50">
+    <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/50 flex-wrap">
       <Input
         value={schemaName}
         onChange={(e) => onSchemaNameChange(e.target.value)}
@@ -67,6 +71,13 @@ export function EntityEditorToolbar({
         Add Entity
       </Button>
 
+      {onImportFromDB && (
+        <Button variant="outline" size="sm" onClick={onImportFromDB} disabled={importing} className="h-8">
+          <Download className="h-3.5 w-3.5 mr-1.5" />
+          {importing ? "Importing..." : "Import from DB"}
+        </Button>
+      )}
+
       <Button variant="outline" size="sm" onClick={onExportSQL} className="h-8">
         <FileCode className="h-3.5 w-3.5 mr-1.5" />
         Export SQL
@@ -81,13 +92,13 @@ export function EntityEditorToolbar({
 
       {onDeploy && (
         <Button
-          variant={deployed ? "outline" : "default"}
+          variant="default"
           size="sm"
           onClick={onDeploy}
           className="h-8"
         >
           <Rocket className="h-3.5 w-3.5 mr-1.5" />
-          {deployed ? "Deployed" : "Deploy"}
+          Deploy to DB
         </Button>
       )}
 
