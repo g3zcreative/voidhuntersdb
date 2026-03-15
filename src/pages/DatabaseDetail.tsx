@@ -142,31 +142,35 @@ export default function DatabaseDetail() {
     },
   });
 
-  // Fetch many-to-many related items (e.g. tags)
-  const m2mQueries = m2mRelations.map((rel) => {
-    const itemId = item?.id;
-    return useQuery({
-      queryKey: ["m2m-detail", rel.junctionTable, rel.relatedTable, itemId],
-      enabled: !!itemId,
-      queryFn: async () => {
-        // Get junction rows
+  // Fetch ALL many-to-many related items in a single query to avoid hooks-order issues
+  const itemId = item?.id;
+  const m2mQuery = useQuery({
+    queryKey: ["m2m-detail-all", tableName, itemId, m2mRelations.map((r) => r.junctionTable).join(",")],
+    enabled: !!itemId && m2mRelations.length > 0,
+    queryFn: async () => {
+      const results: Record<string, Array<Record<string, any>>> = {};
+      for (const rel of m2mRelations) {
         const { data: junctions, error: jErr } = await supabase
           .from(rel.junctionTable as any)
           .select("*")
           .eq(rel.junctionFkToSelf, itemId!);
         if (jErr) throw jErr;
-        if (!junctions || junctions.length === 0) return [];
-
+        if (!junctions || junctions.length === 0) {
+          results[rel.relatedTable] = [];
+          continue;
+        }
         const relatedIds = (junctions as any[]).map((j) => j[rel.junctionFkToRelated]);
         const { data: related, error: rErr } = await supabase
           .from(rel.relatedTable as any)
           .select("*")
           .in("id", relatedIds);
         if (rErr) throw rErr;
-        return (related || []) as Array<Record<string, any>>;
-      },
-    });
+        results[rel.relatedTable] = (related || []) as Array<Record<string, any>>;
+      }
+      return results;
+    },
   });
+  const m2mData = m2mQuery.data || {};
 
   // Collect FK columns used by m2m relations to hide from direct display
   const m2mFieldNames = m2mRelations.map((r) => r.relatedTable.replace(/s$/, "") + "_id");
@@ -272,10 +276,9 @@ export default function DatabaseDetail() {
             )}
 
             {/* Many-to-many badges (e.g. Tags) */}
-            {m2mRelations.map((rel, i) => {
-              const related = m2mQueries[i]?.data;
+            {m2mRelations.map((rel) => {
+              const related = m2mData[rel.relatedTable];
               if (!related || related.length === 0) return null;
-              const label = rel.relatedTable.charAt(0).toUpperCase() + rel.relatedTable.slice(1);
               return (
                 <div key={rel.junctionTable} className="flex flex-wrap gap-2 mb-4">
                   {related.map((r) => (
