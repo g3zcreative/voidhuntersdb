@@ -14,36 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      archetypes: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       authors: {
         Row: {
           avatar_url: string | null
@@ -179,9 +149,47 @@ export type Database = {
         }
         Relationships: []
       }
+      hunter_tags: {
+        Row: {
+          created_at: string
+          hunter_id: string
+          id: string
+          tag_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hunter_id: string
+          id?: string
+          tag_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hunter_id?: string
+          id?: string
+          tag_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_hunter_tags_hunter_id"
+            columns: ["hunter_id"]
+            isOneToOne: false
+            referencedRelation: "hunters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_hunter_tags_tag_id"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunters: {
         Row: {
-          archetype_id: string | null
           awakening_level: number | null
           created_at: string
           description: string | null
@@ -190,17 +198,14 @@ export type Database = {
           level: number | null
           name: string
           power: number | null
-          race_id: string | null
           rarity: number | null
-          region_id: string | null
-          role_id: string | null
           slug: string
           stats: Json | null
           subtitle: string | null
+          tags: string | null
           updated_at: string
         }
         Insert: {
-          archetype_id?: string | null
           awakening_level?: number | null
           created_at?: string
           description?: string | null
@@ -209,17 +214,14 @@ export type Database = {
           level?: number | null
           name: string
           power?: number | null
-          race_id?: string | null
           rarity?: number | null
-          region_id?: string | null
-          role_id?: string | null
           slug: string
           stats?: Json | null
           subtitle?: string | null
+          tags?: string | null
           updated_at?: string
         }
         Update: {
-          archetype_id?: string | null
           awakening_level?: number | null
           created_at?: string
           description?: string | null
@@ -228,45 +230,14 @@ export type Database = {
           level?: number | null
           name?: string
           power?: number | null
-          race_id?: string | null
           rarity?: number | null
-          region_id?: string | null
-          role_id?: string | null
           slug?: string
           stats?: Json | null
           subtitle?: string | null
+          tags?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_hunters_archetypes"
-            columns: ["archetype_id"]
-            isOneToOne: false
-            referencedRelation: "archetypes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_hunters_races"
-            columns: ["race_id"]
-            isOneToOne: false
-            referencedRelation: "races"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_hunters_regions"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "regions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_hunters_roles"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       news_articles: {
         Row: {
@@ -444,66 +415,6 @@ export type Database = {
         }
         Relationships: []
       }
-      races: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      regions: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       roadmap_items: {
         Row: {
           category: string | null
@@ -539,33 +450,6 @@ export type Database = {
           status?: string
           target_date?: string | null
           title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      roles: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          slug?: string
           updated_at?: string
         }
         Relationships: []
@@ -642,6 +526,33 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      tags: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -58,7 +58,7 @@ function parseSchema(row: any): SchemaDefinition {
     nodeId: n.id,
     name: (n.data?.label || "unknown").replace(/\s+/g, "_").toLowerCase(),
     label: n.data?.label || "Unknown",
-    fields: (n.data?.fields || []) as SchemaField[],
+    fields: ((n.data?.fields || []) as SchemaField[]).filter((f) => f.name && f.name.trim() !== ""),
     color: n.data?.color || "259 100% 64%",
   }));
 
