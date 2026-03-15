@@ -19,6 +19,7 @@ import "@xyflow/react/dist/style.css";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useSchemaIntrospect, type IntrospectedTable, type IntrospectedFK } from "@/hooks/useSchemaIntrospect";
 import EntityNodeComponent, {
   type EntityNodeData,
   type EntityField,
@@ -58,6 +59,7 @@ const nodeTypes = { entity: EntityNodeComponent };
 export default function AdminEntityEditor() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { introspection, loading: introspecting, deploying, introspect, previewDeploy, executeDeploy } = useSchemaIntrospect();
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -66,8 +68,11 @@ export default function AdminEntityEditor() {
   const [schemas, setSchemas] = useState<{ id: string; name: string; deployed: boolean }[]>([]);
   const [saving, setSaving] = useState(false);
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
-  const [deployed, setDeployed] = useState(false);
+  const [sqlDialogMode, setSqlDialogMode] = useState<"export" | "deploy">("export");
+  const [deploySQL, setDeploySQL] = useState("");
+  const [deployPayload, setDeployPayload] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ nodeId: string; label: string; hasData: boolean } | null>(null);
+
   // Load saved schemas list
   useEffect(() => {
     supabase
@@ -150,7 +155,6 @@ export default function AdminEntityEditor() {
   const onDeleteNode = useCallback(
     async (nodeId: string, label: string) => {
       const tableName = label.replace(/\s+/g, "_").toLowerCase();
-      // Check if the table exists and has data
       try {
         const { count, error } = await supabase
           .from(tableName as any)
@@ -160,9 +164,8 @@ export default function AdminEntityEditor() {
           return;
         }
       } catch {
-        // Table may not exist in DB yet — safe to remove from canvas
+        // Table may not exist yet
       }
-      // No data or table doesn't exist — remove directly
       setNodes((nds) => nds.filter((n) => n.id !== nodeId));
       setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
     },
@@ -225,21 +228,15 @@ export default function AdminEntityEditor() {
         label: "new_table",
         fields: defaultFields(),
         color: nextColor(),
-        onUpdateLabel,
-        onAddField,
-        onRemoveField,
-        onUpdateField,
-        onDeleteNode,
       },
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [setNodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode]);
+  }, [setNodes]);
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
 
-    // Strip callbacks for serialization
     const serializedNodes = nodes.map(({ data, ...rest }) => ({
       id: rest.id,
       type: rest.type,
@@ -294,19 +291,11 @@ export default function AdminEntityEditor() {
 
     setSelectedSchemaId(data.id);
     setSchemaName(data.name);
-    setDeployed((data as any).deployed ?? false);
 
     const schema = data.schema as unknown as { nodes: any[]; edges: Edge[] };
     const loadedNodes: Node[] = (schema.nodes || []).map((n: any) => ({
       ...n,
-      data: {
-        ...n.data,
-        onUpdateLabel,
-        onAddField,
-        onRemoveField,
-        onUpdateField,
-        onDeleteNode,
-      },
+      data: { ...n.data },
     }));
     setNodes(loadedNodes);
     setEdges(schema.edges || []);
@@ -317,28 +306,174 @@ export default function AdminEntityEditor() {
     setEdges([]);
     setSelectedSchemaId(null);
     setSchemaName("Untitled Schema");
-    setDeployed(false);
   };
 
-  const handleDeploy = async () => {
-    if (!selectedSchemaId) {
-      toast({ title: "Save the schema first", variant: "destructive" });
-      return;
-    }
-    const newState = !deployed;
-    const { error } = await supabase
-      .from("entity_definitions")
-      .update({ deployed: newState } as any)
-      .eq("id", selectedSchemaId);
-    if (error) {
-      toast({ title: "Deploy failed", variant: "destructive" });
-      return;
-    }
-    setDeployed(newState);
-    toast({ title: newState ? "Schema deployed — tables now appear in Collections" : "Schema undeployed" });
-  };
+  // --- Import tables from DB ---
+  const handleImportFromDB = useCallback(async () => {
+    const result = await introspect();
+    if (!result) return;
 
-  // SQL generation
+    const existingTableNames = new Set(
+      nodes.map((n) => ((n.data as any).label as string).replace(/\s+/g, "_").toLowerCase())
+    );
+
+    const newNodes: Node[] = [];
+    const GRID_COLS = 3;
+    const X_SPACING = 320;
+    const Y_SPACING = 350;
+    let idx = nodes.length;
+
+    for (const table of result.tables) {
+      if (existingTableNames.has(table.name)) continue;
+      const col = idx % GRID_COLS;
+      const row = Math.floor(idx / GRID_COLS);
+      newNodes.push({
+        id: crypto.randomUUID(),
+        type: "entity",
+        position: { x: 50 + col * X_SPACING, y: 50 + row * Y_SPACING },
+        data: {
+          label: table.name,
+          fields: table.columns.map((c) => ({
+            id: createFieldId(),
+            name: c.name,
+            type: c.type,
+            nullable: c.nullable,
+            isPrimaryKey: c.isPrimaryKey,
+            defaultValue: c.defaultValue,
+          })),
+          color: nextColor(),
+        },
+      });
+      idx++;
+    }
+
+    if (newNodes.length === 0) {
+      toast({ title: "No new tables to import" });
+      return;
+    }
+
+    setNodes((nds) => [...nds, ...newNodes]);
+
+    // Add edges for foreign keys
+    const allNodes = [...nodes, ...newNodes];
+    const nodeByTable = new Map<string, string>();
+    for (const n of allNodes) {
+      const name = ((n.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
+      nodeByTable.set(name, n.id);
+    }
+
+    const newEdges: Edge[] = [];
+    for (const fk of result.foreignKeys) {
+      const sourceId = nodeByTable.get(fk.sourceTable);
+      const targetId = nodeByTable.get(fk.targetTable);
+      if (sourceId && targetId) {
+        newEdges.push({
+          id: `fk-${fk.constraintName}`,
+          source: sourceId,
+          target: targetId,
+          type: "smoothstep",
+          animated: true,
+          markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(259 100% 64%)" },
+          style: { stroke: "hsl(259 100% 64%)", strokeWidth: 2 },
+          label: fk.sourceColumn,
+          labelStyle: { fontSize: 10, fill: "hsl(215 12% 55%)" },
+          labelBgStyle: { fill: "hsl(228 12% 11%)", fillOpacity: 0.9 },
+          data: { constraintName: fk.constraintName, sourceColumn: fk.sourceColumn, targetColumn: fk.targetColumn },
+        });
+      }
+    }
+
+    if (newEdges.length > 0) {
+      setEdges((eds) => [...eds, ...newEdges]);
+    }
+
+    toast({ title: `Imported ${newNodes.length} table(s) from database` });
+  }, [nodes, introspect, setNodes, setEdges, toast]);
+
+  // --- Build deploy payload from current canvas ---
+  const buildDeployPayload = useCallback(() => {
+    const desiredTables = nodes.map((n) => {
+      const d = n.data as unknown as EntityNodeData;
+      return {
+        name: (d.label as string).replace(/\s+/g, "_").toLowerCase(),
+        columns: d.fields.map((f) => ({
+          name: f.name,
+          type: f.type,
+          nullable: f.nullable,
+          isPrimaryKey: f.isPrimaryKey,
+          defaultValue: f.defaultValue,
+        })),
+      };
+    });
+
+    // Derive FK info from edges
+    const desiredForeignKeys = edges
+      .map((e) => {
+        const srcNode = nodes.find((n) => n.id === e.source);
+        const tgtNode = nodes.find((n) => n.id === e.target);
+        if (!srcNode || !tgtNode) return null;
+        const srcTable = ((srcNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
+        const tgtTable = ((tgtNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
+        const sourceColumn = (e.data as any)?.sourceColumn || `${tgtTable}_id`;
+        const targetColumn = (e.data as any)?.targetColumn || "id";
+        const constraintName = (e.data as any)?.constraintName || `fk_${srcTable}_${sourceColumn}`;
+        return { sourceTable: srcTable, sourceColumn, targetTable: tgtTable, targetColumn, constraintName };
+      })
+      .filter(Boolean);
+
+    return { desiredTables, desiredForeignKeys };
+  }, [nodes, edges]);
+
+  // --- Deploy flow ---
+  const handleDeploy = useCallback(async () => {
+    // 1. Introspect current state
+    const current = await introspect();
+    if (!current) return;
+
+    const { desiredTables, desiredForeignKeys } = buildDeployPayload();
+
+    const payload = {
+      mode: "preview" as const,
+      desiredTables,
+      desiredForeignKeys,
+      currentTables: current.tables.map((t) => ({
+        name: t.name,
+        columns: t.columns.map((c) => ({
+          name: c.name,
+          type: c.type,
+          nullable: c.nullable,
+          isPrimaryKey: c.isPrimaryKey,
+          defaultValue: c.defaultValue,
+        })),
+      })),
+      currentForeignKeys: current.foreignKeys,
+    };
+
+    const preview = await previewDeploy(payload);
+    if (!preview) return;
+
+    if (!preview.sql || preview.statements.length === 0) {
+      toast({ title: "No changes to deploy — schema is already in sync" });
+      return;
+    }
+
+    setDeploySQL(preview.sql);
+    setDeployPayload(payload);
+    setSqlDialogMode("deploy");
+    setSqlDialogOpen(true);
+  }, [introspect, buildDeployPayload, previewDeploy, toast]);
+
+  const handleExecuteDeploy = useCallback(async () => {
+    if (!deployPayload) return;
+    const result = await executeDeploy(deployPayload);
+    if (result) {
+      setSqlDialogOpen(false);
+      setDeploySQL("");
+      setDeployPayload(null);
+    }
+  }, [deployPayload, executeDeploy]);
+
+  // SQL generation for export
   const generateSQL = useCallback(() => {
     const lines: string[] = [];
 
@@ -379,6 +514,12 @@ export default function AdminEntityEditor() {
     return lines.join("\n");
   }, [nodes, edges]);
 
+  const handleExportSQL = useCallback(() => {
+    setSqlDialogMode("export");
+    setDeploySQL(generateSQL());
+    setSqlDialogOpen(true);
+  }, [generateSQL]);
+
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)]">
       <EntityEditorToolbar
@@ -386,11 +527,12 @@ export default function AdminEntityEditor() {
         onSchemaNameChange={setSchemaName}
         onAddEntity={handleAddEntity}
         onSave={handleSave}
-        onExportSQL={() => setSqlDialogOpen(true)}
+        onExportSQL={handleExportSQL}
         onClear={handleClear}
-        onDeploy={selectedSchemaId ? handleDeploy : undefined}
-        deployed={deployed}
+        onDeploy={handleDeploy}
+        onImportFromDB={handleImportFromDB}
         saving={saving}
+        importing={introspecting}
         schemas={schemas}
         selectedSchemaId={selectedSchemaId}
         onLoadSchema={handleLoadSchema}
@@ -424,7 +566,7 @@ export default function AdminEntityEditor() {
             <Panel position="top-center" className="mt-20">
               <div className="text-center text-muted-foreground">
                 <p className="text-lg font-medium mb-1">No entities yet</p>
-                <p className="text-sm">Click "Add Entity" to start designing your schema</p>
+                <p className="text-sm">Click "Add Entity" or "Import from DB" to start</p>
               </div>
             </Panel>
           )}
@@ -434,7 +576,10 @@ export default function AdminEntityEditor() {
       <SQLPreviewDialog
         open={sqlDialogOpen}
         onOpenChange={setSqlDialogOpen}
-        sql={generateSQL()}
+        sql={sqlDialogMode === "deploy" ? deploySQL : generateSQL()}
+        mode={sqlDialogMode}
+        onExecute={sqlDialogMode === "deploy" ? handleExecuteDeploy : undefined}
+        executing={deploying}
       />
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
