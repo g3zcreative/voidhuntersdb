@@ -103,8 +103,17 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
         </pre>
       );
     }
-    default:
-      return <span className="whitespace-pre-wrap">{String(value)}</span>;
+    default: {
+      const strVal = String(value);
+      if (strVal.length > 20) {
+        return (
+          <span className="whitespace-pre-wrap">
+            <EffectHighlightedText text={strVal} />
+          </span>
+        );
+      }
+      return <span className="whitespace-pre-wrap">{strVal}</span>;
+    }
   }
 }
 
