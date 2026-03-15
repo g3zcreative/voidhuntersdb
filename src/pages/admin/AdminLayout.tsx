@@ -46,15 +46,17 @@ function AdminSidebar() {
   const collapsed = state === "collapsed";
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const { schemas } = useSchemaRegistry();
+  const { schemas, isJunction } = useSchemaRegistry();
 
-  // Build dynamic collection nav items from deployed schemas
+  // Build dynamic collection nav items from deployed schemas (hide junction tables)
   const collectionItems = schemas.flatMap((s) =>
-    s.tables.map((t) => ({
-      title: t.label.charAt(0).toUpperCase() + t.label.slice(1),
-      url: `/admin/data/${t.name}`,
-      icon: Layers,
-    }))
+    s.tables
+      .filter((t) => !isJunction(t.name))
+      .map((t) => ({
+        title: t.label.charAt(0).toUpperCase() + t.label.slice(1),
+        url: `/admin/data/${t.name}`,
+        icon: Layers,
+      }))
   );
 
   return (

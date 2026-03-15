@@ -18,6 +18,16 @@ export interface SchemaTable {
   color: string;
 }
 
+/** Describes a many-to-many relationship via a junction table */
+export interface ManyToManyRelation {
+  junctionTable: string;
+  junctionNodeId: string;
+  relatedTable: string;
+  relatedNodeId: string;
+  junctionFkToSelf: string;   // e.g. "hunter_id"
+  junctionFkToRelated: string; // e.g. "tag_id"
+}
+
 export interface SchemaDefinition {
   id: string;
   name: string;
@@ -29,6 +39,8 @@ export interface SchemaDefinition {
     target: string;
     sourceHandle?: string;
     targetHandle?: string;
+    label?: string;
+    data?: any;
   }>;
 }
 
@@ -47,6 +59,62 @@ export function fieldTypeToInputType(dbType: string): "text" | "number" | "boole
 export function isAutoField(field: SchemaField): boolean {
   const autoNames = ["id", "created_at", "updated_at"];
   return autoNames.includes(field.name) && !!field.defaultValue;
+}
+
+/**
+ * Detect if a table is a junction table (has exactly 2 FK edges out, and
+ * only auto-fields + those 2 FK columns).
+ */
+function isJunctionTable(table: SchemaTable, outEdges: Array<{ source: string; target: string }>): boolean {
+  if (outEdges.length !== 2) return false;
+  const nonAutoFields = table.fields.filter((f) => !isAutoField(f));
+  // Junction tables typically have exactly 2 non-auto fields (the 2 FK columns)
+  return nonAutoFields.length <= 2;
+}
+
+/**
+ * For a given table, find all many-to-many relationships via junction tables.
+ */
+function findManyToMany(
+  table: SchemaTable,
+  allTables: SchemaTable[],
+  edges: SchemaDefinition["edges"]
+): ManyToManyRelation[] {
+  const relations: ManyToManyRelation[] = [];
+
+  // Find edges pointing TO this table (junction → this table)
+  const incomingEdges = edges.filter((e) => e.target === table.nodeId);
+
+  for (const inEdge of incomingEdges) {
+    const junctionNode = allTables.find((t) => t.nodeId === inEdge.source);
+    if (!junctionNode) continue;
+
+    // Get all outgoing edges from the junction table
+    const junctionOutEdges = edges.filter((e) => e.source === junctionNode.nodeId);
+    if (!isJunctionTable(junctionNode, junctionOutEdges)) continue;
+
+    // Find the other edge (to the related table)
+    const otherEdge = junctionOutEdges.find((e) => e.target !== table.nodeId);
+    if (!otherEdge) continue;
+
+    const relatedTable = allTables.find((t) => t.nodeId === otherEdge.target);
+    if (!relatedTable) continue;
+
+    // Determine FK column names from edge data/labels
+    const fkToSelf = inEdge.data?.sourceColumn || inEdge.label || `${table.name.replace(/s$/, "")}_id`;
+    const fkToRelated = otherEdge.data?.sourceColumn || otherEdge.label || `${relatedTable.name.replace(/s$/, "")}_id`;
+
+    relations.push({
+      junctionTable: junctionNode.name,
+      junctionNodeId: junctionNode.nodeId,
+      relatedTable: relatedTable.name,
+      relatedNodeId: relatedTable.nodeId,
+      junctionFkToSelf: fkToSelf,
+      junctionFkToRelated: fkToRelated,
+    });
+  }
+
+  return relations;
 }
 
 function parseSchema(row: any): SchemaDefinition {
@@ -73,6 +141,8 @@ function parseSchema(row: any): SchemaDefinition {
       target: e.target,
       sourceHandle: e.sourceHandle,
       targetHandle: e.targetHandle,
+      label: e.label,
+      data: e.data,
     })),
   };
 }
@@ -97,11 +167,32 @@ export function useSchemaRegistry(deployedOnly = true) {
   const getSchemaForTable = (tableName: string) =>
     (query.data || []).find((s) => s.tables.some((t) => t.name === tableName));
 
+  /** Get many-to-many relationships for a given table */
+  const getManyToMany = (tableName: string): ManyToManyRelation[] => {
+    const table = getTable(tableName);
+    if (!table) return [];
+    const schema = getSchemaForTable(tableName);
+    if (!schema) return [];
+    return findManyToMany(table, schema.tables, schema.edges);
+  };
+
+  /** Check if a table is a junction table (should be hidden from standalone list) */
+  const isJunction = (tableName: string): boolean => {
+    const table = getTable(tableName);
+    if (!table) return false;
+    const schema = getSchemaForTable(tableName);
+    if (!schema) return false;
+    const outEdges = schema.edges.filter((e) => e.source === table.nodeId);
+    return isJunctionTable(table, outEdges);
+  };
+
   return {
     schemas: query.data || [],
     tables: allTables,
     getTable,
     getSchemaForTable,
+    getManyToMany,
+    isJunction,
     loading: query.isLoading,
     refetch: query.refetch,
   };
