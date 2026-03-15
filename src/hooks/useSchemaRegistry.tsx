@@ -101,8 +101,10 @@ function findManyToMany(
     if (!relatedTable) continue;
 
     // Determine FK column names from edge data/labels
-    const fkToSelf = inEdge.data?.sourceColumn || inEdge.label || `${table.name.replace(/s$/, "")}_id`;
-    const fkToRelated = otherEdge.data?.sourceColumn || otherEdge.label || `${relatedTable.name.replace(/s$/, "")}_id`;
+    const fallbackSelf = `${table.name.replace(/s$/, "")}_id`;
+    const fallbackRelated = `${relatedTable.name.replace(/s$/, "")}_id`;
+    const fkToSelf = inEdge.data?.sourceColumn || (inEdge.label && inEdge.label !== "FK" ? inEdge.label : fallbackSelf);
+    const fkToRelated = otherEdge.data?.sourceColumn || (otherEdge.label && otherEdge.label !== "FK" ? otherEdge.label : fallbackRelated);
 
     relations.push({
       junctionTable: junctionNode.name,
