@@ -160,7 +160,7 @@ export function Navbar() {
       {/* Mobile nav */}
       {mobileOpen && (
         <nav className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1 bg-background">
-          {tables.length > 0 && (
+          {visibleTables.length > 0 && (
             <>
               <p className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">Database</p>
               {tables.map((t) => (
