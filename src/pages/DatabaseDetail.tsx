@@ -276,10 +276,9 @@ export default function DatabaseDetail() {
             )}
 
             {/* Many-to-many badges (e.g. Tags) */}
-            {m2mRelations.map((rel, i) => {
-              const related = m2mQueries[i]?.data;
+            {m2mRelations.map((rel) => {
+              const related = m2mData[rel.relatedTable];
               if (!related || related.length === 0) return null;
-              const label = rel.relatedTable.charAt(0).toUpperCase() + rel.relatedTable.slice(1);
               return (
                 <div key={rel.junctionTable} className="flex flex-wrap gap-2 mb-4">
                   {related.map((r) => (
