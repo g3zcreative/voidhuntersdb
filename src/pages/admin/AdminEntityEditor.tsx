@@ -414,8 +414,22 @@ export default function AdminEntityEditor() {
         if (!srcNode || !tgtNode) return null;
         const srcTable = ((srcNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
         const tgtTable = ((tgtNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
-        // Use edge data if available, otherwise derive from source/target handles or label
-        const sourceColumn = (e.data as any)?.sourceColumn || (e as any).label || `${tgtTable}_id`;
+
+        // Use explicit edge data first
+        let sourceColumn = (e.data as any)?.sourceColumn;
+        if (!sourceColumn) {
+          // Try to find a matching FK column in the source table's fields
+          const srcFields: EntityField[] = (srcNode.data as any).fields || [];
+          const candidates = [
+            `${tgtTable}_id`,                                           // exact match (e.g. hunters_id)
+            `${tgtTable.replace(/s$/, "")}_id`,                        // singularized (e.g. hunter_id)
+            `${tgtTable.replace(/ies$/, "y")}_id`,                     // categories -> category_id
+            `${tgtTable.replace(/es$/, "")}_id`,                       // matches -> match_id
+          ];
+          const found = candidates.find((c) => srcFields.some((f) => f.name === c));
+          sourceColumn = found || candidates[1] || `${tgtTable}_id`; // default to singular
+        }
+
         const targetColumn = (e.data as any)?.targetColumn || "id";
         const constraintName = (e.data as any)?.constraintName || `fk_${srcTable}_${sourceColumn}`;
         return { sourceTable: srcTable, sourceColumn, targetTable: tgtTable, targetColumn, constraintName };
