@@ -68,7 +68,7 @@ export function MultiRefField({ itemId, relation, selectedIds, onChange }: Multi
 
   // Initialize selectedIds from junction rows on first load
   const junctionIds = useMemo(
-    () => currentJunctions.map((j) => j[relation.junctionFkToRelated] as string),
+    () => (Array.isArray(currentJunctions) ? currentJunctions : []).map((j) => j[relation.junctionFkToRelated] as string),
     [currentJunctions, relation.junctionFkToRelated]
   );
 
