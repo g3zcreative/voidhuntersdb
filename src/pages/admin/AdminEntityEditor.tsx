@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -56,6 +56,8 @@ const defaultFields = (): EntityField[] => [
 
 const nodeTypes = { entity: EntityNodeComponent };
 
+const SCHEMA_NAME = "Main Schema";
+
 export default function AdminEntityEditor() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -63,26 +65,56 @@ export default function AdminEntityEditor() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [schemaName, setSchemaName] = useState("Untitled Schema");
-  const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
-  const [schemas, setSchemas] = useState<{ id: string; name: string; deployed: boolean }[]>([]);
+  const [schemaId, setSchemaId] = useState<string | null>(null);
+  const [deployed, setDeployed] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
   const [sqlDialogMode, setSqlDialogMode] = useState<"export" | "deploy">("export");
   const [deploySQL, setDeploySQL] = useState("");
   const [deployPayload, setDeployPayload] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ nodeId: string; label: string; hasData: boolean } | null>(null);
+  const initialized = useRef(false);
 
-  // Load saved schemas list
+  // On mount: load or create the single schema, then sync from DB
   useEffect(() => {
-    supabase
-      .from("entity_definitions")
-      .select("id, name, deployed")
-      .order("updated_at", { ascending: false })
-      .then(({ data }) => {
-        if (data) setSchemas(data as any);
-      });
-  }, []);
+    if (!user || initialized.current) return;
+    initialized.current = true;
+
+    (async () => {
+      // Try to load existing schema
+      const { data: existing } = await supabase
+        .from("entity_definitions")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (existing) {
+        setSchemaId(existing.id);
+        setDeployed(existing.deployed ?? false);
+        const schema = existing.schema as unknown as { nodes: any[]; edges: Edge[] };
+        const loadedNodes: Node[] = (schema.nodes || []).map((n: any) => ({
+          ...n,
+          data: { ...n.data },
+        }));
+        setNodes(loadedNodes);
+        setEdges(schema.edges || []);
+      } else {
+        // Create the single schema
+        const { data: created } = await supabase
+          .from("entity_definitions")
+          .insert({
+            name: SCHEMA_NAME,
+            created_by: user.id,
+            schema: { nodes: [], edges: [] } as unknown as Json,
+          })
+          .select("id")
+          .single();
+        if (created) setSchemaId(created.id);
+      }
+    })();
+  }, [user, setNodes, setEdges]);
 
   // Node data callbacks
   const onUpdateLabel = useCallback(
@@ -233,8 +265,9 @@ export default function AdminEntityEditor() {
     setNodes((nds) => [...nds, newNode]);
   }, [setNodes]);
 
+  // Save to the single schema row
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !schemaId) return;
     setSaving(true);
 
     const serializedNodes = nodes.map(({ data, ...rest }) => ({
@@ -249,69 +282,32 @@ export default function AdminEntityEditor() {
     }));
 
     const payload = {
-      name: schemaName,
+      name: SCHEMA_NAME,
       schema: JSON.parse(JSON.stringify({ nodes: serializedNodes, edges })) as Json,
-      created_by: user.id,
       updated_at: new Date().toISOString(),
     };
 
     try {
-      if (selectedSchemaId) {
-        await supabase
-          .from("entity_definitions")
-          .update(payload)
-          .eq("id", selectedSchemaId);
-      } else {
-        const { data } = await supabase
-          .from("entity_definitions")
-          .insert(payload)
-          .select("id")
-          .single();
-        if (data) setSelectedSchemaId(data.id);
-      }
-      toast({ title: "Schema saved" });
-      const { data: list } = await supabase
+      const { error } = await supabase
         .from("entity_definitions")
-        .select("id, name, deployed")
-        .order("updated_at", { ascending: false });
-      if (list) setSchemas(list as any);
-    } catch {
-      toast({ title: "Save failed", variant: "destructive" });
+        .update(payload)
+        .eq("id", schemaId);
+      if (error) throw error;
+      toast({ title: "Schema saved" });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
     }
     setSaving(false);
   };
 
-  const handleLoadSchema = async (id: string) => {
-    const { data } = await supabase
-      .from("entity_definitions")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (!data) return;
-
-    setSelectedSchemaId(data.id);
-    setSchemaName(data.name);
-
-    const schema = data.schema as unknown as { nodes: any[]; edges: Edge[] };
-    const loadedNodes: Node[] = (schema.nodes || []).map((n: any) => ({
-      ...n,
-      data: { ...n.data },
-    }));
-    setNodes(loadedNodes);
-    setEdges(schema.edges || []);
-  };
-
-  const handleClear = () => {
-    setNodes([]);
-    setEdges([]);
-    setSelectedSchemaId(null);
-    setSchemaName("Untitled Schema");
-  };
-
-  // --- Import tables from DB ---
-  const handleImportFromDB = useCallback(async () => {
+  // --- Sync tables from DB (import missing, update existing) ---
+  const handleSyncFromDB = useCallback(async () => {
+    setSyncing(true);
     const result = await introspect();
-    if (!result) return;
+    if (!result) {
+      setSyncing(false);
+      return;
+    }
 
     const existingTableNames = new Set(
       nodes.map((n) => ((n.data as any).label as string).replace(/\s+/g, "_").toLowerCase())
@@ -347,12 +343,9 @@ export default function AdminEntityEditor() {
       idx++;
     }
 
-    if (newNodes.length === 0) {
-      toast({ title: "No new tables to import" });
-      return;
+    if (newNodes.length > 0) {
+      setNodes((nds) => [...nds, ...newNodes]);
     }
-
-    setNodes((nds) => [...nds, ...newNodes]);
 
     // Add edges for foreign keys
     const allNodes = [...nodes, ...newNodes];
@@ -362,13 +355,16 @@ export default function AdminEntityEditor() {
       nodeByTable.set(name, n.id);
     }
 
+    const existingEdgeIds = new Set(edges.map((e) => e.id));
     const newEdges: Edge[] = [];
     for (const fk of result.foreignKeys) {
+      const edgeId = `fk-${fk.constraintName}`;
+      if (existingEdgeIds.has(edgeId)) continue;
       const sourceId = nodeByTable.get(fk.sourceTable);
       const targetId = nodeByTable.get(fk.targetTable);
       if (sourceId && targetId) {
         newEdges.push({
-          id: `fk-${fk.constraintName}`,
+          id: edgeId,
           source: sourceId,
           target: targetId,
           type: "smoothstep",
@@ -387,8 +383,10 @@ export default function AdminEntityEditor() {
       setEdges((eds) => [...eds, ...newEdges]);
     }
 
-    toast({ title: `Imported ${newNodes.length} table(s) from database` });
-  }, [nodes, introspect, setNodes, setEdges, toast]);
+    const total = newNodes.length + newEdges.length;
+    toast({ title: total > 0 ? `Synced ${newNodes.length} table(s), ${newEdges.length} FK(s) from database` : "Schema is already in sync with database" });
+    setSyncing(false);
+  }, [nodes, edges, introspect, setNodes, setEdges, toast]);
 
   // --- Build deploy payload from current canvas ---
   const buildDeployPayload = useCallback(() => {
@@ -406,7 +404,6 @@ export default function AdminEntityEditor() {
       };
     });
 
-    // Derive FK info from edges
     const desiredForeignKeys = edges
       .map((e) => {
         const srcNode = nodes.find((n) => n.id === e.source);
@@ -415,19 +412,17 @@ export default function AdminEntityEditor() {
         const srcTable = ((srcNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
         const tgtTable = ((tgtNode.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
 
-        // Use explicit edge data first
         let sourceColumn = (e.data as any)?.sourceColumn;
         if (!sourceColumn) {
-          // Try to find a matching FK column in the source table's fields
           const srcFields: EntityField[] = (srcNode.data as any).fields || [];
           const candidates = [
-            `${tgtTable}_id`,                                           // exact match (e.g. hunters_id)
-            `${tgtTable.replace(/s$/, "")}_id`,                        // singularized (e.g. hunter_id)
-            `${tgtTable.replace(/ies$/, "y")}_id`,                     // categories -> category_id
-            `${tgtTable.replace(/es$/, "")}_id`,                       // matches -> match_id
+            `${tgtTable}_id`,
+            `${tgtTable.replace(/s$/, "")}_id`,
+            `${tgtTable.replace(/ies$/, "y")}_id`,
+            `${tgtTable.replace(/es$/, "")}_id`,
           ];
           const found = candidates.find((c) => srcFields.some((f) => f.name === c));
-          if (!found) return null; // No matching FK column exists — skip this edge
+          if (!found) return null;
           sourceColumn = found;
         }
 
@@ -442,7 +437,6 @@ export default function AdminEntityEditor() {
 
   // --- Deploy flow ---
   const handleDeploy = useCallback(async () => {
-    // 1. Introspect current state
     const current = await introspect();
     if (!current) return;
 
@@ -480,14 +474,20 @@ export default function AdminEntityEditor() {
   }, [introspect, buildDeployPayload, previewDeploy, toast]);
 
   const handleExecuteDeploy = useCallback(async () => {
-    if (!deployPayload) return;
+    if (!deployPayload || !schemaId) return;
     const result = await executeDeploy(deployPayload);
     if (result) {
+      // Mark schema as deployed
+      await supabase
+        .from("entity_definitions")
+        .update({ deployed: true })
+        .eq("id", schemaId);
+      setDeployed(true);
       setSqlDialogOpen(false);
       setDeploySQL("");
       setDeployPayload(null);
     }
-  }, [deployPayload, executeDeploy]);
+  }, [deployPayload, schemaId, executeDeploy]);
 
   // SQL generation for export
   const generateSQL = useCallback(() => {
@@ -518,10 +518,11 @@ export default function AdminEntityEditor() {
         const tgtD = targetNode.data as unknown as EntityNodeData;
         const srcTable = (srcD.label as string).replace(/\s+/g, "_").toLowerCase();
         const tgtTable = (tgtD.label as string).replace(/\s+/g, "_").toLowerCase();
+        const srcCol = (edge.data as any)?.sourceColumn || `${tgtTable.replace(/s$/, "")}_id`;
         lines.push(
           `-- FK: ${srcTable} -> ${tgtTable}`,
-          `ALTER TABLE public.${srcTable} ADD CONSTRAINT fk_${srcTable}_${tgtTable}`,
-          `  FOREIGN KEY (${tgtTable}_id) REFERENCES public.${tgtTable}(id);`,
+          `ALTER TABLE public.${srcTable} ADD CONSTRAINT fk_${srcTable}_${srcCol}`,
+          `  FOREIGN KEY (${srcCol}) REFERENCES public.${tgtTable}(id);`,
           ""
         );
       }
@@ -539,19 +540,14 @@ export default function AdminEntityEditor() {
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)]">
       <EntityEditorToolbar
-        schemaName={schemaName}
-        onSchemaNameChange={setSchemaName}
         onAddEntity={handleAddEntity}
         onSave={handleSave}
         onExportSQL={handleExportSQL}
-        onClear={handleClear}
         onDeploy={handleDeploy}
-        onImportFromDB={handleImportFromDB}
+        onSyncFromDB={handleSyncFromDB}
         saving={saving}
-        importing={introspecting}
-        schemas={schemas}
-        selectedSchemaId={selectedSchemaId}
-        onLoadSchema={handleLoadSchema}
+        syncing={syncing || introspecting}
+        deployed={deployed}
       />
 
       <div className="flex-1 bg-background">
@@ -582,7 +578,7 @@ export default function AdminEntityEditor() {
             <Panel position="top-center" className="mt-20">
               <div className="text-center text-muted-foreground">
                 <p className="text-lg font-medium mb-1">No entities yet</p>
-                <p className="text-sm">Click "Add Entity" or "Import from DB" to start</p>
+                <p className="text-sm">Click "Add Entity" or "Sync from DB" to start</p>
               </div>
             </Panel>
           )}

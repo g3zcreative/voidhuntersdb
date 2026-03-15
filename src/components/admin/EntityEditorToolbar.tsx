@@ -1,67 +1,32 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Save, Download, FolderOpen, FileCode, Trash2, Rocket, RefreshCw } from "lucide-react";
+import { Plus, Save, Download, FileCode, Rocket, RefreshCw } from "lucide-react";
 
 interface EntityEditorToolbarProps {
-  schemaName: string;
-  onSchemaNameChange: (name: string) => void;
   onAddEntity: () => void;
   onSave: () => void;
   onExportSQL: () => void;
-  onClear: () => void;
   onDeploy?: () => void;
-  onImportFromDB?: () => void;
-  deployed?: boolean;
+  onSyncFromDB?: () => void;
   saving: boolean;
-  importing?: boolean;
-  schemas: { id: string; name: string }[];
-  selectedSchemaId: string | null;
-  onLoadSchema: (id: string) => void;
+  syncing?: boolean;
+  deployed?: boolean;
 }
 
 export function EntityEditorToolbar({
-  schemaName,
-  onSchemaNameChange,
   onAddEntity,
   onSave,
   onExportSQL,
-  onClear,
   onDeploy,
-  onImportFromDB,
-  deployed,
+  onSyncFromDB,
   saving,
-  importing,
-  schemas,
-  selectedSchemaId,
-  onLoadSchema,
+  syncing,
+  deployed,
 }: EntityEditorToolbarProps) {
   return (
     <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/50 flex-wrap">
-      <Input
-        value={schemaName}
-        onChange={(e) => onSchemaNameChange(e.target.value)}
-        className="h-8 w-48 text-sm"
-        placeholder="Schema name..."
-      />
-
-      {schemas.length > 0 && (
-        <Select
-          value={selectedSchemaId ?? ""}
-          onValueChange={onLoadSchema}
-        >
-          <SelectTrigger className="h-8 w-48 text-sm">
-            <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
-            <SelectValue placeholder="Load schema..." />
-          </SelectTrigger>
-          <SelectContent>
-            {schemas.map((s) => (
-              <SelectItem key={s.id} value={s.id} className="text-sm">
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <span className="text-sm font-medium text-foreground mr-2">Schema Editor</span>
+      {deployed && (
+        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">Deployed</span>
       )}
 
       <div className="h-4 w-px bg-border" />
@@ -71,21 +36,16 @@ export function EntityEditorToolbar({
         Add Entity
       </Button>
 
-      {onImportFromDB && (
-        <Button variant="outline" size="sm" onClick={onImportFromDB} disabled={importing} className="h-8">
-          <Download className="h-3.5 w-3.5 mr-1.5" />
-          {importing ? "Importing..." : "Import from DB"}
+      {onSyncFromDB && (
+        <Button variant="outline" size="sm" onClick={onSyncFromDB} disabled={syncing} className="h-8">
+          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${syncing ? "animate-spin" : ""}`} />
+          {syncing ? "Syncing..." : "Sync from DB"}
         </Button>
       )}
 
       <Button variant="outline" size="sm" onClick={onExportSQL} className="h-8">
         <FileCode className="h-3.5 w-3.5 mr-1.5" />
         Export SQL
-      </Button>
-
-      <Button variant="outline" size="sm" onClick={onClear} className="h-8 text-destructive hover:text-destructive">
-        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-        Clear
       </Button>
 
       <div className="ml-auto" />
