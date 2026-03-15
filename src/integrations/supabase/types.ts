@@ -529,6 +529,48 @@ export type Database = {
         }
         Relationships: []
       }
+      skills: {
+        Row: {
+          created_at: string
+          description: string | null
+          effects: Json | null
+          hunter_id: string | null
+          icon: string | null
+          id: string
+          max_level: number | null
+          name: string
+          slug: string
+          sort_order: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          effects?: Json | null
+          hunter_id?: string | null
+          icon?: string | null
+          id?: string
+          max_level?: number | null
+          name: string
+          slug: string
+          sort_order?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          effects?: Json | null
+          hunter_id?: string | null
+          icon?: string | null
+          id?: string
+          max_level?: number | null
+          name?: string
+          slug?: string
+          sort_order?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           created_at: string
