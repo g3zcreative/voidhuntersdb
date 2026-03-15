@@ -320,7 +320,7 @@ function GenericDetailView({
           <div className="w-full md:w-72 shrink-0">
             <div className="aspect-square rounded-lg overflow-hidden border border-border bg-secondary">
               {item.image_url ? (
-                <img src={item.image_url} alt={itemName} className="h-full w-full object-cover" />
+                <img src={item.image_url} alt={itemName} className="h-full w-full object-contain" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-muted-foreground/30">
                   <Database className="h-16 w-16" />
