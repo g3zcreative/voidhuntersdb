@@ -51,11 +51,21 @@ export async function compressImage(
   { maxWidth = 1280, maxHeight = 720, maxSizeKB = 200 }: CompressOptions = {}
 ): Promise<Blob> {
   const img = await loadImage(file);
+
+  // Scale to fit within bounds, preserving aspect ratio (no cropping)
+  let w = img.naturalWidth;
+  let h = img.naturalHeight;
+  if (w > maxWidth || h > maxHeight) {
+    const scale = Math.min(maxWidth / w, maxHeight / h);
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+  }
+
   const canvas = document.createElement("canvas");
-  canvas.width = maxWidth;
-  canvas.height = maxHeight;
+  canvas.width = w;
+  canvas.height = h;
   const ctx = canvas.getContext("2d")!;
-  coverCrop(ctx, img, maxWidth, maxHeight);
+  ctx.drawImage(img, 0, 0, w, h);
   URL.revokeObjectURL(img.src);
 
   const mime = supportsWebP ? "image/webp" : "image/jpeg";
