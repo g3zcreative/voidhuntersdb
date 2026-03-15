@@ -131,7 +131,7 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
   }
 
   // Build a regex from buff names for auto-detection
-  const buffMap = new Map<string, BuffData>();
+  const buffMap = new Map<string, EffectData>();
   const buffRegex = buffs && buffs.length > 0
     ? new RegExp(
         `(${buffs
