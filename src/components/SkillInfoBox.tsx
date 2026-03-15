@@ -70,7 +70,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
 
       {/* Description */}
       {buff.description && (
-        <p className="text-xs leading-relaxed text-muted-foreground">{buff.description}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground break-words">{buff.description}</p>
       )}
 
       {/* Affected Stats */}
