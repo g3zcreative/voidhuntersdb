@@ -17,7 +17,7 @@ interface SkillData {
   sort_order?: string | null;
 }
 
-interface BuffData {
+interface EffectData {
   id: string;
   name: string;
   slug: string;

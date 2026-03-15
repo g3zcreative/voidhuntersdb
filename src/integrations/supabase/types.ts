@@ -46,31 +46,37 @@ export type Database = {
       }
       effects: {
         Row: {
+          affected_stats: Json | null
           created_at: string
           description: string | null
           icon: string | null
           id: string
           name: string
+          scaling_info: string | null
           slug: string
           type: string | null
           updated_at: string
         }
         Insert: {
+          affected_stats?: Json | null
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
           name: string
+          scaling_info?: string | null
           slug: string
           type?: string | null
           updated_at?: string
         }
         Update: {
+          affected_stats?: Json | null
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
           name?: string
+          scaling_info?: string | null
           slug?: string
           type?: string | null
           updated_at?: string
