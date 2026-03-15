@@ -34,7 +34,8 @@ export function Navbar() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
-  const { tables } = useSchemaRegistry();
+  const { tables, isJunction } = useSchemaRegistry();
+  const visibleTables = tables.filter((t) => !isJunction(t.name));
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -52,7 +53,7 @@ export function Navbar() {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 ml-4">
           {/* Database dropdown */}
-          {tables.length > 0 && (
+          {visibleTables.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -68,7 +69,7 @@ export function Navbar() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-44">
-                {tables.map((t) => (
+                {visibleTables.map((t) => (
                   <DropdownMenuItem key={t.name} onClick={() => navigate(`/database/${t.name}`)}>
                     {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
                   </DropdownMenuItem>
@@ -159,10 +160,10 @@ export function Navbar() {
       {/* Mobile nav */}
       {mobileOpen && (
         <nav className="md:hidden border-t border-border px-4 py-3 flex flex-col gap-1 bg-background">
-          {tables.length > 0 && (
+          {visibleTables.length > 0 && (
             <>
               <p className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">Database</p>
-              {tables.map((t) => (
+              {visibleTables.map((t) => (
                 <Link
                   key={t.name}
                   to={`/database/${t.name}`}
