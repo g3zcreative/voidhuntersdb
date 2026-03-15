@@ -48,7 +48,7 @@ const supportsWebP = (() => {
 
 export async function compressImage(
   file: File,
-  { maxWidth = 1280, maxHeight = 720, maxSizeKB = 200 }: CompressOptions = {}
+  { maxWidth = 1280, maxHeight = 1280, maxSizeKB = 200 }: CompressOptions = {}
 ): Promise<Blob> {
   const img = await loadImage(file);
 
