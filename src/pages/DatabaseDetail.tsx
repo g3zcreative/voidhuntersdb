@@ -142,6 +142,32 @@ export default function DatabaseDetail() {
     },
   });
 
+  // Fetch many-to-many related items (e.g. tags)
+  const m2mQueries = m2mRelations.map((rel) => {
+    const itemId = item?.id;
+    return useQuery({
+      queryKey: ["m2m-detail", rel.junctionTable, rel.relatedTable, itemId],
+      enabled: !!itemId,
+      queryFn: async () => {
+        // Get junction rows
+        const { data: junctions, error: jErr } = await supabase
+          .from(rel.junctionTable as any)
+          .select("*")
+          .eq(rel.junctionFkToSelf, itemId!);
+        if (jErr) throw jErr;
+        if (!junctions || junctions.length === 0) return [];
+
+        const relatedIds = (junctions as any[]).map((j) => j[rel.junctionFkToRelated]);
+        const { data: related, error: rErr } = await supabase
+          .from(rel.relatedTable as any)
+          .select("*")
+          .in("id", relatedIds);
+        if (rErr) throw rErr;
+        return (related || []) as Array<Record<string, any>>;
+      },
+    });
+  });
+
   const displayFields = useMemo(
     () =>
       (table?.fields || []).filter(
