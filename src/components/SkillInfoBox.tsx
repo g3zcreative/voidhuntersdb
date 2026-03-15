@@ -35,7 +35,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
     : [];
 
   return (
-    <div className="w-72 space-y-3">
+    <div className="w-72 space-y-3 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2.5">
         <div className={`h-10 w-10 shrink-0 rounded-full border-2 overflow-hidden shadow-md ${
@@ -44,7 +44,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
             : "border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)]"
         }`}>
           {buff.icon ? (
-            <img src={buff.icon} alt={buff.name} className="h-full w-full object-cover" />
+            <img src={buff.icon} alt={buff.name} className="h-full w-full object-contain" />
           ) : (
             <div className={`h-full w-full flex items-center justify-center text-xs font-bold ${
               isBuff ? "bg-[hsl(170,80%,15%)] text-[hsl(170,80%,50%)]" : "bg-destructive/20 text-destructive"
@@ -70,7 +70,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
 
       {/* Description */}
       {buff.description && (
-        <p className="text-xs leading-relaxed text-muted-foreground">{buff.description}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground break-words">{buff.description}</p>
       )}
 
       {/* Affected Stats */}
@@ -220,7 +220,7 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
       <div className="p-4 pb-3 flex items-center gap-3">
         <div className="h-14 w-14 shrink-0 rounded-full border-2 border-[hsl(35,60%,40%)] bg-secondary overflow-hidden shadow-[0_0_12px_hsl(35,60%,30%/0.4)]">
           {skill.icon ? (
-            <img src={skill.icon} alt={skill.name} className="h-full w-full object-cover" />
+            <img src={skill.icon} alt={skill.name} className="h-full w-full object-contain" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs">?</div>
           )}
