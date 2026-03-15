@@ -109,10 +109,10 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
   const maxLvl = skill.max_level ?? 5;
 
   const { data: buffs } = useQuery({
-    queryKey: ["buffs"],
+    queryKey: ["effects"],
     queryFn: async () => {
-      const { data } = await supabase.from("buffs").select("*");
-      return (data ?? []) as BuffData[];
+      const { data } = await supabase.from("effects").select("*");
+      return (data ?? []) as EffectData[];
     },
     staleTime: 5 * 60 * 1000,
   });
