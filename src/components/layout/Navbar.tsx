@@ -53,7 +53,7 @@ export function Navbar() {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 ml-4">
           {/* Database dropdown */}
-          {tables.length > 0 && (
+          {visibleTables.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
