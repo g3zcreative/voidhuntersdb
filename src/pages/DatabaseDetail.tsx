@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Database, Swords, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkillInfoBox } from "@/components/SkillInfoBox";
+import { EffectHighlightedText } from "@/components/EffectHighlightedText";
 
 /* ── FK helpers ─────────────────────────────────────── */
 
