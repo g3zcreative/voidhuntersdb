@@ -44,7 +44,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
             : "border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)]"
         }`}>
           {buff.icon ? (
-            <img src={buff.icon} alt={buff.name} className="h-full w-full object-cover" />
+            <img src={buff.icon} alt={buff.name} className="h-full w-full object-contain" />
           ) : (
             <div className={`h-full w-full flex items-center justify-center text-xs font-bold ${
               isBuff ? "bg-[hsl(170,80%,15%)] text-[hsl(170,80%,50%)]" : "bg-destructive/20 text-destructive"
