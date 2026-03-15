@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Database, Swords, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkillInfoBox } from "@/components/SkillInfoBox";
+import { EffectHighlightedText } from "@/components/EffectHighlightedText";
 
 /* ── FK helpers ─────────────────────────────────────── */
 
@@ -102,8 +103,17 @@ function FieldDisplay({ field, value }: { field: SchemaField; value: any }) {
         </pre>
       );
     }
-    default:
-      return <span className="whitespace-pre-wrap">{String(value)}</span>;
+    default: {
+      const strVal = String(value);
+      if (strVal.length > 20) {
+        return (
+          <span className="whitespace-pre-wrap">
+            <EffectHighlightedText text={strVal} />
+          </span>
+        );
+      }
+      return <span className="whitespace-pre-wrap">{strVal}</span>;
+    }
   }
 }
 
@@ -299,6 +309,7 @@ function GenericDetailView({
     (f) =>
       !isAutoField(f) &&
       f.name !== "image_url" &&
+      f.name !== "icon" &&
       f.name !== "name" &&
       f.name !== "title" &&
       f.name !== "slug" &&
