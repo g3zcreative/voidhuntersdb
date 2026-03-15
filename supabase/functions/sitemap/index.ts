@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SITE_URL = "https://godforgehub.com";
+const SITE_URL = "https://voidhuntersdb.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,16 +24,8 @@ Deno.serve(async (req) => {
     { loc: "/", priority: "1.0", changefreq: "daily" },
     { loc: "/news", priority: "0.9", changefreq: "daily" },
     { loc: "/database", priority: "0.8", changefreq: "weekly" },
-    { loc: "/database/heroes", priority: "0.8", changefreq: "weekly" },
-    { loc: "/database/skills", priority: "0.8", changefreq: "weekly" },
-    { loc: "/database/imprints", priority: "0.8", changefreq: "weekly" },
-    { loc: "/database/weapons", priority: "0.8", changefreq: "weekly" },
-    { loc: "/database/armor-sets", priority: "0.8", changefreq: "weekly" },
-    { loc: "/database/mechanics", priority: "0.8", changefreq: "weekly" },
-    { loc: "/bosses", priority: "0.8", changefreq: "weekly" },
     { loc: "/guides", priority: "0.8", changefreq: "weekly" },
-    { loc: "/community", priority: "0.7", changefreq: "monthly" },
-    { loc: "/tools", priority: "0.5", changefreq: "monthly" },
+    { loc: "/official-posts", priority: "0.7", changefreq: "daily" },
     { loc: "/changelog", priority: "0.4", changefreq: "weekly" },
     { loc: "/roadmap", priority: "0.4", changefreq: "monthly" },
   ];
@@ -43,14 +35,9 @@ Deno.serve(async (req) => {
   }
 
   // Dynamic content from DB
-  const configs: { table: string; prefix: string; priority: string; filter?: Record<string, unknown>; limit?: number }[] = [
-    { table: "heroes", prefix: "/database/heroes", priority: "0.7" },
-    { table: "skills", prefix: "/database/skills", priority: "0.6" },
-    { table: "imprints", prefix: "/database/imprints", priority: "0.6" },
-    { table: "mechanics", prefix: "/database/mechanics", priority: "0.6" },
-    { table: "weapons", prefix: "/database/weapons", priority: "0.6" },
-    { table: "armor_sets", prefix: "/database/armor-sets", priority: "0.5" },
-    { table: "bosses", prefix: "/bosses", priority: "0.7" },
+  const configs: { table: string; prefix: string; priority: string; filter?: Record<string, unknown> }[] = [
+    { table: "hunters", prefix: "/database/hunters", priority: "0.7" },
+    { table: "tags", prefix: "/database/tags", priority: "0.6" },
     { table: "news_articles", prefix: "/news", priority: "0.7", filter: { published: true } },
     { table: "guides", prefix: "/guides", priority: "0.7", filter: { published: true } },
   ];
