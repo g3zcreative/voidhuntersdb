@@ -300,6 +300,7 @@ function GenericDetailView({
     (f) =>
       !isAutoField(f) &&
       f.name !== "image_url" &&
+      f.name !== "icon" &&
       f.name !== "name" &&
       f.name !== "title" &&
       f.name !== "slug" &&
