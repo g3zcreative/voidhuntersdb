@@ -168,12 +168,17 @@ export default function DatabaseDetail() {
     });
   });
 
+  // Collect FK columns used by m2m relations to hide from direct display
+  const m2mFieldNames = m2mRelations.map((r) => r.relatedTable.replace(/s$/, "") + "_id");
+  const m2mTableNames = m2mRelations.map((r) => r.relatedTable);
+
   const displayFields = useMemo(
     () =>
       (table?.fields || []).filter(
         (f) => !isAutoField(f) && f.name !== "image_url" && f.name !== "name" && f.name !== "title" && f.name !== "slug"
+          && !m2mTableNames.includes(f.name) // hide raw "tags" uuid field
       ),
-    [table]
+    [table, m2mTableNames]
   );
 
   // Separate stats-like fields (numbers) from others
