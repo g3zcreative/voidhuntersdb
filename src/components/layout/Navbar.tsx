@@ -163,7 +163,7 @@ export function Navbar() {
           {visibleTables.length > 0 && (
             <>
               <p className="px-3 pt-2 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">Database</p>
-              {tables.map((t) => (
+              {visibleTables.map((t) => (
                 <Link
                   key={t.name}
                   to={`/database/${t.name}`}
