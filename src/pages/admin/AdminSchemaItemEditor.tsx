@@ -11,6 +11,7 @@ import {
 } from "@/hooks/useSchemaRegistry";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -356,6 +357,7 @@ export default function AdminSchemaItemEditor() {
   const queryClient = useQueryClient();
   const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
 
@@ -485,6 +487,12 @@ export default function AdminSchemaItemEditor() {
           payload[f.name] = formData[f.name];
         }
       });
+
+      // Auto-set audit columns if user is logged in
+      if (user?.id) {
+        payload.updated_by = user.id;
+        if (isNew) payload.created_by = user.id;
+      }
 
       let itemId = id;
 
