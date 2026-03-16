@@ -30,6 +30,7 @@ const contentItems = [
 
 const insightItems = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+  { title: "Activity Log", url: "/admin/activity", icon: Clock },
   { title: "Feedback", url: "/admin/feedback", icon: MessageCircle },
 ];
 
