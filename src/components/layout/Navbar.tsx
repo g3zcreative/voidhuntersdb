@@ -120,7 +120,7 @@ export function Navbar() {
                     {user.email}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  {isAdmin && (
+                  {canAccessAdmin && (
                     <DropdownMenuItem onClick={() => navigate("/admin")}>
                       <Shield className="mr-2 h-4 w-4" /> Admin Panel
                     </DropdownMenuItem>
