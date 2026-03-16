@@ -13,7 +13,7 @@ import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
   Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
-  ChevronRight,
+  ChevronRight, Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
@@ -30,6 +30,7 @@ const contentItems = [
 
 const insightItems = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+  { title: "Activity Log", url: "/admin/activity", icon: Clock },
   { title: "Feedback", url: "/admin/feedback", icon: MessageCircle },
 ];
 
