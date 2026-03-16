@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           boss_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           effects: Json | null
           id: string
@@ -56,10 +57,12 @@ export type Database = {
           sort_order: number | null
           type: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           boss_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           effects?: Json | null
           id?: string
@@ -68,10 +71,12 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           boss_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           effects?: Json | null
           id?: string
@@ -80,42 +85,50 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
       bosses: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           image_url: string | null
           name: string
           slug: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
           name: string
           slug: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
           name?: string
           slug?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
       effects: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           icon: string | null
           id: string
@@ -123,9 +136,11 @@ export type Database = {
           slug: string
           type: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -133,9 +148,11 @@ export type Database = {
           slug: string
           type?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -143,6 +160,7 @@ export type Database = {
           slug?: string
           type?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -294,6 +312,7 @@ export type Database = {
         Row: {
           awakening_level: number | null
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           image_url: string | null
@@ -306,10 +325,12 @@ export type Database = {
           subtitle: string | null
           tags: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           awakening_level?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -322,10 +343,12 @@ export type Database = {
           subtitle?: string | null
           tags?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           awakening_level?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -338,6 +361,7 @@ export type Database = {
           subtitle?: string | null
           tags?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -634,6 +658,7 @@ export type Database = {
       skills: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           effects: Json | null
           hunter_id: string | null
@@ -645,9 +670,11 @@ export type Database = {
           sort_order: number | null
           type: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           effects?: Json | null
           hunter_id?: string | null
@@ -659,9 +686,11 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           effects?: Json | null
           hunter_id?: string | null
@@ -673,33 +702,40 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
       tags: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           name: string
           slug: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name: string
           slug: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           name?: string
           slug?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
