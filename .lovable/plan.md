@@ -1,6 +1,6 @@
 # Dynamic Schema-Driven CMS
 
-## Status: Phase 1 Complete ✅
+## Status: Phase 1 Complete ✅ | Community Contributions ✅
 
 ### Implemented
 1. **DB migration** — `deployed` (boolean) and `public_slug` (text) columns added to `entity_definitions`
@@ -10,6 +10,10 @@
 5. **Routes wired** in `App.tsx` — `/admin/data/:tableName` and `/admin/data/:tableName/:id`
 6. **Dynamic "Collections" sidebar group** in `AdminLayout.tsx` — populated from deployed schemas
 7. **Deploy button** in Entity Editor toolbar — toggles `deployed` flag
+8. **Contributor role** — community members can add/edit game data via admin Collections
+9. **Storage policy** — contributors can upload to `images` bucket
+10. **Junction table DELETE** — contributors can manage many-to-many relationships (hunter_tags)
+11. **Audit columns** — `created_by` and `updated_by` on all game tables, auto-populated on save
 
 ### Phase 2 (Future)
 - Public pages: `/database/:tableName`, `/database/:tableName/:slug`
@@ -17,3 +21,5 @@
 - Image upload fields
 - Markdown editor fields
 - Batch operations on list page
+- Contributor activity log
+- Contributor review workflow
