@@ -151,6 +151,20 @@ function generateDiffSQL(req: DeployRequest): string[] {
         );
       }
       if (cur.nullable !== col.nullable) {
+        if (!col.nullable) {
+          // Backfill existing nulls with a safe default before setting NOT NULL
+          const backfillDefault = col.type.toLowerCase() === "uuid" ? "gen_random_uuid()"
+            : col.type.toLowerCase() === "text" ? "''"
+            : col.type.toLowerCase() === "boolean" ? "false"
+            : col.type.toLowerCase() === "integer" || col.type.toLowerCase() === "smallint" || col.type.toLowerCase() === "bigint" ? "0"
+            : col.type.toLowerCase() === "numeric" || col.type.toLowerCase() === "real" || col.type.toLowerCase() === "float8" ? "0"
+            : col.type.toLowerCase() === "jsonb" || col.type.toLowerCase() === "json" ? "'{}'"
+            : col.type.toLowerCase() === "timestamptz" || col.type.toLowerCase() === "timestamp" || col.type.toLowerCase() === "date" ? "now()"
+            : "''";
+          statements.push(
+            `UPDATE public.${name} SET ${colName} = ${backfillDefault} WHERE ${colName} IS NULL;`
+          );
+        }
         statements.push(
           `ALTER TABLE public.${name} ALTER COLUMN ${colName} ${col.nullable ? "DROP NOT NULL" : "SET NOT NULL"};`
         );
