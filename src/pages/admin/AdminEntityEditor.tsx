@@ -413,8 +413,12 @@ export default function AdminEntityEditor() {
       setEdges((eds) => [...eds, ...newEdges]);
     }
 
-    const total = newNodes.length + newEdges.length;
-    toast({ title: total > 0 ? `Synced ${newNodes.length} table(s), ${newEdges.length} FK(s) from database` : "Schema is already in sync with database" });
+    const total = newNodes.length + newEdges.length + updatedNodeIds.size;
+    const parts: string[] = [];
+    if (newNodes.length > 0) parts.push(`${newNodes.length} new table(s)`);
+    if (updatedNodeIds.size > 0) parts.push(`${updatedNodeIds.size} table(s) updated`);
+    if (newEdges.length > 0) parts.push(`${newEdges.length} FK(s)`);
+    toast({ title: total > 0 ? `Synced: ${parts.join(", ")}` : "Schema is already in sync with database" });
     setSyncing(false);
   }, [nodes, edges, introspect, setNodes, setEdges, toast]);
 
