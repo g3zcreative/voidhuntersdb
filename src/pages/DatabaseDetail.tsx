@@ -237,9 +237,9 @@ function HunterDetailView({
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {skills.map((skill) => (
-                <Link key={skill.id} to={`/database/skills/${skill.slug || skill.id}`} className="block hover:scale-[1.01] transition-transform">
+                <div key={skill.id}>
                   <SkillInfoBox skill={skill as any} />
-                </Link>
+                </div>
               ))}
             </div>
           </div>
