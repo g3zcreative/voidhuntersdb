@@ -9,9 +9,7 @@ interface EffectData {
   slug: string;
   icon: string | null;
   description: string | null;
-  type: string;
-  affected_stats: Record<string, any> | null;
-  scaling_info: string | null;
+  type: string | null;
 }
 
 function useEffects() {
@@ -27,10 +25,6 @@ function useEffects() {
 
 function BuffPopoverCard({ buff }: { buff: EffectData }) {
   const isBuff = buff.type === "buff";
-  const affectedStats =
-    buff.affected_stats && typeof buff.affected_stats === "object"
-      ? Object.entries(buff.affected_stats)
-      : [];
 
   return (
     <div className="w-72 space-y-3 overflow-hidden">
@@ -65,7 +59,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
                 : "border-destructive text-destructive"
             }`}
           >
-            {buff.type.toUpperCase()}
+            {(buff.type || "effect").toUpperCase()}
           </Badge>
         </div>
       </div>
@@ -73,30 +67,6 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
       {/* Description */}
       {buff.description && (
         <p className="text-xs leading-relaxed text-muted-foreground break-words">{buff.description}</p>
-      )}
-
-      {/* Affected Stats */}
-      {affectedStats.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Affected Stats</p>
-          <div className="grid grid-cols-2 gap-1">
-            {affectedStats.map(([stat, value]) => (
-              <div key={stat} className="flex items-center justify-between bg-secondary/50 rounded px-2 py-1">
-                <span className="text-[11px] text-muted-foreground capitalize">{stat.replace(/_/g, " ")}</span>
-                <span className={`text-[11px] font-semibold ${isBuff ? "text-[hsl(170,80%,50%)]" : "text-destructive"}`}>
-                  {String(value)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Scaling Info */}
-      {buff.scaling_info && (
-        <p className="text-[10px] text-muted-foreground italic border-t border-border pt-2">
-          {buff.scaling_info}
-        </p>
       )}
     </div>
   );

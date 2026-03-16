@@ -21,7 +21,10 @@ function isFilterableField(f: SchemaField) {
 
 /** Pluralize simple _id → table name */
 function fkTableName(fieldName: string) {
-  return fieldName.slice(0, -3) + "s";
+  const base = fieldName.slice(0, -3);
+  if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith("z")) return base + "es";
+  if (base.endsWith("y") && !["a","e","i","o","u"].includes(base[base.length - 2])) return base.slice(0, -1) + "ies";
+  return base + "s";
 }
 
 function useFkOptions(tableName: string) {

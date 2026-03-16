@@ -44,39 +44,102 @@ export type Database = {
         }
         Relationships: []
       }
+      boss_skills: {
+        Row: {
+          boss_id: string | null
+          created_at: string
+          description: string | null
+          effects: Json | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number | null
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          boss_id?: string | null
+          created_at?: string
+          description?: string | null
+          effects?: Json | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number | null
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          boss_id?: string | null
+          created_at?: string
+          description?: string | null
+          effects?: Json | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bosses: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       effects: {
         Row: {
-          affected_stats: Json | null
           created_at: string
           description: string | null
           icon: string | null
           id: string
           name: string
-          scaling_info: string | null
           slug: string
           type: string | null
           updated_at: string
         }
         Insert: {
-          affected_stats?: Json | null
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
           name: string
-          scaling_info?: string | null
           slug: string
           type?: string | null
           updated_at?: string
         }
         Update: {
-          affected_stats?: Json | null
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
           name?: string
-          scaling_info?: string | null
           slug?: string
           type?: string | null
           updated_at?: string
@@ -579,7 +642,7 @@ export type Database = {
           max_level: number | null
           name: string
           slug: string
-          sort_order: string | null
+          sort_order: number | null
           type: string | null
           updated_at: string
         }
@@ -593,7 +656,7 @@ export type Database = {
           max_level?: number | null
           name: string
           slug: string
-          sort_order?: string | null
+          sort_order?: number | null
           type?: string | null
           updated_at?: string
         }
@@ -607,7 +670,7 @@ export type Database = {
           max_level?: number | null
           name?: string
           slug?: string
-          sort_order?: string | null
+          sort_order?: number | null
           type?: string | null
           updated_at?: string
         }

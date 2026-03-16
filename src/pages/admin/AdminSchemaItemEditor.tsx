@@ -38,6 +38,13 @@ function slugify(text: string): string {
 function getFkTable(fieldName: string): string | null {
   if (!fieldName.endsWith("_id")) return null;
   const base = fieldName.slice(0, -3);
+  // Handle common English pluralization
+  if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith("z")) {
+    return base + "es";
+  }
+  if (base.endsWith("y") && !["a","e","i","o","u"].includes(base[base.length - 2])) {
+    return base.slice(0, -1) + "ies";
+  }
   return base + "s";
 }
 
