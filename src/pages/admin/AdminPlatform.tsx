@@ -8,13 +8,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, MoreHorizontal, ShieldCheck, ShieldOff, Ban, CheckCircle, Users } from "lucide-react";
+import { Search, MoreHorizontal, ShieldCheck, ShieldOff, Ban, CheckCircle, Users, PenTool } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -41,7 +41,7 @@ async function getAuthHeaders() {
 export default function AdminPlatform() {
   const [search, setSearch] = useState("");
   const [confirmAction, setConfirmAction] = useState<{
-    type: "ban" | "unban" | "promote" | "demote";
+    type: "ban" | "unban" | "promote" | "demote" | "add-contributor" | "remove-contributor";
     user: AdminUser;
   } | null>(null);
   const queryClient = useQueryClient();
@@ -91,6 +91,10 @@ export default function AdminPlatform() {
       mutation.mutate({ action: "set-role", body: { user_id: user.id, role: "admin", remove: false } });
     } else if (type === "demote") {
       mutation.mutate({ action: "set-role", body: { user_id: user.id, role: "admin", remove: true } });
+    } else if (type === "add-contributor") {
+      mutation.mutate({ action: "set-role", body: { user_id: user.id, role: "contributor", remove: false } });
+    } else if (type === "remove-contributor") {
+      mutation.mutate({ action: "set-role", body: { user_id: user.id, role: "contributor", remove: true } });
     }
     setConfirmAction(null);
   };
@@ -103,6 +107,15 @@ export default function AdminPlatform() {
 
   const isBanned = (u: AdminUser) =>
     u.banned_until && new Date(u.banned_until) > new Date();
+
+  const confirmLabels: Record<string, string> = {
+    ban: "Ban User",
+    unban: "Unban User",
+    promote: "Promote to Admin",
+    demote: "Remove Admin Role",
+    "add-contributor": "Make Contributor",
+    "remove-contributor": "Remove Contributor Role",
+  };
 
   return (
     <div className="space-y-6">
@@ -148,14 +161,14 @@ export default function AdminPlatform() {
                 <TableRow key={user.id} className={isBanned(user) ? "opacity-60" : ""}>
                   <TableCell className="font-mono text-sm">{user.email}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       {user.roles.length === 0 && (
                         <Badge variant="outline" className="text-xs">user</Badge>
                       )}
                       {user.roles.map((r) => (
                         <Badge
                           key={r}
-                          variant={r === "admin" ? "default" : "secondary"}
+                          variant={r === "admin" ? "default" : r === "contributor" ? "secondary" : "outline"}
                           className="text-xs"
                         >
                           {r}
@@ -199,6 +212,20 @@ export default function AdminPlatform() {
                             <ShieldCheck className="mr-2 h-4 w-4" /> Make Admin
                           </DropdownMenuItem>
                         )}
+                        {user.roles.includes("contributor") ? (
+                          <DropdownMenuItem
+                            onClick={() => setConfirmAction({ type: "remove-contributor", user })}
+                          >
+                            <PenTool className="mr-2 h-4 w-4" /> Remove Contributor
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => setConfirmAction({ type: "add-contributor", user })}
+                          >
+                            <PenTool className="mr-2 h-4 w-4" /> Make Contributor
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
                         {isBanned(user) ? (
                           <DropdownMenuItem
                             onClick={() => setConfirmAction({ type: "unban", user })}
@@ -234,13 +261,10 @@ export default function AdminPlatform() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction?.type === "ban" && "Ban User"}
-              {confirmAction?.type === "unban" && "Unban User"}
-              {confirmAction?.type === "promote" && "Promote to Admin"}
-              {confirmAction?.type === "demote" && "Remove Admin Role"}
+              {confirmAction ? confirmLabels[confirmAction.type] : ""}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {confirmAction?.type}{" "}
+              Are you sure you want to {confirmAction?.type.replace("-", " ")}{" "}
               <strong>{confirmAction?.user.email}</strong>? This action can be reversed.
             </AlertDialogDescription>
           </AlertDialogHeader>
