@@ -319,8 +319,38 @@ export default function AdminEntityEditor() {
     const Y_SPACING = 350;
     let idx = nodes.length;
 
+    // Track which existing nodes get column updates
+    const updatedNodeIds = new Set<string>();
+
     for (const table of result.tables) {
-      if (existingTableNames.has(table.name)) continue;
+      if (existingTableNames.has(table.name)) {
+        // Update existing node: merge in any new columns from DB
+        setNodes((nds) =>
+          nds.map((n) => {
+            const nodeLabel = ((n.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
+            if (nodeLabel !== table.name) return n;
+            const existingFields: EntityField[] = (n.data as any).fields || [];
+            const existingNames = new Set(existingFields.map((f) => f.name));
+            const newFields = table.columns
+              .filter((c) => !existingNames.has(c.name))
+              .map((c) => ({
+                id: createFieldId(),
+                name: c.name,
+                type: c.type,
+                nullable: c.nullable,
+                isPrimaryKey: c.isPrimaryKey,
+                defaultValue: c.defaultValue,
+              }));
+            if (newFields.length === 0) return n;
+            updatedNodeIds.add(n.id);
+            return {
+              ...n,
+              data: { ...n.data, fields: [...existingFields, ...newFields] },
+            };
+          })
+        );
+        continue;
+      }
       const col = idx % GRID_COLS;
       const row = Math.floor(idx / GRID_COLS);
       newNodes.push({
