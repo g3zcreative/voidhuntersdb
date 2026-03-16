@@ -33,7 +33,7 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { canAccessAdmin } = useAdmin();
   const { tables, isJunction } = useSchemaRegistry();
   const visibleTables = tables.filter((t) => !isJunction(t.name));
 
