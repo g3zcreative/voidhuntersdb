@@ -9,9 +9,7 @@ interface EffectData {
   slug: string;
   icon: string | null;
   description: string | null;
-  type: string;
-  affected_stats: Record<string, any> | null;
-  scaling_info: string | null;
+  type: string | null;
 }
 
 function useEffects() {
