@@ -357,6 +357,7 @@ export default function AdminSchemaItemEditor() {
   const queryClient = useQueryClient();
   const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
 
