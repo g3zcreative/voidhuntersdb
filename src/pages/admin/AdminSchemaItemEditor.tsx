@@ -488,6 +488,12 @@ export default function AdminSchemaItemEditor() {
         }
       });
 
+      // Auto-set audit columns if user is logged in
+      if (user?.id) {
+        payload.updated_by = user.id;
+        if (isNew) payload.created_by = user.id;
+      }
+
       let itemId = id;
 
       if (isNew) {
