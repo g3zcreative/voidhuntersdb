@@ -420,6 +420,35 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
+  // Load existing skills for hunters
+  const { data: existingSkills } = useQuery({
+    queryKey: ["hunter-skills", id],
+    enabled: !isNew && isHuntersTable && !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("skills")
+        .select("*")
+        .eq("hunter_id", id!)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data || []) as Array<Record<string, any>>;
+    },
+  });
+
+  // Initialize inline skills from loaded data
+  useEffect(() => {
+    if (!isHuntersTable || skillsInitialized) return;
+    if (isNew) {
+      setInlineSkills([]);
+      setSkillsInitialized(true);
+      return;
+    }
+    if (existingSkills) {
+      setInlineSkills(existingSkills.map(existingToInlineSkill));
+      setSkillsInitialized(true);
+    }
+  }, [isHuntersTable, isNew, skillsInitialized, existingSkills]);
+
   // Load existing junction rows for multi-ref fields
   const junctionQueries = manyToManyRelations.map((rel) =>
     useQuery({
