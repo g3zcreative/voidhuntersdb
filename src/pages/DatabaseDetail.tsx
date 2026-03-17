@@ -153,7 +153,7 @@ function HunterDetailView({
       <div className="flex flex-col md:flex-row gap-8">
         {/* Image */}
         <div className="w-full md:w-72 shrink-0">
-          <div className="aspect-[3/4] rounded-lg overflow-hidden border border-border bg-secondary">
+          <div className="aspect-[4/5] rounded-lg overflow-hidden border border-border bg-secondary">
             {item.image_url ? (
               <img src={item.image_url} alt={item.name} className="h-full w-full object-contain" />
             ) : (
