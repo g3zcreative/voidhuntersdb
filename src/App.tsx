@@ -98,6 +98,8 @@ function AppRoutes() {
           <Route path="docs" element={<AdminDocs />} />
           <Route path="entity-editor" element={<AdminEntityEditor />} />
           <Route path="activity" element={<AdminActivityLog />} />
+          <Route path="contributions" element={<AdminContributions />} />
+          <Route path="contributions/:id" element={<AdminContributionReview />} />
           <Route path="data/:tableName" element={<AdminSchemaData />} />
           <Route path="data/:tableName/:id" element={<AdminSchemaItemEditor />} />
         </Route>
