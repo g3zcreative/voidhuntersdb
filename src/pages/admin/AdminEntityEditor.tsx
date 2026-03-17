@@ -753,6 +753,19 @@ export default function AdminEntityEditor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EdgeConfigDialog
+        open={edgeConfigOpen}
+        onOpenChange={setEdgeConfigOpen}
+        sourceTableName={getNodeTableName((pendingConnection?.source || editingEdge?.source) ?? "")}
+        targetTableName={getNodeTableName((pendingConnection?.target || editingEdge?.target) ?? "")}
+        sourceFields={getNodeFields((pendingConnection?.source || editingEdge?.source) ?? "")}
+        targetFields={getNodeFields((pendingConnection?.target || editingEdge?.target) ?? "")}
+        initialSourceColumn={(editingEdge?.data as any)?.sourceColumn}
+        initialTargetColumn={(editingEdge?.data as any)?.targetColumn}
+        onApply={handleEdgeConfigApply}
+        onCancel={handleEdgeConfigCancel}
+      />
     </div>
   );
 }
