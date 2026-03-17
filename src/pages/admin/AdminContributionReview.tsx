@@ -167,8 +167,8 @@ export default function AdminContributionReview() {
       }
 
       // Mark as approved
-      const { error: updateError } = await supabase
-        .from("contributions")
+      const { error: updateError } = await (supabase
+        .from("contributions") as any)
         .update({
           status: "approved",
           reviewer_id: user.id,
