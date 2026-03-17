@@ -13,10 +13,13 @@ import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
   Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
-  ChevronRight, Clock,
+  ChevronRight, Clock, GitPullRequest,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 
 const contentItems = [
