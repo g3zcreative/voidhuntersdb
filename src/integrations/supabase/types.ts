@@ -311,6 +311,50 @@ export type Database = {
         }
         Relationships: []
       }
+      hunt_paths: {
+        Row: {
+          created_at: string
+          effect: string | null
+          id: string
+          level: number | null
+          name: string
+          required_trophy_id: string | null
+          required_trophy_qty: number | null
+          unlock_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effect?: string | null
+          id?: string
+          level?: number | null
+          name: string
+          required_trophy_id?: string | null
+          required_trophy_qty?: number | null
+          unlock_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effect?: string | null
+          id?: string
+          level?: number | null
+          name?: string
+          required_trophy_id?: string | null
+          required_trophy_qty?: number | null
+          unlock_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_hunt_paths_required_trophy_id"
+            columns: ["required_trophy_id"]
+            isOneToOne: false
+            referencedRelation: "trophies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunter_tags: {
         Row: {
           created_at: string
@@ -790,6 +834,33 @@ export type Database = {
           slug?: string
           updated_at?: string
           updated_by?: string
+        }
+        Relationships: []
+      }
+      trophies: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          rarity: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          rarity?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          rarity?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
