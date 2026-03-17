@@ -729,6 +729,13 @@ export default function AdminSchemaItemEditor() {
         </div>
       )}
 
+      {/* Inline Skills Editor (hunters only) */}
+      {isHuntersTable && (
+        <div className="mt-8">
+          <InlineSkillsEditor skills={inlineSkills} onChange={setInlineSkills} />
+        </div>
+      )}
+
       {/* Read-only metadata for existing items */}
       {!isNew && existingItem && (
         <div className="mt-8 space-y-4">
