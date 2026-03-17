@@ -25,6 +25,7 @@ import EntityNodeComponent, {
   type EntityField,
 } from "@/components/admin/EntityNode";
 import { EntityEditorToolbar } from "@/components/admin/EntityEditorToolbar";
+import { EdgeConfigDialog, type EdgeConfigResult } from "@/components/admin/EdgeConfigDialog";
 import { SQLPreviewDialog } from "@/components/admin/SQLPreviewDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
