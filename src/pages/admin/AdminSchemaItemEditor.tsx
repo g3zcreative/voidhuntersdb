@@ -688,6 +688,11 @@ export default function AdminSchemaItemEditor() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {isContributorOnly && (
+        <div className="mb-6 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-400">
+          Your changes will be submitted for review by an admin before going live.
+        </div>
+      )}
 
       {/* Basic Info */}
       {basicFields.length > 0 && (
