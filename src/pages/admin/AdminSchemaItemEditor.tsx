@@ -365,6 +365,8 @@ export default function AdminSchemaItemEditor() {
   const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
+  const { isAdmin, isContributor } = useAdmin();
+  const isContributorOnly = isContributor && !isAdmin;
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
 
