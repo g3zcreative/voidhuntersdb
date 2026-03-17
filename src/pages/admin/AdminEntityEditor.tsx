@@ -235,24 +235,123 @@ export default function AdminEntityEditor() {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            type: "smoothstep",
-            animated: true,
-            markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(259 100% 64%)" },
-            style: { stroke: "hsl(259 100% 64%)", strokeWidth: 2 },
-            label: "FK",
-            labelStyle: { fontSize: 10, fill: "hsl(215 12% 55%)" },
-            labelBgStyle: { fill: "hsl(228 12% 11%)", fillOpacity: 0.9 },
-          },
-          eds
-        )
-      );
+      setPendingConnection(params);
+      setEditingEdge(null);
+      setEdgeConfigOpen(true);
     },
-    [setEdges]
+    []
   );
+
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      setPendingConnection(null);
+      setEditingEdge(edge);
+      setEdgeConfigOpen(true);
+    },
+    []
+  );
+
+  const getNodeTableName = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return "";
+      return ((node.data as any).label as string).replace(/\s+/g, "_").toLowerCase();
+    },
+    [nodes]
+  );
+
+  const getNodeFields = useCallback(
+    (nodeId: string): EntityField[] => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return [];
+      return (node.data as any).fields || [];
+    },
+    [nodes]
+  );
+
+  const handleEdgeConfigApply = useCallback(
+    (result: EdgeConfigResult) => {
+      const sourceNodeId = pendingConnection?.source || editingEdge?.source;
+      if (!sourceNodeId) return;
+
+      // Auto-create FK column if requested
+      if (result.autoCreatedColumn) {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id !== sourceNodeId) return n;
+            const d = n.data as unknown as EntityNodeData;
+            const exists = d.fields.some((f) => f.name === result.autoCreatedColumn);
+            if (exists) return n;
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                fields: [
+                  ...d.fields,
+                  {
+                    id: createFieldId(),
+                    name: result.autoCreatedColumn!,
+                    type: "uuid",
+                    nullable: true,
+                    isPrimaryKey: false,
+                    defaultValue: "",
+                  },
+                ],
+              },
+            };
+          })
+        );
+      }
+
+      const edgeData = {
+        sourceColumn: result.sourceColumn,
+        targetColumn: result.targetColumn,
+      };
+
+      if (editingEdge) {
+        // Update existing edge
+        setEdges((eds) =>
+          eds.map((e) =>
+            e.id === editingEdge.id
+              ? {
+                  ...e,
+                  label: result.sourceColumn,
+                  data: { ...e.data, ...edgeData },
+                }
+              : e
+          )
+        );
+      } else if (pendingConnection) {
+        // Create new edge
+        setEdges((eds) =>
+          addEdge(
+            {
+              ...pendingConnection,
+              type: "smoothstep",
+              animated: true,
+              markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(259 100% 64%)" },
+              style: { stroke: "hsl(259 100% 64%)", strokeWidth: 2 },
+              label: result.sourceColumn,
+              labelStyle: { fontSize: 10, fill: "hsl(215 12% 55%)" },
+              labelBgStyle: { fill: "hsl(228 12% 11%)", fillOpacity: 0.9 },
+              data: edgeData,
+            },
+            eds
+          )
+        );
+      }
+
+      setEdgeConfigOpen(false);
+      setPendingConnection(null);
+      setEditingEdge(null);
+    },
+    [pendingConnection, editingEdge, setNodes, setEdges]
+  );
+
+  const handleEdgeConfigCancel = useCallback(() => {
+    setPendingConnection(null);
+    setEditingEdge(null);
+  }, []);
 
   const handleAddEntity = useCallback(() => {
     const id = crypto.randomUUID();
