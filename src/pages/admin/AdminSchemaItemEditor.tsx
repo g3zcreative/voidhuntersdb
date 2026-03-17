@@ -729,6 +729,7 @@ export default function AdminSchemaItemEditor() {
                   field={field}
                   value={formData[field.name]}
                   onChange={(val) => updateField(field.name, val)}
+                  fkMap={fkMap}
                 />
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground font-mono">{field.type}</span>
