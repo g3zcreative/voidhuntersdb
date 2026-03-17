@@ -244,7 +244,7 @@ export default function DatabaseList() {
               >
                 <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col">
                   {hasImages && (
-                    <div className="aspect-square w-full overflow-hidden bg-secondary">
+                    <div className={`${tableName === "hunters" ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden bg-secondary`}>
                       {item.image_url ? (
                         <img
                           src={item.image_url}
