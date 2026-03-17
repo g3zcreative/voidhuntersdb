@@ -79,7 +79,7 @@ function AdminSidebar() {
         return true;
       })
       .map((t) => ({
-        title: t.label.charAt(0).toUpperCase() + t.label.slice(1),
+        title: formatTableLabel(t.label),
         url: `/admin/data/${t.name}`,
         icon: Layers,
       }))

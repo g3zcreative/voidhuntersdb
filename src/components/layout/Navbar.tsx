@@ -175,7 +175,7 @@ export function Navbar() {
                       : "text-muted-foreground hover:bg-secondary"
                   }`}
                 >
-                  {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                  {formatTableLabel(t.label)}
                 </Link>
               ))}
               <Separator className="my-1" />
