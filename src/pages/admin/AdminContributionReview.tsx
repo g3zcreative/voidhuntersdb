@@ -154,7 +154,7 @@ export default function AdminContributionReview() {
         for (const [junctionTable, refData] of Object.entries(multiRefs as Record<string, any>)) {
           const { fkToSelf, fkToRelated, selectedIds } = refData;
           // Delete existing junctions
-          await supabase.from(junctionTable as any).delete().eq(fkToSelf, itemId);
+          await (supabase.from(junctionTable as any) as any).delete().eq(fkToSelf, itemId);
           // Insert new ones
           if (selectedIds?.length > 0) {
             const rows = selectedIds.map((relId: string) => ({
