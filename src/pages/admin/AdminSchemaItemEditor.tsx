@@ -532,7 +532,7 @@ export default function AdminSchemaItemEditor() {
       });
 
       // Auto-set audit columns only if the table has them
-      const fieldNames = new Set(editableFields.map((f) => f.name).concat(allFields.map((f) => f.name)));
+      const fieldNames = new Set((table?.fields || []).map((f) => f.name));
       if (user?.id) {
         if (fieldNames.has("updated_by")) payload.updated_by = user.id;
         if (isNew && fieldNames.has("created_by")) payload.created_by = user.id;
