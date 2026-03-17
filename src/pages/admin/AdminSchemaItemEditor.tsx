@@ -276,18 +276,20 @@ function FieldInput({
   field,
   value,
   onChange,
+  fkMap,
 }: {
   field: SchemaField;
   value: any;
   onChange: (val: any) => void;
+  fkMap?: Map<string, string>;
 }) {
   // Image URL fields get upload support
   if (field.name === "image_url" || field.name.endsWith("_image_url") || field.name === "icon") {
     return <ImageUploadField value={value} onChange={onChange} />;
   }
 
-  // Check if this is a FK field
-  const fkTable = getFkTable(field.name);
+  // Check if this is a FK field via edge metadata
+  const fkTable = fkMap?.get(field.name);
   if (fkTable && field.type.toLowerCase() === "uuid") {
     return (
       <FkSelect

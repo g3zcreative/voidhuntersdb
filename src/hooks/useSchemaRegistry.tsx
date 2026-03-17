@@ -212,6 +212,7 @@ export function useSchemaRegistry(deployedOnly = true) {
     getTable,
     getSchemaForTable,
     getManyToMany,
+    getForeignKeys,
     isJunction,
     loading: query.isLoading,
     refetch: query.refetch,
