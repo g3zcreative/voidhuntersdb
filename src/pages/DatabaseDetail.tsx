@@ -8,6 +8,7 @@ import {
   fieldTypeToInputType,
   type SchemaField,
 } from "@/hooks/useSchemaRegistry";
+import { formatTableLabel } from "@/lib/format-label";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
@@ -493,7 +494,7 @@ export default function DatabaseDetail() {
     );
   }
 
-  const displayLabel = table.label.charAt(0).toUpperCase() + table.label.slice(1);
+  const displayLabel = formatTableLabel(table.label);
   const itemName = item.name || item.title || "Unnamed";
   const isHunter = tableName === "hunters";
   const isSkill = tableName === "skills";

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchemaRegistry, isAutoField } from "@/hooks/useSchemaRegistry";
+import { formatTableLabel } from "@/lib/format-label";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -88,7 +89,7 @@ export default function AdminSchemaData() {
     },
   });
 
-  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+  const displayLabel = table ? formatTableLabel(table.label) : "";
 
   // Set header breadcrumbs and actions
   useEffect(() => {

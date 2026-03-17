@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Menu, X, User, Shield, LogOut, Database, ChevronDown } from "lucide-react";
+import { formatTableLabel } from "@/lib/format-label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -71,7 +72,7 @@ export function Navbar() {
               <DropdownMenuContent align="start" className="w-44">
                 {visibleTables.map((t) => (
                   <DropdownMenuItem key={t.name} onClick={() => navigate(`/database/${t.name}`)}>
-                    {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                    {formatTableLabel(t.label)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -174,7 +175,7 @@ export function Navbar() {
                       : "text-muted-foreground hover:bg-secondary"
                   }`}
                 >
-                  {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                  {formatTableLabel(t.label)}
                 </Link>
               ))}
               <Separator className="my-1" />
