@@ -704,6 +704,7 @@ export default function AdminSchemaItemEditor() {
                   field={field}
                   value={formData[field.name]}
                   onChange={(val) => updateField(field.name, val)}
+                  fkMap={fkMap}
                 />
                 {field.nullable && (
                   <p className="text-xs text-muted-foreground">Optional</p>
