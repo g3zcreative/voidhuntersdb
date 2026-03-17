@@ -25,6 +25,12 @@ import {
 import { Save, Upload, Loader2, X } from "lucide-react";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
 import { MultiRefField } from "@/components/admin/MultiRefField";
+import {
+  InlineSkillsEditor,
+  type InlineSkill,
+  createEmptySkill,
+  existingToInlineSkill,
+} from "@/components/admin/InlineSkillsEditor";
 
 function slugify(text: string): string {
   return text
