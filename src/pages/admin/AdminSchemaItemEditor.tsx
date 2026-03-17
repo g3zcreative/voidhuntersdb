@@ -376,6 +376,13 @@ export default function AdminSchemaItemEditor() {
     [tableName, getManyToMany]
   );
 
+  // Build FK map from edge metadata: fieldName → referencedTable
+  const fkMap = useMemo(() => {
+    if (!tableName) return new Map<string, string>();
+    const fks = getForeignKeys(tableName);
+    return new Map(fks.map((fk) => [fk.column, fk.referencedTable]));
+  }, [tableName, getForeignKeys]);
+
   // Fields that are managed by multi-ref should be hidden from the regular form
   // e.g., the "tags" uuid field on hunters that's a leftover single-ref
   const multiRefRelatedTables = useMemo(
