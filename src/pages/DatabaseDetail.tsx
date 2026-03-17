@@ -8,6 +8,7 @@ import {
   fieldTypeToInputType,
   type SchemaField,
 } from "@/hooks/useSchemaRegistry";
+import { formatTableLabel } from "@/lib/format-label";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
