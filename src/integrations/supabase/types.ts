@@ -125,6 +125,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contributions: {
+        Row: {
+          action: string
+          contributor_id: string
+          created_at: string
+          id: string
+          payload: Json
+          record_id: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_note: string | null
+          status: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          contributor_id: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          record_id?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_note?: string | null
+          status?: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          contributor_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          record_id?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_note?: string | null
+          status?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       effects: {
         Row: {
           created_at: string
