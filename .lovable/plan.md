@@ -1,6 +1,6 @@
 # Dynamic Schema-Driven CMS
 
-## Status: Phase 1 Complete ✅ | Community Contributions ✅
+## Status: Phase 1 Complete ✅ | Community Contributions ✅ | Edge Config ✅
 
 ### Implemented
 1. **DB migration** — `deployed` (boolean) and `public_slug` (text) columns added to `entity_definitions`
@@ -15,6 +15,8 @@
 10. **Junction table DELETE** — contributors can manage many-to-many relationships (hunter_tags)
 11. **Audit columns** — `created_by` and `updated_by` on all game tables, auto-populated on save
 12. **Contribution review system** — contributors save to `contributions` table; admins review at `/admin/contributions`
+13. **Edge Configuration Dialog** — drawing/clicking edges opens a dialog to pick source/target FK columns with auto-create option
+14. **Contributor RLS on deploy** — schema-deploy now generates contributor INSERT/UPDATE policies alongside admin + public-read
 
 ### Phase 2 (Future)
 - Public pages: `/database/:tableName`, `/database/:tableName/:slug`
