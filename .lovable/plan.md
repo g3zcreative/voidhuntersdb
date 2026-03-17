@@ -14,6 +14,7 @@
 9. **Storage policy** — contributors can upload to `images` bucket
 10. **Junction table DELETE** — contributors can manage many-to-many relationships (hunter_tags)
 11. **Audit columns** — `created_by` and `updated_by` on all game tables, auto-populated on save
+12. **Contribution review system** — contributors save to `contributions` table; admins review at `/admin/contributions`
 
 ### Phase 2 (Future)
 - Public pages: `/database/:tableName`, `/database/:tableName/:slug`
@@ -21,5 +22,5 @@
 - Image upload fields
 - Markdown editor fields
 - Batch operations on list page
-- Contributor activity log
-- Contributor review workflow
+- Contributor activity log / "My Submissions" page
+- Email notifications on approval/rejection
