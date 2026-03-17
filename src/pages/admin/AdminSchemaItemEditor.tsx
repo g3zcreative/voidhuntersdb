@@ -537,6 +537,40 @@ export default function AdminSchemaItemEditor() {
         if (isNew) payload.created_by = user.id;
       }
 
+      // ── Contributor path: save to contributions table ──
+      if (isContributorOnly) {
+        const contributionPayload = { ...payload };
+
+        // Bundle inline skills
+        if (isHuntersTable) {
+          contributionPayload._inline_skills = inlineSkills;
+        }
+
+        // Bundle multi-ref selections
+        if (manyToManyRelations.length > 0) {
+          const refs: Record<string, any> = {};
+          manyToManyRelations.forEach((rel) => {
+            refs[rel.junctionTable] = {
+              fkToSelf: rel.junctionFkToSelf,
+              fkToRelated: rel.junctionFkToRelated,
+              selectedIds: multiRefSelections[rel.relatedTable] || [],
+            };
+          });
+          contributionPayload._multi_refs = refs;
+        }
+
+        const { error } = await supabase.from("contributions").insert({
+          contributor_id: user!.id,
+          table_name: tableName!,
+          record_id: isNew ? null : id,
+          action: isNew ? "create" : "update",
+          payload: contributionPayload,
+        } as any);
+        if (error) throw error;
+        return;
+      }
+
+      // ── Admin path: direct save ──
       let itemId = id;
 
       if (isNew) {
@@ -558,13 +592,11 @@ export default function AdminSchemaItemEditor() {
         const toInsertSkills = inlineSkills.filter((s) => s._status === "new" && s.name.trim());
         const toUpdateSkills = inlineSkills.filter((s) => s._status === "existing" && s.id);
 
-        // Delete removed skills
         for (const skill of toDeleteSkills) {
           const { error } = await supabase.from("skills").delete().eq("id", skill.id!);
           if (error) throw error;
         }
 
-        // Insert new skills
         for (const skill of toInsertSkills) {
           const { error } = await supabase.from("skills").insert({
             hunter_id: itemId,
@@ -583,7 +615,6 @@ export default function AdminSchemaItemEditor() {
           if (error) throw error;
         }
 
-        // Update existing skills
         for (const skill of toUpdateSkills) {
           const { error } = await supabase.from("skills").update({
             name: skill.name,
@@ -609,7 +640,7 @@ export default function AdminSchemaItemEditor() {
       manyToManyRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["multi-ref-junctions", rel.junctionTable] });
       });
-      toast({ title: isNew ? "Item created" : "Item saved" });
+      toast({ title: isContributorOnly ? "Submitted for review" : (isNew ? "Item created" : "Item saved") });
       navigate(`/admin/data/${tableName}`);
     },
     onError: (err: any) => {
