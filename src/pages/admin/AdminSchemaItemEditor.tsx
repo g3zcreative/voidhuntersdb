@@ -25,6 +25,12 @@ import {
 import { Save, Upload, Loader2, X } from "lucide-react";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
 import { MultiRefField } from "@/components/admin/MultiRefField";
+import {
+  InlineSkillsEditor,
+  type InlineSkill,
+  createEmptySkill,
+  existingToInlineSkill,
+} from "@/components/admin/InlineSkillsEditor";
 
 function slugify(text: string): string {
   return text
@@ -365,6 +371,11 @@ export default function AdminSchemaItemEditor() {
   const [multiRefSelections, setMultiRefSelections] = useState<Record<string, string[]>>({});
   const [multiRefInitialized, setMultiRefInitialized] = useState(false);
 
+  // Inline skills state (only used when tableName === "hunters")
+  const [inlineSkills, setInlineSkills] = useState<InlineSkill[]>([]);
+  const [skillsInitialized, setSkillsInitialized] = useState(false);
+  const isHuntersTable = tableName === "hunters";
+
   const isNew = id === "new";
   const table = tableName ? getTable(tableName) : undefined;
   const manyToManyRelations = useMemo(
@@ -408,6 +419,35 @@ export default function AdminSchemaItemEditor() {
       return data;
     },
   });
+
+  // Load existing skills for hunters
+  const { data: existingSkills } = useQuery({
+    queryKey: ["hunter-skills", id],
+    enabled: !isNew && isHuntersTable && !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("skills")
+        .select("*")
+        .eq("hunter_id", id!)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data || []) as Array<Record<string, any>>;
+    },
+  });
+
+  // Initialize inline skills from loaded data
+  useEffect(() => {
+    if (!isHuntersTable || skillsInitialized) return;
+    if (isNew) {
+      setInlineSkills([]);
+      setSkillsInitialized(true);
+      return;
+    }
+    if (existingSkills) {
+      setInlineSkills(existingSkills.map(existingToInlineSkill));
+      setSkillsInitialized(true);
+    }
+  }, [isHuntersTable, isNew, skillsInitialized, existingSkills]);
 
   // Load existing junction rows for multi-ref fields
   const junctionQueries = manyToManyRelations.map((rel) =>
@@ -509,48 +549,60 @@ export default function AdminSchemaItemEditor() {
         if (error) throw error;
       }
 
-      // Save multi-ref junction rows
-      for (const rel of manyToManyRelations) {
-        const selectedIds = multiRefSelections[rel.relatedTable] || [];
+      // Save inline skills (hunters only)
+      if (isHuntersTable && itemId) {
+        const toDeleteSkills = inlineSkills.filter((s) => s._status === "deleted" && s.id);
+        const toInsertSkills = inlineSkills.filter((s) => s._status === "new" && s.name.trim());
+        const toUpdateSkills = inlineSkills.filter((s) => s._status === "existing" && s.id);
 
-        // Get current junction rows
-        const { data: currentRows } = await supabase
-          .from(rel.junctionTable as any)
-          .select("*")
-          .eq(rel.junctionFkToSelf, itemId!);
-
-        const currentRelatedIds = new Set(
-          ((currentRows || []) as Array<Record<string, any>>).map((r) => r[rel.junctionFkToRelated] as string)
-        );
-        const desiredIds = new Set(selectedIds);
-
-        // Delete removed
-        const toDelete = [...currentRelatedIds].filter((id) => !desiredIds.has(id));
-        if (toDelete.length > 0) {
-          const { error } = await supabase
-            .from(rel.junctionTable as any)
-            .delete()
-            .eq(rel.junctionFkToSelf, itemId!)
-            .in(rel.junctionFkToRelated, toDelete);
+        // Delete removed skills
+        for (const skill of toDeleteSkills) {
+          const { error } = await supabase.from("skills").delete().eq("id", skill.id!);
           if (error) throw error;
         }
 
-        // Insert added
-        const toInsert = [...desiredIds].filter((id) => !currentRelatedIds.has(id));
-        if (toInsert.length > 0) {
-          const rows = toInsert.map((relId) => ({
-            [rel.junctionFkToSelf]: itemId,
-            [rel.junctionFkToRelated]: relId,
-          }));
-          const { error } = await supabase
-            .from(rel.junctionTable as any)
-            .insert(rows as any);
+        // Insert new skills
+        for (const skill of toInsertSkills) {
+          const { error } = await supabase.from("skills").insert({
+            hunter_id: itemId,
+            name: skill.name,
+            slug: skill.slug || slugify(skill.name),
+            type: skill.type,
+            sort_order: skill.sort_order,
+            max_level: skill.max_level,
+            cooldown: skill.cooldown,
+            description: skill.description,
+            icon: skill.icon,
+            effects: skill.effects as any,
+            created_by: user!.id,
+            updated_by: user!.id,
+          });
+          if (error) throw error;
+        }
+
+        // Update existing skills
+        for (const skill of toUpdateSkills) {
+          const { error } = await supabase.from("skills").update({
+            name: skill.name,
+            slug: skill.slug,
+            type: skill.type,
+            sort_order: skill.sort_order,
+            max_level: skill.max_level,
+            cooldown: skill.cooldown,
+            description: skill.description,
+            icon: skill.icon,
+            effects: skill.effects as any,
+            updated_by: user!.id,
+          }).eq("id", skill.id!);
           if (error) throw error;
         }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
+      if (isHuntersTable) {
+        queryClient.invalidateQueries({ queryKey: ["hunter-skills"] });
+      }
       manyToManyRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["multi-ref-junctions", rel.junctionTable] });
       });
@@ -674,6 +726,13 @@ export default function AdminSchemaItemEditor() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Inline Skills Editor (hunters only) */}
+      {isHuntersTable && (
+        <div className="mt-8">
+          <InlineSkillsEditor skills={inlineSkills} onChange={setInlineSkills} />
         </div>
       )}
 
