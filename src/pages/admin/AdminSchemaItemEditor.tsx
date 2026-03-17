@@ -657,14 +657,17 @@ export default function AdminSchemaItemEditor() {
       { label: displayLabel, href: `/admin/data/${tableName}` },
       { label: isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`) },
     ]);
+    const saveLabel = isContributorOnly
+      ? (saveMutation.isPending ? "Submitting..." : "Submit for Review")
+      : (saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save");
     setActions(
       <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
         <Save className="h-4 w-4 mr-2" />
-        {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
+        {saveLabel}
       </Button>
     );
     return () => { setBreadcrumbs([]); setActions(null); };
-  }, [table, displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending]);
+  }, [table, displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending, isContributorOnly]);
 
   if (registryLoading || (!isNew && itemLoading)) {
     return (
