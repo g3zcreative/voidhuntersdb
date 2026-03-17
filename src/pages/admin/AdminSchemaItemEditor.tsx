@@ -549,48 +549,60 @@ export default function AdminSchemaItemEditor() {
         if (error) throw error;
       }
 
-      // Save multi-ref junction rows
-      for (const rel of manyToManyRelations) {
-        const selectedIds = multiRefSelections[rel.relatedTable] || [];
+      // Save inline skills (hunters only)
+      if (isHuntersTable && itemId) {
+        const toDeleteSkills = inlineSkills.filter((s) => s._status === "deleted" && s.id);
+        const toInsertSkills = inlineSkills.filter((s) => s._status === "new" && s.name.trim());
+        const toUpdateSkills = inlineSkills.filter((s) => s._status === "existing" && s.id);
 
-        // Get current junction rows
-        const { data: currentRows } = await supabase
-          .from(rel.junctionTable as any)
-          .select("*")
-          .eq(rel.junctionFkToSelf, itemId!);
-
-        const currentRelatedIds = new Set(
-          ((currentRows || []) as Array<Record<string, any>>).map((r) => r[rel.junctionFkToRelated] as string)
-        );
-        const desiredIds = new Set(selectedIds);
-
-        // Delete removed
-        const toDelete = [...currentRelatedIds].filter((id) => !desiredIds.has(id));
-        if (toDelete.length > 0) {
-          const { error } = await supabase
-            .from(rel.junctionTable as any)
-            .delete()
-            .eq(rel.junctionFkToSelf, itemId!)
-            .in(rel.junctionFkToRelated, toDelete);
+        // Delete removed skills
+        for (const skill of toDeleteSkills) {
+          const { error } = await supabase.from("skills").delete().eq("id", skill.id!);
           if (error) throw error;
         }
 
-        // Insert added
-        const toInsert = [...desiredIds].filter((id) => !currentRelatedIds.has(id));
-        if (toInsert.length > 0) {
-          const rows = toInsert.map((relId) => ({
-            [rel.junctionFkToSelf]: itemId,
-            [rel.junctionFkToRelated]: relId,
-          }));
-          const { error } = await supabase
-            .from(rel.junctionTable as any)
-            .insert(rows as any);
+        // Insert new skills
+        for (const skill of toInsertSkills) {
+          const { error } = await supabase.from("skills").insert({
+            hunter_id: itemId,
+            name: skill.name,
+            slug: skill.slug || slugify(skill.name),
+            type: skill.type,
+            sort_order: skill.sort_order,
+            max_level: skill.max_level,
+            cooldown: skill.cooldown,
+            description: skill.description,
+            icon: skill.icon,
+            effects: skill.effects as any,
+            created_by: user!.id,
+            updated_by: user!.id,
+          });
+          if (error) throw error;
+        }
+
+        // Update existing skills
+        for (const skill of toUpdateSkills) {
+          const { error } = await supabase.from("skills").update({
+            name: skill.name,
+            slug: skill.slug,
+            type: skill.type,
+            sort_order: skill.sort_order,
+            max_level: skill.max_level,
+            cooldown: skill.cooldown,
+            description: skill.description,
+            icon: skill.icon,
+            effects: skill.effects as any,
+            updated_by: user!.id,
+          }).eq("id", skill.id!);
           if (error) throw error;
         }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
+      if (isHuntersTable) {
+        queryClient.invalidateQueries({ queryKey: ["hunter-skills"] });
+      }
       manyToManyRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["multi-ref-junctions", rel.junctionTable] });
       });
