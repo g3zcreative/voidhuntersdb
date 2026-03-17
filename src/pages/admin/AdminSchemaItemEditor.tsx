@@ -42,19 +42,7 @@ function slugify(text: string): string {
     .trim();
 }
 
-/** Detect if a field is a foreign key by name pattern (e.g. role_id → roles table) */
-function getFkTable(fieldName: string): string | null {
-  if (!fieldName.endsWith("_id")) return null;
-  const base = fieldName.slice(0, -3);
-  // Handle common English pluralization
-  if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith("z")) {
-    return base + "es";
-  }
-  if (base.endsWith("y") && !["a","e","i","o","u"].includes(base[base.length - 2])) {
-    return base.slice(0, -1) + "ies";
-  }
-  return base + "s";
-}
+// getFkTable heuristic removed — FK lookups now driven by edge metadata via useSchemaRegistry.getForeignKeys
 
 function FkSelect({
   field,
