@@ -206,9 +206,9 @@ export function InlineSkillsEditor({ skills, onChange }: Props) {
         </div>
       ) : (
         <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <Accordion type="multiple" className="w-full">
+          <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="w-full">
             {visibleSkills.map((skill, index) => (
-              <AccordionItem key={skill._key} value={skill._key} className="border-border">
+              <AccordionItem key={skill._key} value={skill._key} className="border-border" ref={(el) => { itemRefs.current[skill._key] = el; }}>
                 <div className="flex items-center">
                   <AccordionTrigger className="flex-1 px-4 py-3 hover:no-underline">
                     <div className="flex items-center gap-2 text-left">
