@@ -75,6 +75,9 @@ export default function AdminEntityEditor() {
   const [deploySQL, setDeploySQL] = useState("");
   const [deployPayload, setDeployPayload] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ nodeId: string; label: string; hasData: boolean } | null>(null);
+  const [edgeConfigOpen, setEdgeConfigOpen] = useState(false);
+  const [pendingConnection, setPendingConnection] = useState<Connection | null>(null);
+  const [editingEdge, setEditingEdge] = useState<Edge | null>(null);
   const initialized = useRef(false);
 
   // On mount: load or create the single schema, then sync from DB
