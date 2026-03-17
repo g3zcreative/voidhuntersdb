@@ -101,12 +101,20 @@ function generateDiffSQL(req: DeployRequest): string[] {
 
     statements.push(`CREATE TABLE public.${name} (\n${colDefs.join(",\n")}\n);`);
     statements.push(`ALTER TABLE public.${name} ENABLE ROW LEVEL SECURITY;`);
-    // Default admin-only policies
+    // Admin policies
     statements.push(
       `CREATE POLICY "Admins can do everything on ${name}" ON public.${name} FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));`
     );
+    // Public read
     statements.push(
       `CREATE POLICY "Public can read ${name}" ON public.${name} FOR SELECT TO anon, authenticated USING (true);`
+    );
+    // Contributor policies
+    statements.push(
+      `CREATE POLICY "Contributors can insert ${name}" ON public.${name} FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'contributor'));`
+    );
+    statements.push(
+      `CREATE POLICY "Contributors can update ${name}" ON public.${name} FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'contributor')) WITH CHECK (public.has_role(auth.uid(), 'contributor'));`
     );
   }
 
