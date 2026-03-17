@@ -187,23 +187,15 @@ function HunterDetailView({
           )}
 
           {/* Stats grid */}
-          {item.stats && typeof item.stats === "object" && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-              {Object.entries(item.stats as Record<string, any>).map(([k, v]) => (
-                <div key={k} className="bg-secondary rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{k}</p>
-                  <p className="font-display text-xl font-bold text-foreground">{String(v)}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Numeric stats row */}
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {[
               { label: "Rarity", value: item.rarity },
               { label: "Level", value: item.level },
               { label: "Power", value: item.power },
+              { label: "Attack", value: item.attack },
+              { label: "Defense", value: item.defense },
+              { label: "Health", value: item.health },
+              { label: "Speed", value: item.speed },
               { label: "Awakening", value: item.awakening_level },
             ]
               .filter((s) => s.value != null)

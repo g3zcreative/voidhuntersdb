@@ -48,7 +48,7 @@ export type Database = {
         Row: {
           boss_id: string | null
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           effects: Json | null
           id: string
@@ -57,12 +57,12 @@ export type Database = {
           sort_order: number | null
           type: string | null
           updated_at: string
-          updated_by: string | null
+          updated_by: string
         }
         Insert: {
           boss_id?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by: string
           description?: string | null
           effects?: Json | null
           id?: string
@@ -71,12 +71,12 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by: string
         }
         Update: {
           boss_id?: string | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           effects?: Json | null
           id?: string
@@ -85,50 +85,50 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by?: string
         }
         Relationships: []
       }
       bosses: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           id: string
           image_url: string | null
           name: string
           slug: string
           updated_at: string
-          updated_by: string | null
+          updated_by: string
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by: string
           description?: string | null
           id?: string
           image_url?: string | null
           name: string
           slug: string
           updated_at?: string
-          updated_by?: string | null
+          updated_by: string
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           id?: string
           image_url?: string | null
           name?: string
           slug?: string
           updated_at?: string
-          updated_by?: string | null
+          updated_by?: string
         }
         Relationships: []
       }
       effects: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           icon: string | null
           id: string
@@ -136,11 +136,11 @@ export type Database = {
           slug: string
           type: string | null
           updated_at: string
-          updated_by: string | null
+          updated_by: string
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by: string
           description?: string | null
           icon?: string | null
           id?: string
@@ -148,11 +148,11 @@ export type Database = {
           slug: string
           type?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by: string
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           icon?: string | null
           id?: string
@@ -160,7 +160,7 @@ export type Database = {
           slug?: string
           type?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by?: string
         }
         Relationships: []
       }
@@ -310,10 +310,13 @@ export type Database = {
       }
       hunters: {
         Row: {
+          attack: number | null
           awakening_level: number | null
           created_at: string
-          created_by: string | null
+          created_by: string
+          defense: number | null
           description: string | null
+          health: number | null
           id: string
           image_url: string | null
           level: number | null
@@ -321,17 +324,20 @@ export type Database = {
           power: number | null
           rarity: number | null
           slug: string
-          stats: Json | null
+          speed: number | null
           subtitle: string | null
           tags: string | null
           updated_at: string
-          updated_by: string | null
+          updated_by: string
         }
         Insert: {
+          attack?: number | null
           awakening_level?: number | null
           created_at?: string
-          created_by?: string | null
+          created_by: string
+          defense?: number | null
           description?: string | null
+          health?: number | null
           id?: string
           image_url?: string | null
           level?: number | null
@@ -339,17 +345,20 @@ export type Database = {
           power?: number | null
           rarity?: number | null
           slug: string
-          stats?: Json | null
+          speed?: number | null
           subtitle?: string | null
           tags?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by: string
         }
         Update: {
+          attack?: number | null
           awakening_level?: number | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
+          defense?: number | null
           description?: string | null
+          health?: number | null
           id?: string
           image_url?: string | null
           level?: number | null
@@ -357,11 +366,11 @@ export type Database = {
           power?: number | null
           rarity?: number | null
           slug?: string
-          stats?: Json | null
+          speed?: number | null
           subtitle?: string | null
           tags?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by?: string
         }
         Relationships: []
       }
@@ -657,8 +666,9 @@ export type Database = {
       }
       skills: {
         Row: {
+          cooldown: number | null
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           effects: Json | null
           hunter_id: string | null
@@ -670,11 +680,12 @@ export type Database = {
           sort_order: number | null
           type: string | null
           updated_at: string
-          updated_by: string | null
+          updated_by: string
         }
         Insert: {
+          cooldown?: number | null
           created_at?: string
-          created_by?: string | null
+          created_by: string
           description?: string | null
           effects?: Json | null
           hunter_id?: string | null
@@ -686,11 +697,12 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by: string
         }
         Update: {
+          cooldown?: number | null
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           effects?: Json | null
           hunter_id?: string | null
@@ -702,40 +714,40 @@ export type Database = {
           sort_order?: number | null
           type?: string | null
           updated_at?: string
-          updated_by?: string | null
+          updated_by?: string
         }
         Relationships: []
       }
       tags: {
         Row: {
           created_at: string
-          created_by: string | null
+          created_by: string
           description: string | null
           id: string
           name: string
           slug: string
           updated_at: string
-          updated_by: string | null
+          updated_by: string
         }
         Insert: {
           created_at?: string
-          created_by?: string | null
+          created_by: string
           description?: string | null
           id?: string
           name: string
           slug: string
           updated_at?: string
-          updated_by?: string | null
+          updated_by: string
         }
         Update: {
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           description?: string | null
           id?: string
           name?: string
           slug?: string
           updated_at?: string
-          updated_by?: string | null
+          updated_by?: string
         }
         Relationships: []
       }
