@@ -371,6 +371,11 @@ export default function AdminSchemaItemEditor() {
   const [multiRefSelections, setMultiRefSelections] = useState<Record<string, string[]>>({});
   const [multiRefInitialized, setMultiRefInitialized] = useState(false);
 
+  // Inline skills state (only used when tableName === "hunters")
+  const [inlineSkills, setInlineSkills] = useState<InlineSkill[]>([]);
+  const [skillsInitialized, setSkillsInitialized] = useState(false);
+  const isHuntersTable = tableName === "hunters";
+
   const isNew = id === "new";
   const table = tableName ? getTable(tableName) : undefined;
   const manyToManyRelations = useMemo(
