@@ -123,6 +123,11 @@ function AdminSidebar() {
                         <NavLink to={item.url} className="hover:bg-muted/50" activeClassName="bg-muted text-primary font-medium">
                           <item.icon className="mr-2 h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
+                          {!collapsed && item.url === "/admin/contributions" && pendingCount > 0 && (
+                            <Badge className="ml-auto bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs px-1.5 py-0">
+                              {pendingCount}
+                            </Badge>
+                          )}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
