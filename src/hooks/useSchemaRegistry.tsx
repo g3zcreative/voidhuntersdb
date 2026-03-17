@@ -178,6 +178,24 @@ export function useSchemaRegistry(deployedOnly = true) {
     return findManyToMany(table, schema.tables, schema.edges);
   };
 
+  /** Get foreign key mappings for a given table, derived from edge metadata */
+  const getForeignKeys = (tableName: string): Array<{ column: string; referencedTable: string }> => {
+    const table = getTable(tableName);
+    if (!table) return [];
+    const schema = getSchemaForTable(tableName);
+    if (!schema) return [];
+    const outEdges = schema.edges.filter((e) => e.source === table.nodeId);
+    return outEdges
+      .map((edge) => {
+        const targetTable = schema.tables.find((t) => t.nodeId === edge.target);
+        if (!targetTable) return null;
+        const column = edge.data?.sourceColumn || edge.label || null;
+        if (!column || column === "FK") return null;
+        return { column, referencedTable: targetTable.name };
+      })
+      .filter(Boolean) as Array<{ column: string; referencedTable: string }>;
+  };
+
   /** Check if a table is a junction table (should be hidden from standalone list) */
   const isJunction = (tableName: string): boolean => {
     const table = getTable(tableName);
@@ -194,6 +212,7 @@ export function useSchemaRegistry(deployedOnly = true) {
     getTable,
     getSchemaForTable,
     getManyToMany,
+    getForeignKeys,
     isJunction,
     loading: query.isLoading,
     refetch: query.refetch,

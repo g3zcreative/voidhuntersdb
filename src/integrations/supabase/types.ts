@@ -313,6 +313,7 @@ export type Database = {
       }
       hunt_paths: {
         Row: {
+          affected_stat: string | null
           created_at: string
           effect: string | null
           id: string
@@ -324,6 +325,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          affected_stat?: string | null
           created_at?: string
           effect?: string | null
           id?: string
@@ -335,6 +337,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          affected_stat?: string | null
           created_at?: string
           effect?: string | null
           id?: string
@@ -346,6 +349,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_hunt_paths_affected_stat"
+            columns: ["affected_stat"]
+            isOneToOne: false
+            referencedRelation: "stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_hunt_paths_required_trophy_id"
             columns: ["required_trophy_id"]
@@ -801,6 +811,33 @@ export type Database = {
           type?: string | null
           updated_at?: string
           updated_by?: string
+        }
+        Relationships: []
+      }
+      stats: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

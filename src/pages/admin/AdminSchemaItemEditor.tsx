@@ -42,19 +42,7 @@ function slugify(text: string): string {
     .trim();
 }
 
-/** Detect if a field is a foreign key by name pattern (e.g. role_id → roles table) */
-function getFkTable(fieldName: string): string | null {
-  if (!fieldName.endsWith("_id")) return null;
-  const base = fieldName.slice(0, -3);
-  // Handle common English pluralization
-  if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith("z")) {
-    return base + "es";
-  }
-  if (base.endsWith("y") && !["a","e","i","o","u"].includes(base[base.length - 2])) {
-    return base.slice(0, -1) + "ies";
-  }
-  return base + "s";
-}
+// getFkTable heuristic removed — FK lookups now driven by edge metadata via useSchemaRegistry.getForeignKeys
 
 function FkSelect({
   field,
@@ -288,18 +276,20 @@ function FieldInput({
   field,
   value,
   onChange,
+  fkMap,
 }: {
   field: SchemaField;
   value: any;
   onChange: (val: any) => void;
+  fkMap?: Map<string, string>;
 }) {
   // Image URL fields get upload support
   if (field.name === "image_url" || field.name.endsWith("_image_url") || field.name === "icon") {
     return <ImageUploadField value={value} onChange={onChange} />;
   }
 
-  // Check if this is a FK field
-  const fkTable = getFkTable(field.name);
+  // Check if this is a FK field via edge metadata
+  const fkTable = fkMap?.get(field.name);
   if (fkTable && field.type.toLowerCase() === "uuid") {
     return (
       <FkSelect
@@ -362,7 +352,7 @@ export default function AdminSchemaItemEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
+  const { getTable, getManyToMany, getForeignKeys, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
   const { isAdmin, isContributor } = useAdmin();
@@ -385,6 +375,13 @@ export default function AdminSchemaItemEditor() {
     () => (tableName ? getManyToMany(tableName) : []),
     [tableName, getManyToMany]
   );
+
+  // Build FK map from edge metadata: fieldName → referencedTable
+  const fkMap = useMemo(() => {
+    if (!tableName) return new Map<string, string>();
+    const fks = getForeignKeys(tableName);
+    return new Map(fks.map((fk) => [fk.column, fk.referencedTable]));
+  }, [tableName, getForeignKeys]);
 
   // Fields that are managed by multi-ref should be hidden from the regular form
   // e.g., the "tags" uuid field on hunters that's a leftover single-ref
@@ -707,6 +704,7 @@ export default function AdminSchemaItemEditor() {
                   field={field}
                   value={formData[field.name]}
                   onChange={(val) => updateField(field.name, val)}
+                  fkMap={fkMap}
                 />
                 {field.nullable && (
                   <p className="text-xs text-muted-foreground">Optional</p>
@@ -731,6 +729,7 @@ export default function AdminSchemaItemEditor() {
                   field={field}
                   value={formData[field.name]}
                   onChange={(val) => updateField(field.name, val)}
+                  fkMap={fkMap}
                 />
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground font-mono">{field.type}</span>
