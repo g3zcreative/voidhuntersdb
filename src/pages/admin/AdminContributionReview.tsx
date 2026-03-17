@@ -192,8 +192,8 @@ export default function AdminContributionReview() {
   const rejectMutation = useMutation({
     mutationFn: async () => {
       if (!contribution || !user) throw new Error("Missing data");
-      const { error } = await supabase
-        .from("contributions")
+      const { error } = await (supabase
+        .from("contributions") as any)
         .update({
           status: "rejected",
           reviewer_id: user.id,
