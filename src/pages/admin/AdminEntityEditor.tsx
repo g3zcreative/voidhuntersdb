@@ -188,6 +188,25 @@ export default function AdminEntityEditor() {
     [setNodes]
   );
 
+  const onMoveField = useCallback(
+    (nodeId: string, fieldId: string, direction: "up" | "down") => {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const d = n.data as unknown as EntityNodeData;
+          const fields = [...d.fields];
+          const idx = fields.findIndex((f) => f.id === fieldId);
+          if (idx < 0) return n;
+          const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+          if (swapIdx < 0 || swapIdx >= fields.length) return n;
+          [fields[idx], fields[swapIdx]] = [fields[swapIdx], fields[idx]];
+          return { ...n, data: { ...n.data, fields } };
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const onDeleteNode = useCallback(
     async (nodeId: string, label: string) => {
       const tableName = label.replace(/\s+/g, "_").toLowerCase();
@@ -227,10 +246,11 @@ export default function AdminEntityEditor() {
           onAddField,
           onRemoveField,
           onUpdateField,
+          onMoveField,
           onDeleteNode,
         },
       })),
-    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode]
+    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onMoveField, onDeleteNode]
   );
 
   const onConnect = useCallback(
