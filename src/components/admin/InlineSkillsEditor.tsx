@@ -142,13 +142,27 @@ interface Props {
 
 export function InlineSkillsEditor({ skills, onChange }: Props) {
   const visibleSkills = skills.filter((s) => s._status !== "deleted");
+  const [openItems, setOpenItems] = useState<string[]>([]);
+  const lastAddedKeyRef = useRef<string | null>(null);
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (lastAddedKeyRef.current) {
+      const el = itemRefs.current[lastAddedKeyRef.current];
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
+      }
+      lastAddedKeyRef.current = null;
+    }
+  }, [skills]);
 
   const updateSkill = (key: string, field: keyof InlineSkill, value: any) => {
     onChange(
       skills.map((s) => {
         if (s._key !== key) return s;
         const updated = { ...s, [field]: value };
-        // Auto-slug from name for new skills
         if (field === "name" && s._status === "new") {
           updated.slug = slugify(String(value || ""));
         }
@@ -168,7 +182,10 @@ export function InlineSkillsEditor({ skills, onChange }: Props) {
   };
 
   const addSkill = () => {
-    onChange([...skills, createEmptySkill()]);
+    const newSkill = createEmptySkill();
+    lastAddedKeyRef.current = newSkill._key;
+    setOpenItems((prev) => [...prev, newSkill._key]);
+    onChange([...skills, newSkill]);
   };
 
   return (
