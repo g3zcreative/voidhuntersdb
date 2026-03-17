@@ -54,7 +54,20 @@ function AdminSidebar() {
   const navigate = useNavigate();
   const { schemas, isJunction } = useSchemaRegistry();
 
-  // Build dynamic collection nav items from deployed schemas (hide junction tables, deduplicate by table name)
+  // Pending contributions count for badge
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["pending-contributions-count"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("contributions")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (error) return 0;
+      return count || 0;
+    },
+    refetchInterval: 30000, // refresh every 30s
+  });
   const seen = new Set<string>();
   const collectionItems = schemas.flatMap((s) =>
     s.tables
