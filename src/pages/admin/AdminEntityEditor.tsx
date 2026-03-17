@@ -694,6 +694,7 @@ export default function AdminEntityEditor() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onEdgeClick={onEdgeClick}
           nodeTypes={nodeTypes}
           fitView
           proOptions={{ hideAttribution: true }}
