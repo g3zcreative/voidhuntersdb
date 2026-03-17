@@ -12,6 +12,7 @@ import {
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -364,6 +365,8 @@ export default function AdminSchemaItemEditor() {
   const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
+  const { isAdmin, isContributor } = useAdmin();
+  const isContributorOnly = isContributor && !isAdmin;
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
 
@@ -534,6 +537,40 @@ export default function AdminSchemaItemEditor() {
         if (isNew) payload.created_by = user.id;
       }
 
+      // ── Contributor path: save to contributions table ──
+      if (isContributorOnly) {
+        const contributionPayload = { ...payload };
+
+        // Bundle inline skills
+        if (isHuntersTable) {
+          contributionPayload._inline_skills = inlineSkills;
+        }
+
+        // Bundle multi-ref selections
+        if (manyToManyRelations.length > 0) {
+          const refs: Record<string, any> = {};
+          manyToManyRelations.forEach((rel) => {
+            refs[rel.junctionTable] = {
+              fkToSelf: rel.junctionFkToSelf,
+              fkToRelated: rel.junctionFkToRelated,
+              selectedIds: multiRefSelections[rel.relatedTable] || [],
+            };
+          });
+          contributionPayload._multi_refs = refs;
+        }
+
+        const { error } = await supabase.from("contributions").insert({
+          contributor_id: user!.id,
+          table_name: tableName!,
+          record_id: isNew ? null : id,
+          action: isNew ? "create" : "update",
+          payload: contributionPayload,
+        } as any);
+        if (error) throw error;
+        return;
+      }
+
+      // ── Admin path: direct save ──
       let itemId = id;
 
       if (isNew) {
@@ -555,13 +592,11 @@ export default function AdminSchemaItemEditor() {
         const toInsertSkills = inlineSkills.filter((s) => s._status === "new" && s.name.trim());
         const toUpdateSkills = inlineSkills.filter((s) => s._status === "existing" && s.id);
 
-        // Delete removed skills
         for (const skill of toDeleteSkills) {
           const { error } = await supabase.from("skills").delete().eq("id", skill.id!);
           if (error) throw error;
         }
 
-        // Insert new skills
         for (const skill of toInsertSkills) {
           const { error } = await supabase.from("skills").insert({
             hunter_id: itemId,
@@ -580,7 +615,6 @@ export default function AdminSchemaItemEditor() {
           if (error) throw error;
         }
 
-        // Update existing skills
         for (const skill of toUpdateSkills) {
           const { error } = await supabase.from("skills").update({
             name: skill.name,
@@ -606,7 +640,7 @@ export default function AdminSchemaItemEditor() {
       manyToManyRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["multi-ref-junctions", rel.junctionTable] });
       });
-      toast({ title: isNew ? "Item created" : "Item saved" });
+      toast({ title: isContributorOnly ? "Submitted for review" : (isNew ? "Item created" : "Item saved") });
       navigate(`/admin/data/${tableName}`);
     },
     onError: (err: any) => {
@@ -623,14 +657,17 @@ export default function AdminSchemaItemEditor() {
       { label: displayLabel, href: `/admin/data/${tableName}` },
       { label: isNew ? `New ${singularLabel}` : (formData.name || formData.title || `Edit ${singularLabel}`) },
     ]);
+    const saveLabel = isContributorOnly
+      ? (saveMutation.isPending ? "Submitting..." : "Submit for Review")
+      : (saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save");
     setActions(
       <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
         <Save className="h-4 w-4 mr-2" />
-        {saveMutation.isPending ? "Saving..." : isNew ? "Create" : "Save"}
+        {saveLabel}
       </Button>
     );
     return () => { setBreadcrumbs([]); setActions(null); };
-  }, [table, displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending]);
+  }, [table, displayLabel, singularLabel, tableName, isNew, formData.name, formData.title, saveMutation.isPending, isContributorOnly]);
 
   if (registryLoading || (!isNew && itemLoading)) {
     return (
@@ -651,6 +688,11 @@ export default function AdminSchemaItemEditor() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {isContributorOnly && (
+        <div className="mb-6 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-400">
+          Your changes will be submitted for review by an admin before going live.
+        </div>
+      )}
 
       {/* Basic Info */}
       {basicFields.length > 0 && (
