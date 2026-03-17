@@ -1,28 +1,46 @@
-# Dynamic Schema-Driven CMS
 
-## Status: Phase 1 Complete ✅ | Community Contributions ✅ | Edge Config ✅
 
-### Implemented
-1. **DB migration** — `deployed` (boolean) and `public_slug` (text) columns added to `entity_definitions`
-2. **`useSchemaRegistry` hook** — fetches deployed schemas, parses nodes into table/field definitions, maps DB types to input types
-3. **`AdminSchemaData`** — dynamic list page at `/admin/data/:tableName` with search, delete, row-click navigation
-4. **`AdminSchemaItemEditor`** — full-page Webflow-inspired editor at `/admin/data/:tableName/:id` with auto-slug, grouped fields, metadata display
-5. **Routes wired** in `App.tsx` — `/admin/data/:tableName` and `/admin/data/:tableName/:id`
-6. **Dynamic "Collections" sidebar group** in `AdminLayout.tsx` — populated from deployed schemas
-7. **Deploy button** in Entity Editor toolbar — toggles `deployed` flag
-8. **Contributor role** — community members can add/edit game data via admin Collections
-9. **Storage policy** — contributors can upload to `images` bucket
-10. **Junction table DELETE** — contributors can manage many-to-many relationships (hunter_tags)
-11. **Audit columns** — `created_by` and `updated_by` on all game tables, auto-populated on save
-12. **Contribution review system** — contributors save to `contributions` table; admins review at `/admin/contributions`
-13. **Edge Configuration Dialog** — drawing/clicking edges opens a dialog to pick source/target FK columns with auto-create option
-14. **Contributor RLS on deploy** — schema-deploy now generates contributor INSERT/UPDATE policies alongside admin + public-read
+## Use Edge Metadata to Drive FK Dropdowns Automatically
 
-### Phase 2 (Future)
-- Public pages: `/database/:tableName`, `/database/:tableName/:slug`
-- FK fields rendered as searchable select dropdowns
-- Image upload fields
-- Markdown editor fields
-- Batch operations on list page
-- Contributor activity log / "My Submissions" page
-- Email notifications on approval/rejection
+### Problem
+The item editor uses a heuristic function `getFkTable()` that guesses the referenced table from column names (e.g. `hunter_id` → `hunters`). This fails for fields like `affected_stat` (no `_id` suffix) and `required_trophy_id` (pluralizes to `required_trophies` instead of `trophies`).
+
+Meanwhile, the Entity Editor already stores the correct FK mappings in edge data (`edge.data.sourceColumn` → target table). This metadata is parsed by `useSchemaRegistry` but never used by the item editor.
+
+### Solution
+Replace the heuristic `getFkTable()` with a lookup function that reads actual edge metadata from the schema registry. Every edge already stores which source column points to which target table. This means: **if you draw an edge in the Entity Editor, the form automatically gets a dropdown. No code changes needed.**
+
+### Changes
+
+**1. `useSchemaRegistry.tsx` — Add `getForeignKeys` helper**
+- New function `getForeignKeys(tableName)` that returns `Array<{ column: string; referencedTable: string }>` by scanning edges where `source === table.nodeId` and reading `edge.data.sourceColumn`
+- Export it from the hook
+
+**2. `AdminSchemaItemEditor.tsx` — Replace heuristic with edge-driven lookups**
+- Import `getForeignKeys` from the schema registry
+- Remove the `getFkTable()` heuristic function
+- In `FieldInput`, look up the field name in the FK map. If found, render `FkSelect` with the correct referenced table
+- This handles `affected_stat` → `stats`, `required_trophy_id` → `trophies`, and any future FK automatically
+
+### How it works after this change
+
+```text
+Entity Editor                    Schema Registry                Item Editor Form
+┌──────────────┐                ┌──────────────────┐           ┌──────────────────┐
+│ Draw edge:   │  edge.data =   │ getForeignKeys() │  returns  │ FieldInput sees   │
+│ hunt_paths   │──────────────→ │ { column:        │─────────→ │ affected_stat is  │
+│  → stats     │  sourceColumn: │   "affected_stat"│           │ FK to "stats"     │
+│              │  "affected_stat"│   table: "stats"}│           │ → renders FkSelect│
+└──────────────┘                └──────────────────┘           └──────────────────┘
+```
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/hooks/useSchemaRegistry.tsx` | Add `getForeignKeys(tableName)` that derives FK info from edges |
+| `src/pages/admin/AdminSchemaItemEditor.tsx` | Replace `getFkTable()` with `getForeignKeys` lookup; pass FK map into `FieldInput` |
+
+### Result
+Any edge you draw and configure in the Entity Editor will automatically produce a searchable dropdown in the data entry form. No naming conventions required, no developer intervention.
+
