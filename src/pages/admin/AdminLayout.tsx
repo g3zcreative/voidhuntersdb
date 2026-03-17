@@ -13,10 +13,13 @@ import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
   Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
-  ChevronRight, Clock,
+  ChevronRight, Clock, GitPullRequest,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 
 const contentItems = [
@@ -31,6 +34,7 @@ const contentItems = [
 const insightItems = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Activity Log", url: "/admin/activity", icon: Clock },
+  { title: "Contributions", url: "/admin/contributions", icon: GitPullRequest },
   { title: "Feedback", url: "/admin/feedback", icon: MessageCircle },
 ];
 
@@ -50,7 +54,20 @@ function AdminSidebar() {
   const navigate = useNavigate();
   const { schemas, isJunction } = useSchemaRegistry();
 
-  // Build dynamic collection nav items from deployed schemas (hide junction tables, deduplicate by table name)
+  // Pending contributions count for badge
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["pending-contributions-count"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("contributions")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (error) return 0;
+      return count || 0;
+    },
+    refetchInterval: 30000, // refresh every 30s
+  });
   const seen = new Set<string>();
   const collectionItems = schemas.flatMap((s) =>
     s.tables
@@ -119,6 +136,11 @@ function AdminSidebar() {
                         <NavLink to={item.url} className="hover:bg-muted/50" activeClassName="bg-muted text-primary font-medium">
                           <item.icon className="mr-2 h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
+                          {!collapsed && item.url === "/admin/contributions" && pendingCount > 0 && (
+                            <Badge className="ml-auto bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs px-1.5 py-0">
+                              {pendingCount}
+                            </Badge>
+                          )}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
