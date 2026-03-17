@@ -72,7 +72,7 @@ export function Navbar() {
               <DropdownMenuContent align="start" className="w-44">
                 {visibleTables.map((t) => (
                   <DropdownMenuItem key={t.name} onClick={() => navigate(`/database/${t.name}`)}>
-                    {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                    {formatTableLabel(t.label)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
