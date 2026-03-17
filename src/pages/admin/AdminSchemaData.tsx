@@ -89,7 +89,7 @@ export default function AdminSchemaData() {
     },
   });
 
-  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+  const displayLabel = table ? formatTableLabel(table.label) : "";
 
   // Set header breadcrumbs and actions
   useEffect(() => {

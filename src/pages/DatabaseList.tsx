@@ -168,7 +168,7 @@ export default function DatabaseList() {
     );
   }
 
-  const displayLabel = table.label.charAt(0).toUpperCase() + table.label.slice(1);
+  const displayLabel = formatTableLabel(table.label);
   const hasImages = table.fields.some((f) => f.name === "image_url");
 
   return (

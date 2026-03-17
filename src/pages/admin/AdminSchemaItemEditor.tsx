@@ -647,7 +647,7 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
-  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+  const displayLabel = table ? formatTableLabel(table.label) : "";
   const singularLabel = displayLabel.replace(/s$/, "");
 
   useEffect(() => {
