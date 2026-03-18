@@ -150,6 +150,20 @@ export function EdgeConfigDialog({
               </SelectContent>
             </Select>
           </div>
+
+          <div className="flex items-center gap-2 pt-2 border-t border-border">
+            <Checkbox
+              id="inline-toggle"
+              checked={inline}
+              onCheckedChange={(checked) => setInline(!!checked)}
+            />
+            <Label htmlFor="inline-toggle" className="text-sm font-normal cursor-pointer">
+              Show inline on parent form
+            </Label>
+            <span className="text-xs text-muted-foreground ml-auto">
+              Edit child rows directly on the {targetTableName} edit page
+            </span>
+          </div>
         </div>
 
         <DialogFooter>
