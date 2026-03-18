@@ -464,7 +464,11 @@ export default function AdminSchemaItemEditor() {
                   .eq(nestedRel.fkColumn, row.id)
                   .order("created_at", { ascending: true });
                 if (nestedErr) throw nestedErr;
-                row[`_children_${nestedRel.childTable}`] = nestedData || [];
+                row[`_children_${nestedRel.childTable}`] = (nestedData || []).map((r: any) => ({
+                  ...r,
+                  _key: r.id || String(Math.random()),
+                  _status: "existing",
+                }));
               }
             }
           }
