@@ -637,51 +637,89 @@ export default function AdminSchemaItemEditor() {
         if (error) throw error;
       }
 
-      // Save inline children (generic)
-      for (const rel of inlineChildRelations) {
-        const childRows = inlineChildren[rel.childTable] || [];
-        if (!itemId) continue;
+      // Save inline children (generic) — recursive helper
+      const saveInlineChildren = async (
+        relations: InlineChildRelation[],
+        childrenMap: Record<string, InlineChildRow[]>,
+        parentItemId: string
+      ) => {
+        for (const rel of relations) {
+          const childRows = childrenMap[rel.childTable] || [];
+          if (!parentItemId) continue;
 
-        const toDelete = childRows.filter((r) => r._status === "deleted" && r.id);
-        const toInsert = childRows.filter((r) => r._status === "new" && (r.name || r.title || true));
-        const toUpdate = childRows.filter((r) => r._status === "existing" && r.id);
+          const toDelete = childRows.filter((r) => r._status === "deleted" && r.id);
+          const toInsert = childRows.filter((r) => r._status === "new");
+          const toUpdate = childRows.filter((r) => r._status === "existing" && r.id);
 
-        const childTable = getTable(rel.childTable);
-        const childFields = (childTable?.fields || []).filter(
-          (f) => !isAutoField(f) && f.name !== rel.fkColumn && f.name !== "created_by" && f.name !== "updated_by"
-        );
-        const childFieldNames = new Set((childTable?.fields || []).map((f) => f.name));
+          const childTable = getTable(rel.childTable);
+          const childFields = (childTable?.fields || []).filter(
+            (f) => !isAutoField(f) && f.name !== rel.fkColumn && f.name !== "created_by" && f.name !== "updated_by"
+          );
+          const childFieldNames = new Set((childTable?.fields || []).map((f) => f.name));
 
-        for (const row of toDelete) {
-          const { error } = await supabase.from(rel.childTable as any).delete().eq("id", row.id);
-          if (error) throw error;
-        }
+          // Find nested inline relations for this child table
+          const nestedRels = getInlineChildren(rel.childTable);
 
-        for (const row of toInsert) {
-          const insertPayload: Record<string, any> = { [rel.fkColumn]: itemId };
-          childFields.forEach((f) => {
-            if (row[f.name] !== undefined) insertPayload[f.name] = row[f.name];
-          });
-          if (childFieldNames.has("created_by") && user?.id) insertPayload.created_by = user.id;
-          if (childFieldNames.has("updated_by") && user?.id) insertPayload.updated_by = user.id;
-          // Auto-generate slug if field exists and not set
-          if (childFieldNames.has("slug") && !insertPayload.slug && insertPayload.name) {
-            insertPayload.slug = slugify(String(insertPayload.name));
+          for (const row of toDelete) {
+            const { error } = await supabase.from(rel.childTable as any).delete().eq("id", row.id);
+            if (error) throw error;
           }
-          const { error } = await supabase.from(rel.childTable as any).insert(insertPayload);
-          if (error) throw error;
-        }
 
-        for (const row of toUpdate) {
-          const updatePayload: Record<string, any> = {};
-          childFields.forEach((f) => {
-            if (row[f.name] !== undefined) updatePayload[f.name] = row[f.name];
-          });
-          if (childFieldNames.has("updated_by") && user?.id) updatePayload.updated_by = user.id;
-          const { error } = await supabase.from(rel.childTable as any).update(updatePayload).eq("id", row.id);
-          if (error) throw error;
+          for (const row of toInsert) {
+            const insertPayload: Record<string, any> = { [rel.fkColumn]: parentItemId };
+            childFields.forEach((f) => {
+              if (row[f.name] !== undefined) insertPayload[f.name] = row[f.name];
+            });
+            if (childFieldNames.has("created_by") && user?.id) insertPayload.created_by = user.id;
+            if (childFieldNames.has("updated_by") && user?.id) insertPayload.updated_by = user.id;
+            if (childFieldNames.has("slug") && !insertPayload.slug && insertPayload.name) {
+              insertPayload.slug = slugify(String(insertPayload.name));
+            }
+            const { data: inserted, error } = await supabase
+              .from(rel.childTable as any)
+              .insert(insertPayload)
+              .select("id")
+              .single();
+            if (error) throw error;
+
+            // Save nested children for this newly inserted row
+            if (nestedRels.length > 0 && inserted) {
+              const nestedMap: Record<string, InlineChildRow[]> = {};
+              for (const nr of nestedRels) {
+                const nestedRows = (row[`_children_${nr.childTable}`] || []) as InlineChildRow[];
+                if (nestedRows.length > 0) nestedMap[nr.childTable] = nestedRows;
+              }
+              if (Object.keys(nestedMap).length > 0) {
+                await saveInlineChildren(nestedRels, nestedMap, (inserted as any).id);
+              }
+            }
+          }
+
+          for (const row of toUpdate) {
+            const updatePayload: Record<string, any> = {};
+            childFields.forEach((f) => {
+              if (row[f.name] !== undefined) updatePayload[f.name] = row[f.name];
+            });
+            if (childFieldNames.has("updated_by") && user?.id) updatePayload.updated_by = user.id;
+            const { error } = await supabase.from(rel.childTable as any).update(updatePayload).eq("id", row.id);
+            if (error) throw error;
+
+            // Save nested children for this existing row
+            if (nestedRels.length > 0 && row.id) {
+              const nestedMap: Record<string, InlineChildRow[]> = {};
+              for (const nr of nestedRels) {
+                const nestedRows = (row[`_children_${nr.childTable}`] || []) as InlineChildRow[];
+                if (nestedRows.length > 0) nestedMap[nr.childTable] = nestedRows;
+              }
+              if (Object.keys(nestedMap).length > 0) {
+                await saveInlineChildren(nestedRels, nestedMap, row.id);
+              }
+            }
+          }
         }
-      }
+      };
+
+      await saveInlineChildren(inlineChildRelations, inlineChildren, itemId!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
