@@ -347,10 +347,9 @@ export function InlineSkillsEditor({ skills, onChange }: Props) {
                     {/* Icon URL */}
                     <div className="col-span-2 space-y-1.5">
                       <Label className="text-xs">Icon URL</Label>
-                      <Input
-                        value={skill.icon ?? ""}
-                        onChange={(e) => updateSkill(skill._key, "icon", e.target.value || null)}
-                        placeholder="https://..."
+                      <InlineImageUpload
+                        value={skill.icon}
+                        onChange={(v) => updateSkill(skill._key, "icon", v)}
                       />
                     </div>
                     {/* Description */}
