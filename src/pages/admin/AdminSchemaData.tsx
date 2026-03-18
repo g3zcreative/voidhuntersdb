@@ -31,6 +31,12 @@ export default function AdminSchemaData() {
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // Reset search when switching tables
+  useEffect(() => {
+    setSearch("");
+    setDeleteId(null);
+  }, [tableName]);
+
   const table = tableName ? getTable(tableName) : undefined;
 
   const visibleFields = table?.fields.filter((f) => !isAutoField(f)) || [];
