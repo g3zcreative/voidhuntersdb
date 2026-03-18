@@ -9,7 +9,52 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload, Loader2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { compressImage, compressedExtension } from "@/lib/image-utils";
+import { toast } from "@/hooks/use-toast";
+
+function InlineImageUpload({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    setUploading(true);
+    try {
+      const compressed = await compressImage(file);
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${compressedExtension}`;
+      const { error } = await supabase.storage.from("images").upload(path, compressed);
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("images").getPublicUrl(path);
+      onChange(urlData.publicUrl);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        placeholder="https://..."
+        className="flex-1"
+      />
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+      <Button type="button" variant="outline" size="icon" className="shrink-0 h-9 w-9" onClick={() => inputRef.current?.click()} disabled={uploading} title="Upload image">
+        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+      </Button>
+      {value && (
+        <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9" onClick={() => onChange(null)} title="Clear">
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export interface InlineSkill {
   _key: string; // local tracking key
