@@ -438,15 +438,42 @@ export default function AdminSchemaItemEditor() {
     enabled: !isNew && !!id && inlineChildRelations.length > 0,
     queryFn: async () => {
       const result: Record<string, Array<Record<string, any>>> = {};
-      for (const rel of inlineChildRelations) {
-        const { data, error } = await supabase
-          .from(rel.childTable as any)
-          .select("*")
-          .eq(rel.fkColumn, id!)
-          .order("sort_order", { ascending: true });
-        if (error) throw error;
-        result[rel.childTable] = (data || []) as Array<Record<string, any>>;
-      }
+
+      // Recursive helper to load nested inline children
+      const loadChildren = async (
+        relations: InlineChildRelation[],
+        parentId: string
+      ) => {
+        for (const rel of relations) {
+          const { data, error } = await supabase
+            .from(rel.childTable as any)
+            .select("*")
+            .eq(rel.fkColumn, parentId)
+            .order("sort_order", { ascending: true });
+          if (error) throw error;
+          const rows = (data || []) as Array<Record<string, any>>;
+
+          // Check for nested inline children of this child table
+          const nestedRels = getInlineChildren(rel.childTable);
+          if (nestedRels.length > 0) {
+            for (const row of rows) {
+              for (const nestedRel of nestedRels) {
+                const { data: nestedData, error: nestedErr } = await supabase
+                  .from(nestedRel.childTable as any)
+                  .select("*")
+                  .eq(nestedRel.fkColumn, row.id)
+                  .order("created_at", { ascending: true });
+                if (nestedErr) throw nestedErr;
+                row[`_children_${nestedRel.childTable}`] = nestedData || [];
+              }
+            }
+          }
+
+          result[rel.childTable] = rows;
+        }
+      };
+
+      await loadChildren(inlineChildRelations, id!);
       return result;
     },
   });
