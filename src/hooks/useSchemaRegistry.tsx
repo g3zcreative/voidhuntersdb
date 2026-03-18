@@ -28,6 +28,13 @@ export interface ManyToManyRelation {
   junctionFkToRelated: string; // e.g. "tag_id"
 }
 
+/** Describes a one-to-many inline child relationship */
+export interface InlineChildRelation {
+  childTable: string;
+  childNodeId: string;
+  fkColumn: string; // column on child table pointing to parent
+}
+
 export interface SchemaDefinition {
   id: string;
   name: string;
