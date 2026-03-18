@@ -560,9 +560,9 @@ export default function AdminSchemaItemEditor() {
       if (isContributorOnly) {
         const contributionPayload = { ...payload };
 
-        // Bundle inline skills
-        if (isHuntersTable) {
-          contributionPayload._inline_skills = inlineSkills;
+        // Bundle inline children
+        if (inlineChildRelations.length > 0) {
+          contributionPayload._inline_children = inlineChildren;
         }
 
         // Bundle multi-ref selections
