@@ -507,7 +507,7 @@ export default function DatabaseDetail() {
         url={`/database/${tableName}/${slug}`}
       />
 
-      <div className="container max-w-4xl py-8">
+      <div className="container py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
