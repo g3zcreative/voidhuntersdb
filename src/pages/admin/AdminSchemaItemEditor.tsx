@@ -388,6 +388,12 @@ export default function AdminSchemaItemEditor() {
     return new Map(fks.map((fk) => [fk.column, fk.referencedTable]));
   }, [tableName, getForeignKeys]);
 
+  // Inline children from edge metadata
+  const inlineChildRelations = useMemo(
+    () => (tableName ? getInlineChildren(tableName) : []),
+    [tableName, getInlineChildren]
+  );
+
   // Fields that are managed by multi-ref should be hidden from the regular form
   // e.g., the "tags" uuid field on hunters that's a leftover single-ref
   const multiRefRelatedTables = useMemo(
