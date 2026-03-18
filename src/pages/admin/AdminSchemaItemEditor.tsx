@@ -605,57 +605,57 @@ export default function AdminSchemaItemEditor() {
         if (error) throw error;
       }
 
-      // Save inline skills (hunters only)
-      if (isHuntersTable && itemId) {
-        const toDeleteSkills = inlineSkills.filter((s) => s._status === "deleted" && s.id);
-        const toInsertSkills = inlineSkills.filter((s) => s._status === "new" && s.name.trim());
-        const toUpdateSkills = inlineSkills.filter((s) => s._status === "existing" && s.id);
+      // Save inline children (generic)
+      for (const rel of inlineChildRelations) {
+        const childRows = inlineChildren[rel.childTable] || [];
+        if (!itemId) continue;
 
-        for (const skill of toDeleteSkills) {
-          const { error } = await supabase.from("skills").delete().eq("id", skill.id!);
+        const toDelete = childRows.filter((r) => r._status === "deleted" && r.id);
+        const toInsert = childRows.filter((r) => r._status === "new" && (r.name || r.title || true));
+        const toUpdate = childRows.filter((r) => r._status === "existing" && r.id);
+
+        const childTable = getTable(rel.childTable);
+        const childFields = (childTable?.fields || []).filter(
+          (f) => !isAutoField(f) && f.name !== rel.fkColumn && f.name !== "created_by" && f.name !== "updated_by"
+        );
+        const childFieldNames = new Set((childTable?.fields || []).map((f) => f.name));
+
+        for (const row of toDelete) {
+          const { error } = await supabase.from(rel.childTable as any).delete().eq("id", row.id);
           if (error) throw error;
         }
 
-        for (const skill of toInsertSkills) {
-          const { error } = await supabase.from("skills").insert({
-            hunter_id: itemId,
-            name: skill.name,
-            slug: skill.slug || slugify(skill.name),
-            type: skill.type,
-            sort_order: skill.sort_order,
-            max_level: skill.max_level,
-            cooldown: skill.cooldown,
-            description: skill.description,
-            icon: skill.icon,
-            effects: skill.effects as any,
-            created_by: user!.id,
-            updated_by: user!.id,
+        for (const row of toInsert) {
+          const insertPayload: Record<string, any> = { [rel.fkColumn]: itemId };
+          childFields.forEach((f) => {
+            if (row[f.name] !== undefined) insertPayload[f.name] = row[f.name];
           });
+          if (childFieldNames.has("created_by") && user?.id) insertPayload.created_by = user.id;
+          if (childFieldNames.has("updated_by") && user?.id) insertPayload.updated_by = user.id;
+          // Auto-generate slug if field exists and not set
+          if (childFieldNames.has("slug") && !insertPayload.slug && insertPayload.name) {
+            insertPayload.slug = slugify(String(insertPayload.name));
+          }
+          const { error } = await supabase.from(rel.childTable as any).insert(insertPayload);
           if (error) throw error;
         }
 
-        for (const skill of toUpdateSkills) {
-          const { error } = await supabase.from("skills").update({
-            name: skill.name,
-            slug: skill.slug,
-            type: skill.type,
-            sort_order: skill.sort_order,
-            max_level: skill.max_level,
-            cooldown: skill.cooldown,
-            description: skill.description,
-            icon: skill.icon,
-            effects: skill.effects as any,
-            updated_by: user!.id,
-          }).eq("id", skill.id!);
+        for (const row of toUpdate) {
+          const updatePayload: Record<string, any> = {};
+          childFields.forEach((f) => {
+            if (row[f.name] !== undefined) updatePayload[f.name] = row[f.name];
+          });
+          if (childFieldNames.has("updated_by") && user?.id) updatePayload.updated_by = user.id;
+          const { error } = await supabase.from(rel.childTable as any).update(updatePayload).eq("id", row.id);
           if (error) throw error;
         }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
-      if (isHuntersTable) {
-        queryClient.invalidateQueries({ queryKey: ["hunter-skills"] });
-      }
+      inlineChildRelations.forEach((rel) => {
+        queryClient.invalidateQueries({ queryKey: ["inline-children", rel.childTable] });
+      });
       manyToManyRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["multi-ref-junctions", rel.junctionTable] });
       });
