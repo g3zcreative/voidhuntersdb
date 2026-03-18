@@ -784,6 +784,7 @@ export default function AdminEntityEditor() {
         targetFields={getNodeFields((pendingConnection?.target || editingEdge?.target) ?? "")}
         initialSourceColumn={(editingEdge?.data as any)?.sourceColumn}
         initialTargetColumn={(editingEdge?.data as any)?.targetColumn}
+        initialInline={(editingEdge?.data as any)?.inline}
         onApply={handleEdgeConfigApply}
         onCancel={handleEdgeConfigCancel}
       />
