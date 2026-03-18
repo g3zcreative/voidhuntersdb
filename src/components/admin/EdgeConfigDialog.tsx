@@ -37,6 +37,7 @@ interface EdgeConfigDialogProps {
   targetFields: EntityField[];
   initialSourceColumn?: string;
   initialTargetColumn?: string;
+  initialInline?: boolean;
   onApply: (result: EdgeConfigResult) => void;
   onCancel: () => void;
 }
