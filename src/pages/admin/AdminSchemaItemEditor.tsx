@@ -506,21 +506,24 @@ export default function AdminSchemaItemEditor() {
     }
   }, [isNew, inlineChildrenInitialized, inlineChildRelations, loadedInlineChildren]);
 
-  // Load existing junction rows for multi-ref fields
-  const junctionQueries = manyToManyRelations.map((rel) =>
-    useQuery({
-      queryKey: ["multi-ref-junctions", rel.junctionTable, id],
-      enabled: !isNew && !!id,
-      queryFn: async () => {
+  // Load existing junction rows for multi-ref fields (single query, no hooks-in-loop)
+  const m2mKey = manyToManyRelations.map((r) => `${r.junctionTable}:${r.junctionFkToSelf}`).join(",");
+  const { data: junctionData, isLoading: junctionLoading } = useQuery({
+    queryKey: ["multi-ref-junctions-all", m2mKey, id],
+    enabled: !isNew && !!id && manyToManyRelations.length > 0,
+    queryFn: async () => {
+      const result: Array<{ relation: ManyToManyRelation; rows: Array<Record<string, any>> }> = [];
+      for (const rel of manyToManyRelations) {
         const { data, error } = await supabase
           .from(rel.junctionTable as any)
           .select("*")
           .eq(rel.junctionFkToSelf, id!);
         if (error) throw error;
-        return { relation: rel, rows: (data || []) as Array<Record<string, any>> };
-      },
-    })
-  );
+        result.push({ relation: rel, rows: (data || []) as Array<Record<string, any>> });
+      }
+      return result;
+    },
+  });
 
   // Initialize multi-ref selections from junction rows
   useEffect(() => {
@@ -532,20 +535,16 @@ export default function AdminSchemaItemEditor() {
       setMultiRefInitialized(true);
       return;
     }
-    // Wait for all junction queries to load
-    const allLoaded = junctionQueries.every((q) => !q.isLoading);
-    if (!allLoaded) return;
+    if (junctionLoading || !junctionData) return;
     const selections: Record<string, string[]> = {};
-    junctionQueries.forEach((q) => {
-      if (q.data) {
-        selections[q.data.relation.relatedTable] = q.data.rows.map(
-          (r) => r[q.data.relation.junctionFkToRelated] as string
-        );
-      }
+    junctionData.forEach((jd) => {
+      selections[jd.relation.relatedTable] = jd.rows.map(
+        (r) => r[jd.relation.junctionFkToRelated] as string
+      );
     });
     setMultiRefSelections(selections);
     setMultiRefInitialized(true);
-  }, [isNew, multiRefInitialized, manyToManyRelations, junctionQueries]);
+  }, [isNew, multiRefInitialized, manyToManyRelations, junctionLoading, junctionData]);
 
   useEffect(() => {
     if (existingItem && !initialized) {
