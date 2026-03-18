@@ -431,34 +431,44 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
-  // Load existing skills for hunters
-  const { data: existingSkills } = useQuery({
-    queryKey: ["hunter-skills", id],
-    enabled: !isNew && isHuntersTable && !!id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("skills")
-        .select("*")
-        .eq("hunter_id", id!)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return (data || []) as Array<Record<string, any>>;
-    },
-  });
+  // Load existing inline children
+  const inlineChildQueries = inlineChildRelations.map((rel) =>
+    useQuery({
+      queryKey: ["inline-children", rel.childTable, id],
+      enabled: !isNew && !!id,
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from(rel.childTable as any)
+          .select("*")
+          .eq(rel.fkColumn, id!)
+          .order("sort_order", { ascending: true });
+        if (error) throw error;
+        return { childTable: rel.childTable, rows: (data || []) as Array<Record<string, any>> };
+      },
+    })
+  );
 
-  // Initialize inline skills from loaded data
+  // Initialize inline children from loaded data
   useEffect(() => {
-    if (!isHuntersTable || skillsInitialized) return;
+    if (inlineChildrenInitialized || inlineChildRelations.length === 0) return;
     if (isNew) {
-      setInlineSkills([]);
-      setSkillsInitialized(true);
+      const defaults: Record<string, InlineChildRow[]> = {};
+      inlineChildRelations.forEach((rel) => { defaults[rel.childTable] = []; });
+      setInlineChildren(defaults);
+      setInlineChildrenInitialized(true);
       return;
     }
-    if (existingSkills) {
-      setInlineSkills(existingSkills.map(existingToInlineSkill));
-      setSkillsInitialized(true);
-    }
-  }, [isHuntersTable, isNew, skillsInitialized, existingSkills]);
+    const allLoaded = inlineChildQueries.every((q) => !q.isLoading);
+    if (!allLoaded) return;
+    const children: Record<string, InlineChildRow[]> = {};
+    inlineChildQueries.forEach((q) => {
+      if (q.data) {
+        children[q.data.childTable] = q.data.rows.map(existingToRow);
+      }
+    });
+    setInlineChildren(children);
+    setInlineChildrenInitialized(true);
+  }, [isNew, inlineChildrenInitialized, inlineChildRelations, inlineChildQueries]);
 
   // Load existing junction rows for multi-ref fields
   const junctionQueries = manyToManyRelations.map((rel) =>
