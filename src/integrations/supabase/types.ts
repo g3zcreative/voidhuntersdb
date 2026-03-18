@@ -419,6 +419,7 @@ export type Database = {
           name: string
           power: number | null
           rarity: number | null
+          skill_id: string | null
           slug: string
           speed: number | null
           subtitle: string | null
@@ -440,6 +441,7 @@ export type Database = {
           name: string
           power?: number | null
           rarity?: number | null
+          skill_id?: string | null
           slug: string
           speed?: number | null
           subtitle?: string | null
@@ -461,6 +463,7 @@ export type Database = {
           name?: string
           power?: number | null
           rarity?: number | null
+          skill_id?: string | null
           slug?: string
           speed?: number | null
           subtitle?: string | null
@@ -468,7 +471,15 @@ export type Database = {
           updated_at?: string
           updated_by?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_hunters_skill_id"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news_articles: {
         Row: {
