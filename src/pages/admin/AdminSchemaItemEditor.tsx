@@ -8,6 +8,7 @@ import {
   fieldTypeToInputType,
   type SchemaField,
   type ManyToManyRelation,
+  type InlineChildRelation,
 } from "@/hooks/useSchemaRegistry";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
@@ -28,11 +29,11 @@ import { Save, Upload, Loader2, X } from "lucide-react";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
 import { MultiRefField } from "@/components/admin/MultiRefField";
 import {
-  InlineSkillsEditor,
-  type InlineSkill,
-  createEmptySkill,
-  existingToInlineSkill,
-} from "@/components/admin/InlineSkillsEditor";
+  InlineChildEditor,
+  type InlineChildRow,
+  createEmptyRow,
+  existingToRow,
+} from "@/components/admin/InlineChildEditor";
 
 function slugify(text: string): string {
   return text
