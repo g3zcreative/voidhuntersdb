@@ -358,7 +358,7 @@ export default function AdminSchemaItemEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, getManyToMany, getForeignKeys, loading: registryLoading } = useSchemaRegistry();
+  const { getTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
   const { isAdmin, isContributor } = useAdmin();
@@ -370,10 +370,9 @@ export default function AdminSchemaItemEditor() {
   const [multiRefSelections, setMultiRefSelections] = useState<Record<string, string[]>>({});
   const [multiRefInitialized, setMultiRefInitialized] = useState(false);
 
-  // Inline skills state (only used when tableName === "hunters")
-  const [inlineSkills, setInlineSkills] = useState<InlineSkill[]>([]);
-  const [skillsInitialized, setSkillsInitialized] = useState(false);
-  const isHuntersTable = tableName === "hunters";
+  // Generic inline children state: { [childTable]: InlineChildRow[] }
+  const [inlineChildren, setInlineChildren] = useState<Record<string, InlineChildRow[]>>({});
+  const [inlineChildrenInitialized, setInlineChildrenInitialized] = useState(false);
 
   const isNew = id === "new";
   const table = tableName ? getTable(tableName) : undefined;
