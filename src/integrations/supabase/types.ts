@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      awakenings: {
+        Row: {
+          awakening_level: number | null
+          created_at: string
+          effect: string | null
+          id: string
+          skill_id: string
+          updated_at: string
+        }
+        Insert: {
+          awakening_level?: number | null
+          created_at?: string
+          effect?: string | null
+          id?: string
+          skill_id: string
+          updated_at?: string
+        }
+        Update: {
+          awakening_level?: number | null
+          created_at?: string
+          effect?: string | null
+          id?: string
+          skill_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       boss_skills: {
         Row: {
           boss_id: string | null
@@ -773,6 +800,7 @@ export type Database = {
       }
       skills: {
         Row: {
+          awakening_id: string | null
           cooldown: number | null
           created_at: string
           created_by: string
@@ -790,6 +818,7 @@ export type Database = {
           updated_by: string
         }
         Insert: {
+          awakening_id?: string | null
           cooldown?: number | null
           created_at?: string
           created_by: string
@@ -807,6 +836,7 @@ export type Database = {
           updated_by: string
         }
         Update: {
+          awakening_id?: string | null
           cooldown?: number | null
           created_at?: string
           created_by?: string
@@ -823,7 +853,15 @@ export type Database = {
           updated_at?: string
           updated_by?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_skills_awakening_id"
+            columns: ["awakening_id"]
+            isOneToOne: false
+            referencedRelation: "awakenings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stats: {
         Row: {
