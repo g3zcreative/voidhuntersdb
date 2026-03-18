@@ -284,8 +284,12 @@ function FieldInput({
   onChange: (val: any) => void;
   fkMap?: Map<string, string>;
 }) {
-  // Image URL fields get upload support
-  if (field.name === "image_url" || field.name.endsWith("_image_url") || field.name === "icon") {
+  // Image URL fields get upload support — match any field with image/icon/avatar/logo/thumbnail in the name
+  const lowerName = field.name.toLowerCase();
+  const isImageField = ["image", "icon", "avatar", "logo", "thumbnail", "banner", "cover", "photo"].some(
+    (kw) => lowerName.includes(kw)
+  );
+  if (isImageField) {
     return <ImageUploadField value={value} onChange={onChange} />;
   }
 
