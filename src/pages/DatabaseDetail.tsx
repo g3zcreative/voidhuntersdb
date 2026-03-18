@@ -228,7 +228,7 @@ function HunterDetailView({
               <Swords className="h-5 w-5 text-primary" />
               Skills
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 items-stretch">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
               {skills.map((skill) => (
                 <div key={skill.id} className="flex">
                   <SkillInfoBox skill={skill as any} />
