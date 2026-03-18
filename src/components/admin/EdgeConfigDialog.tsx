@@ -24,6 +24,7 @@ export interface EdgeConfigResult {
   sourceColumn: string;
   targetColumn: string;
   autoCreatedColumn?: string; // set when user chose auto-create
+  inline?: boolean; // show child rows inline on parent form
 }
 
 interface EdgeConfigDialogProps {
