@@ -228,7 +228,7 @@ function HunterDetailView({
               <Swords className="h-5 w-5 text-primary" />
               Skills
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 items-stretch">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
               {skills.map((skill) => (
                 <div key={skill.id} className="flex">
                   <SkillInfoBox skill={skill as any} />
@@ -507,7 +507,7 @@ export default function DatabaseDetail() {
         url={`/database/${tableName}/${slug}`}
       />
 
-      <div className="container max-w-4xl py-8">
+      <div className="container py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
