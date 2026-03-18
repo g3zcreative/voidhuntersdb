@@ -99,16 +99,21 @@ export default function AdminSchemaData() {
 
   // Set header breadcrumbs and actions
   useEffect(() => {
-    if (!table) return;
-    setBreadcrumbs([{ label: displayLabel }]);
+    if (!table || !tableName) {
+      setBreadcrumbs([]);
+      setActions(null);
+      return;
+    }
+    const label = formatTableLabel(table.label);
+    setBreadcrumbs([{ label }]);
     setActions(
       <Button size="sm" onClick={() => navigate(`/admin/data/${tableName}/new`)}>
         <Plus className="h-4 w-4 mr-2" />
-        New {displayLabel.replace(/s$/, "")}
+        New {label.replace(/s$/, "")}
       </Button>
     );
     return () => { setBreadcrumbs([]); setActions(null); };
-  }, [table, displayLabel, tableName]);
+  }, [table, tableName, navigate, setBreadcrumbs, setActions]);
 
   if (registryLoading) {
     return <div className="p-6 space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>;
