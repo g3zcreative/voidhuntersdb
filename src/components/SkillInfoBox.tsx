@@ -1,11 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { EffectHighlightedText } from "@/components/EffectHighlightedText";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SkillEffect {
   [key: string]: any;
 }
 
 interface SkillData {
+  id?: string;
   name: string;
   description?: string | null;
   icon?: string | null;
