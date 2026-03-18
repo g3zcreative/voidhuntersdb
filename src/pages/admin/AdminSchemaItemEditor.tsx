@@ -792,12 +792,19 @@ export default function AdminSchemaItemEditor() {
         </div>
       )}
 
-      {/* Inline Skills Editor (hunters only) */}
-      {isHuntersTable && (
-        <div className="mt-8">
-          <InlineSkillsEditor skills={inlineSkills} onChange={setInlineSkills} />
+      {/* Inline Child Editors (schema-driven) */}
+      {inlineChildRelations.map((rel) => (
+        <div key={rel.childTable} className="mt-8">
+          <InlineChildEditor
+            relation={rel}
+            parentId={isNew ? null : id!}
+            rows={inlineChildren[rel.childTable] || []}
+            onChange={(rows) =>
+              setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
+            }
+          />
         </div>
-      )}
+      ))}
 
       {/* Read-only metadata for existing items */}
       {!isNew && existingItem && (
