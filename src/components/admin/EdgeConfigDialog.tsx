@@ -51,6 +51,7 @@ export function EdgeConfigDialog({
   targetFields,
   initialSourceColumn,
   initialTargetColumn,
+  initialInline,
   onApply,
   onCancel,
 }: EdgeConfigDialogProps) {
@@ -62,13 +63,15 @@ export function EdgeConfigDialog({
   const [targetColumn, setTargetColumn] = useState(
     initialTargetColumn || "id"
   );
+  const [inline, setInline] = useState(initialInline ?? false);
 
   useEffect(() => {
     if (open) {
       setSourceColumn(initialSourceColumn || AUTO_CREATE);
       setTargetColumn(initialTargetColumn || "id");
+      setInline(initialInline ?? false);
     }
-  }, [open, initialSourceColumn, initialTargetColumn]);
+  }, [open, initialSourceColumn, initialTargetColumn, initialInline]);
 
   const uuidSourceFields = useMemo(
     () => sourceFields.filter((f) => f.type === "uuid" && !f.isPrimaryKey),
@@ -86,9 +89,10 @@ export function EdgeConfigDialog({
         sourceColumn: autoName,
         targetColumn,
         autoCreatedColumn: autoName,
+        inline,
       });
     } else {
-      onApply({ sourceColumn, targetColumn });
+      onApply({ sourceColumn, targetColumn, inline });
     }
   };
 
