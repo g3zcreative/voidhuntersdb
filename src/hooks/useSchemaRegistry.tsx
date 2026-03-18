@@ -28,6 +28,13 @@ export interface ManyToManyRelation {
   junctionFkToRelated: string; // e.g. "tag_id"
 }
 
+/** Describes a one-to-many inline child relationship */
+export interface InlineChildRelation {
+  childTable: string;
+  childNodeId: string;
+  fkColumn: string; // column on child table pointing to parent
+}
+
 export interface SchemaDefinition {
   id: string;
   name: string;
@@ -206,6 +213,30 @@ export function useSchemaRegistry(deployedOnly = true) {
     return isJunctionTable(table, outEdges);
   };
 
+  /** Get inline child tables for a given parent table (edges marked inline=true pointing to this table) */
+  const getInlineChildren = (tableName: string): InlineChildRelation[] => {
+    const table = getTable(tableName);
+    if (!table) return [];
+    const schema = getSchemaForTable(tableName);
+    if (!schema) return [];
+
+    // Find edges where target is this table AND inline flag is set
+    return schema.edges
+      .filter((e) => e.target === table.nodeId && e.data?.inline === true)
+      .map((edge) => {
+        const childTable = schema.tables.find((t) => t.nodeId === edge.source);
+        if (!childTable) return null;
+        const fkColumn = edge.data?.sourceColumn || edge.label || null;
+        if (!fkColumn || fkColumn === "FK") return null;
+        return {
+          childTable: childTable.name,
+          childNodeId: childTable.nodeId,
+          fkColumn,
+        };
+      })
+      .filter(Boolean) as InlineChildRelation[];
+  };
+
   return {
     schemas: query.data || [],
     tables: allTables,
@@ -213,6 +244,7 @@ export function useSchemaRegistry(deployedOnly = true) {
     getSchemaForTable,
     getManyToMany,
     getForeignKeys,
+    getInlineChildren,
     isJunction,
     loading: query.isLoading,
     refetch: query.refetch,

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { EntityField } from "@/components/admin/EntityNode";
 
 const AUTO_CREATE = "__auto_create__";
@@ -24,6 +25,7 @@ export interface EdgeConfigResult {
   sourceColumn: string;
   targetColumn: string;
   autoCreatedColumn?: string; // set when user chose auto-create
+  inline?: boolean; // show child rows inline on parent form
 }
 
 interface EdgeConfigDialogProps {
@@ -35,6 +37,7 @@ interface EdgeConfigDialogProps {
   targetFields: EntityField[];
   initialSourceColumn?: string;
   initialTargetColumn?: string;
+  initialInline?: boolean;
   onApply: (result: EdgeConfigResult) => void;
   onCancel: () => void;
 }
@@ -48,6 +51,7 @@ export function EdgeConfigDialog({
   targetFields,
   initialSourceColumn,
   initialTargetColumn,
+  initialInline,
   onApply,
   onCancel,
 }: EdgeConfigDialogProps) {
@@ -59,13 +63,15 @@ export function EdgeConfigDialog({
   const [targetColumn, setTargetColumn] = useState(
     initialTargetColumn || "id"
   );
+  const [inline, setInline] = useState(initialInline ?? false);
 
   useEffect(() => {
     if (open) {
       setSourceColumn(initialSourceColumn || AUTO_CREATE);
       setTargetColumn(initialTargetColumn || "id");
+      setInline(initialInline ?? false);
     }
-  }, [open, initialSourceColumn, initialTargetColumn]);
+  }, [open, initialSourceColumn, initialTargetColumn, initialInline]);
 
   const uuidSourceFields = useMemo(
     () => sourceFields.filter((f) => f.type === "uuid" && !f.isPrimaryKey),
@@ -83,9 +89,10 @@ export function EdgeConfigDialog({
         sourceColumn: autoName,
         targetColumn,
         autoCreatedColumn: autoName,
+        inline,
       });
     } else {
-      onApply({ sourceColumn, targetColumn });
+      onApply({ sourceColumn, targetColumn, inline });
     }
   };
 
@@ -142,6 +149,20 @@ export function EdgeConfigDialog({
                 )}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2 border-t border-border">
+            <Checkbox
+              id="inline-toggle"
+              checked={inline}
+              onCheckedChange={(checked) => setInline(!!checked)}
+            />
+            <Label htmlFor="inline-toggle" className="text-sm font-normal cursor-pointer">
+              Show inline on parent form
+            </Label>
+            <span className="text-xs text-muted-foreground ml-auto">
+              Edit child rows directly on the {targetTableName} edit page
+            </span>
           </div>
         </div>
 

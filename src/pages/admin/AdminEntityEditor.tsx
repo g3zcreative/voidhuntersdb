@@ -326,6 +326,7 @@ export default function AdminEntityEditor() {
       const edgeData = {
         sourceColumn: result.sourceColumn,
         targetColumn: result.targetColumn,
+        inline: result.inline ?? false,
       };
 
       if (editingEdge) {
@@ -783,6 +784,7 @@ export default function AdminEntityEditor() {
         targetFields={getNodeFields((pendingConnection?.target || editingEdge?.target) ?? "")}
         initialSourceColumn={(editingEdge?.data as any)?.sourceColumn}
         initialTargetColumn={(editingEdge?.data as any)?.targetColumn}
+        initialInline={(editingEdge?.data as any)?.inline}
         onApply={handleEdgeConfigApply}
         onCancel={handleEdgeConfigCancel}
       />
