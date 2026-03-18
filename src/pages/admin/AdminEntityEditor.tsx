@@ -326,6 +326,7 @@ export default function AdminEntityEditor() {
       const edgeData = {
         sourceColumn: result.sourceColumn,
         targetColumn: result.targetColumn,
+        inline: result.inline ?? false,
       };
 
       if (editingEdge) {
