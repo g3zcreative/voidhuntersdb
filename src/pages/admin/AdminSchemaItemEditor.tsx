@@ -431,26 +431,33 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
-  // Load existing inline children
-  const inlineChildQueries = inlineChildRelations.map((rel) =>
-    useQuery({
-      queryKey: ["inline-children", rel.childTable, id],
-      enabled: !isNew && !!id,
-      queryFn: async () => {
+  // Load existing inline children (single combined query)
+  const inlineChildRelationsKey = inlineChildRelations.map((r) => `${r.childTable}:${r.fkColumn}`).join(",");
+  const { data: loadedInlineChildren } = useQuery({
+    queryKey: ["inline-children-all", tableName, id, inlineChildRelationsKey],
+    enabled: !isNew && !!id && inlineChildRelations.length > 0,
+    queryFn: async () => {
+      const result: Record<string, Array<Record<string, any>>> = {};
+      for (const rel of inlineChildRelations) {
         const { data, error } = await supabase
           .from(rel.childTable as any)
           .select("*")
           .eq(rel.fkColumn, id!)
           .order("sort_order", { ascending: true });
         if (error) throw error;
-        return { childTable: rel.childTable, rows: (data || []) as Array<Record<string, any>> };
-      },
-    })
-  );
+        result[rel.childTable] = (data || []) as Array<Record<string, any>>;
+      }
+      return result;
+    },
+  });
 
   // Initialize inline children from loaded data
   useEffect(() => {
-    if (inlineChildrenInitialized || inlineChildRelations.length === 0) return;
+    if (inlineChildrenInitialized) return;
+    if (inlineChildRelations.length === 0) {
+      setInlineChildrenInitialized(true);
+      return;
+    }
     if (isNew) {
       const defaults: Record<string, InlineChildRow[]> = {};
       inlineChildRelations.forEach((rel) => { defaults[rel.childTable] = []; });
@@ -458,17 +465,15 @@ export default function AdminSchemaItemEditor() {
       setInlineChildrenInitialized(true);
       return;
     }
-    const allLoaded = inlineChildQueries.every((q) => !q.isLoading);
-    if (!allLoaded) return;
-    const children: Record<string, InlineChildRow[]> = {};
-    inlineChildQueries.forEach((q) => {
-      if (q.data) {
-        children[q.data.childTable] = q.data.rows.map(existingToRow);
+    if (loadedInlineChildren) {
+      const children: Record<string, InlineChildRow[]> = {};
+      for (const [childTable, rows] of Object.entries(loadedInlineChildren)) {
+        children[childTable] = rows.map(existingToRow);
       }
-    });
-    setInlineChildren(children);
-    setInlineChildrenInitialized(true);
-  }, [isNew, inlineChildrenInitialized, inlineChildRelations, inlineChildQueries]);
+      setInlineChildren(children);
+      setInlineChildrenInitialized(true);
+    }
+  }, [isNew, inlineChildrenInitialized, inlineChildRelations, loadedInlineChildren]);
 
   // Load existing junction rows for multi-ref fields
   const junctionQueries = manyToManyRelations.map((rel) =>
