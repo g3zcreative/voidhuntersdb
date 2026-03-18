@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { EntityField } from "@/components/admin/EntityNode";
 
 const AUTO_CREATE = "__auto_create__";
