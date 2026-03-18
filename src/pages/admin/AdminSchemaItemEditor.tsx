@@ -8,11 +8,13 @@ import {
   fieldTypeToInputType,
   type SchemaField,
   type ManyToManyRelation,
+  type InlineChildRelation,
 } from "@/hooks/useSchemaRegistry";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { formatTableLabel } from "@/lib/format-label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,11 +29,11 @@ import { Save, Upload, Loader2, X } from "lucide-react";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
 import { MultiRefField } from "@/components/admin/MultiRefField";
 import {
-  InlineSkillsEditor,
-  type InlineSkill,
-  createEmptySkill,
-  existingToInlineSkill,
-} from "@/components/admin/InlineSkillsEditor";
+  InlineChildEditor,
+  type InlineChildRow,
+  createEmptyRow,
+  existingToRow,
+} from "@/components/admin/InlineChildEditor";
 
 function slugify(text: string): string {
   return text
@@ -42,19 +44,7 @@ function slugify(text: string): string {
     .trim();
 }
 
-/** Detect if a field is a foreign key by name pattern (e.g. role_id → roles table) */
-function getFkTable(fieldName: string): string | null {
-  if (!fieldName.endsWith("_id")) return null;
-  const base = fieldName.slice(0, -3);
-  // Handle common English pluralization
-  if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith("z")) {
-    return base + "es";
-  }
-  if (base.endsWith("y") && !["a","e","i","o","u"].includes(base[base.length - 2])) {
-    return base.slice(0, -1) + "ies";
-  }
-  return base + "s";
-}
+// getFkTable heuristic removed — FK lookups now driven by edge metadata via useSchemaRegistry.getForeignKeys
 
 function FkSelect({
   field,
@@ -288,18 +278,24 @@ function FieldInput({
   field,
   value,
   onChange,
+  fkMap,
 }: {
   field: SchemaField;
   value: any;
   onChange: (val: any) => void;
+  fkMap?: Map<string, string>;
 }) {
-  // Image URL fields get upload support
-  if (field.name === "image_url" || field.name.endsWith("_image_url") || field.name === "icon") {
+  // Image URL fields get upload support — match any field with image/icon/avatar/logo/thumbnail in the name
+  const lowerName = field.name.toLowerCase();
+  const isImageField = ["image", "icon", "avatar", "logo", "thumbnail", "banner", "cover", "photo"].some(
+    (kw) => lowerName.includes(kw)
+  );
+  if (isImageField) {
     return <ImageUploadField value={value} onChange={onChange} />;
   }
 
-  // Check if this is a FK field
-  const fkTable = getFkTable(field.name);
+  // Check if this is a FK field via edge metadata
+  const fkTable = fkMap?.get(field.name);
   if (fkTable && field.type.toLowerCase() === "uuid") {
     return (
       <FkSelect
@@ -362,7 +358,7 @@ export default function AdminSchemaItemEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
+  const { getTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
   const { isAdmin, isContributor } = useAdmin();
@@ -374,16 +370,28 @@ export default function AdminSchemaItemEditor() {
   const [multiRefSelections, setMultiRefSelections] = useState<Record<string, string[]>>({});
   const [multiRefInitialized, setMultiRefInitialized] = useState(false);
 
-  // Inline skills state (only used when tableName === "hunters")
-  const [inlineSkills, setInlineSkills] = useState<InlineSkill[]>([]);
-  const [skillsInitialized, setSkillsInitialized] = useState(false);
-  const isHuntersTable = tableName === "hunters";
+  // Generic inline children state: { [childTable]: InlineChildRow[] }
+  const [inlineChildren, setInlineChildren] = useState<Record<string, InlineChildRow[]>>({});
+  const [inlineChildrenInitialized, setInlineChildrenInitialized] = useState(false);
 
   const isNew = id === "new";
   const table = tableName ? getTable(tableName) : undefined;
   const manyToManyRelations = useMemo(
-    () => (tableName ? getManyToMany(tableName) : []),
+    () => (tableName ? getManyToMany(tableName).filter((r) => r && r.relatedTable && r.junctionTable) : []),
     [tableName, getManyToMany]
+  );
+
+  // Build FK map from edge metadata: fieldName → referencedTable
+  const fkMap = useMemo(() => {
+    if (!tableName) return new Map<string, string>();
+    const fks = getForeignKeys(tableName);
+    return new Map(fks.map((fk) => [fk.column, fk.referencedTable]));
+  }, [tableName, getForeignKeys]);
+
+  // Inline children from edge metadata
+  const inlineChildRelations = useMemo(
+    () => (tableName ? getInlineChildren(tableName) : []),
+    [tableName, getInlineChildren]
   );
 
   // Fields that are managed by multi-ref should be hidden from the regular form
@@ -423,50 +431,99 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
-  // Load existing skills for hunters
-  const { data: existingSkills } = useQuery({
-    queryKey: ["hunter-skills", id],
-    enabled: !isNew && isHuntersTable && !!id,
+  // Load existing inline children (single combined query)
+  const inlineChildRelationsKey = inlineChildRelations.map((r) => `${r.childTable}:${r.fkColumn}`).join(",");
+  const { data: loadedInlineChildren } = useQuery({
+    queryKey: ["inline-children-all", tableName, id, inlineChildRelationsKey],
+    enabled: !isNew && !!id && inlineChildRelations.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("skills")
-        .select("*")
-        .eq("hunter_id", id!)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return (data || []) as Array<Record<string, any>>;
+      const result: Record<string, Array<Record<string, any>>> = {};
+
+      // Recursive helper to load nested inline children
+      const loadChildren = async (
+        relations: InlineChildRelation[],
+        parentId: string
+      ) => {
+        for (const rel of relations) {
+          const { data, error } = await supabase
+            .from(rel.childTable as any)
+            .select("*")
+            .eq(rel.fkColumn, parentId)
+            .order("sort_order", { ascending: true });
+          if (error) throw error;
+          const rows = (data || []) as Array<Record<string, any>>;
+
+          // Check for nested inline children of this child table
+          const nestedRels = getInlineChildren(rel.childTable);
+          if (nestedRels.length > 0) {
+            for (const row of rows) {
+              for (const nestedRel of nestedRels) {
+                const { data: nestedData, error: nestedErr } = await supabase
+                  .from(nestedRel.childTable as any)
+                  .select("*")
+                  .eq(nestedRel.fkColumn, row.id)
+                  .order("created_at", { ascending: true });
+                if (nestedErr) throw nestedErr;
+                row[`_children_${nestedRel.childTable}`] = (nestedData || []).map((r: any) => ({
+                  ...r,
+                  _key: r.id || String(Math.random()),
+                  _status: "existing",
+                }));
+              }
+            }
+          }
+
+          result[rel.childTable] = rows;
+        }
+      };
+
+      await loadChildren(inlineChildRelations, id!);
+      return result;
     },
   });
 
-  // Initialize inline skills from loaded data
+  // Initialize inline children from loaded data
   useEffect(() => {
-    if (!isHuntersTable || skillsInitialized) return;
-    if (isNew) {
-      setInlineSkills([]);
-      setSkillsInitialized(true);
+    if (inlineChildrenInitialized) return;
+    if (inlineChildRelations.length === 0) {
+      setInlineChildrenInitialized(true);
       return;
     }
-    if (existingSkills) {
-      setInlineSkills(existingSkills.map(existingToInlineSkill));
-      setSkillsInitialized(true);
+    if (isNew) {
+      const defaults: Record<string, InlineChildRow[]> = {};
+      inlineChildRelations.forEach((rel) => { defaults[rel.childTable] = []; });
+      setInlineChildren(defaults);
+      setInlineChildrenInitialized(true);
+      return;
     }
-  }, [isHuntersTable, isNew, skillsInitialized, existingSkills]);
+    if (loadedInlineChildren) {
+      const children: Record<string, InlineChildRow[]> = {};
+      for (const [childTable, rows] of Object.entries(loadedInlineChildren)) {
+        children[childTable] = rows.map(existingToRow);
+      }
+      setInlineChildren(children);
+      setInlineChildrenInitialized(true);
+    }
+  }, [isNew, inlineChildrenInitialized, inlineChildRelations, loadedInlineChildren]);
 
-  // Load existing junction rows for multi-ref fields
-  const junctionQueries = manyToManyRelations.map((rel) =>
-    useQuery({
-      queryKey: ["multi-ref-junctions", rel.junctionTable, id],
-      enabled: !isNew && !!id,
-      queryFn: async () => {
+  // Load existing junction rows for multi-ref fields (single query, no hooks-in-loop)
+  const m2mKey = manyToManyRelations.map((r) => `${r.junctionTable}:${r.junctionFkToSelf}`).join(",");
+  const { data: junctionData, isLoading: junctionLoading } = useQuery({
+    queryKey: ["multi-ref-junctions-all", m2mKey, id],
+    enabled: !isNew && !!id && manyToManyRelations.length > 0,
+    queryFn: async () => {
+      const result: Array<{ relation: ManyToManyRelation; rows: Array<Record<string, any>> }> = [];
+      for (const rel of manyToManyRelations) {
         const { data, error } = await supabase
           .from(rel.junctionTable as any)
           .select("*")
           .eq(rel.junctionFkToSelf, id!);
         if (error) throw error;
-        return { relation: rel, rows: (data || []) as Array<Record<string, any>> };
-      },
-    })
-  );
+        result.push({ relation: rel, rows: (data || []) as Array<Record<string, any>> });
+      }
+      return result;
+    },
+  });
 
   // Initialize multi-ref selections from junction rows
   useEffect(() => {
@@ -478,20 +535,16 @@ export default function AdminSchemaItemEditor() {
       setMultiRefInitialized(true);
       return;
     }
-    // Wait for all junction queries to load
-    const allLoaded = junctionQueries.every((q) => !q.isLoading);
-    if (!allLoaded) return;
+    if (junctionLoading || !junctionData) return;
     const selections: Record<string, string[]> = {};
-    junctionQueries.forEach((q) => {
-      if (q.data) {
-        selections[q.data.relation.relatedTable] = q.data.rows.map(
-          (r) => r[q.data.relation.junctionFkToRelated] as string
-        );
-      }
+    junctionData.forEach((jd) => {
+      selections[jd.relation.relatedTable] = jd.rows.map(
+        (r) => r[jd.relation.junctionFkToRelated] as string
+      );
     });
     setMultiRefSelections(selections);
     setMultiRefInitialized(true);
-  }, [isNew, multiRefInitialized, manyToManyRelations, junctionQueries]);
+  }, [isNew, multiRefInitialized, manyToManyRelations, junctionLoading, junctionData]);
 
   useEffect(() => {
     if (existingItem && !initialized) {
@@ -531,19 +584,20 @@ export default function AdminSchemaItemEditor() {
         }
       });
 
-      // Auto-set audit columns if user is logged in
+      // Auto-set audit columns only if the table has them
+      const fieldNames = new Set((table?.fields || []).map((f) => f.name));
       if (user?.id) {
-        payload.updated_by = user.id;
-        if (isNew) payload.created_by = user.id;
+        if (fieldNames.has("updated_by")) payload.updated_by = user.id;
+        if (isNew && fieldNames.has("created_by")) payload.created_by = user.id;
       }
 
       // ── Contributor path: save to contributions table ──
       if (isContributorOnly) {
         const contributionPayload = { ...payload };
 
-        // Bundle inline skills
-        if (isHuntersTable) {
-          contributionPayload._inline_skills = inlineSkills;
+        // Bundle inline children
+        if (inlineChildRelations.length > 0) {
+          contributionPayload._inline_children = inlineChildren;
         }
 
         // Bundle multi-ref selections
@@ -586,57 +640,95 @@ export default function AdminSchemaItemEditor() {
         if (error) throw error;
       }
 
-      // Save inline skills (hunters only)
-      if (isHuntersTable && itemId) {
-        const toDeleteSkills = inlineSkills.filter((s) => s._status === "deleted" && s.id);
-        const toInsertSkills = inlineSkills.filter((s) => s._status === "new" && s.name.trim());
-        const toUpdateSkills = inlineSkills.filter((s) => s._status === "existing" && s.id);
+      // Save inline children (generic) — recursive helper
+      const saveInlineChildren = async (
+        relations: InlineChildRelation[],
+        childrenMap: Record<string, InlineChildRow[]>,
+        parentItemId: string
+      ) => {
+        for (const rel of relations) {
+          const childRows = childrenMap[rel.childTable] || [];
+          if (!parentItemId) continue;
 
-        for (const skill of toDeleteSkills) {
-          const { error } = await supabase.from("skills").delete().eq("id", skill.id!);
-          if (error) throw error;
-        }
+          const toDelete = childRows.filter((r) => r._status === "deleted" && r.id);
+          const toInsert = childRows.filter((r) => r._status === "new");
+          const toUpdate = childRows.filter((r) => r._status === "existing" && r.id);
 
-        for (const skill of toInsertSkills) {
-          const { error } = await supabase.from("skills").insert({
-            hunter_id: itemId,
-            name: skill.name,
-            slug: skill.slug || slugify(skill.name),
-            type: skill.type,
-            sort_order: skill.sort_order,
-            max_level: skill.max_level,
-            cooldown: skill.cooldown,
-            description: skill.description,
-            icon: skill.icon,
-            effects: skill.effects as any,
-            created_by: user!.id,
-            updated_by: user!.id,
-          });
-          if (error) throw error;
-        }
+          const childTable = getTable(rel.childTable);
+          const childFields = (childTable?.fields || []).filter(
+            (f) => !isAutoField(f) && f.name !== rel.fkColumn && f.name !== "created_by" && f.name !== "updated_by"
+          );
+          const childFieldNames = new Set((childTable?.fields || []).map((f) => f.name));
 
-        for (const skill of toUpdateSkills) {
-          const { error } = await supabase.from("skills").update({
-            name: skill.name,
-            slug: skill.slug,
-            type: skill.type,
-            sort_order: skill.sort_order,
-            max_level: skill.max_level,
-            cooldown: skill.cooldown,
-            description: skill.description,
-            icon: skill.icon,
-            effects: skill.effects as any,
-            updated_by: user!.id,
-          }).eq("id", skill.id!);
-          if (error) throw error;
+          // Find nested inline relations for this child table
+          const nestedRels = getInlineChildren(rel.childTable);
+
+          for (const row of toDelete) {
+            const { error } = await supabase.from(rel.childTable as any).delete().eq("id", row.id);
+            if (error) throw error;
+          }
+
+          for (const row of toInsert) {
+            const insertPayload: Record<string, any> = { [rel.fkColumn]: parentItemId };
+            childFields.forEach((f) => {
+              if (row[f.name] !== undefined) insertPayload[f.name] = row[f.name];
+            });
+            if (childFieldNames.has("created_by") && user?.id) insertPayload.created_by = user.id;
+            if (childFieldNames.has("updated_by") && user?.id) insertPayload.updated_by = user.id;
+            if (childFieldNames.has("slug") && !insertPayload.slug && insertPayload.name) {
+              insertPayload.slug = slugify(String(insertPayload.name));
+            }
+            const { data: inserted, error } = await supabase
+              .from(rel.childTable as any)
+              .insert(insertPayload)
+              .select("id")
+              .single();
+            if (error) throw error;
+
+            // Save nested children for this newly inserted row
+            if (nestedRels.length > 0 && inserted) {
+              const nestedMap: Record<string, InlineChildRow[]> = {};
+              for (const nr of nestedRels) {
+                const nestedRows = (row[`_children_${nr.childTable}`] || []) as InlineChildRow[];
+                if (nestedRows.length > 0) nestedMap[nr.childTable] = nestedRows;
+              }
+              if (Object.keys(nestedMap).length > 0) {
+                await saveInlineChildren(nestedRels, nestedMap, (inserted as any).id);
+              }
+            }
+          }
+
+          for (const row of toUpdate) {
+            const updatePayload: Record<string, any> = {};
+            childFields.forEach((f) => {
+              if (row[f.name] !== undefined) updatePayload[f.name] = row[f.name];
+            });
+            if (childFieldNames.has("updated_by") && user?.id) updatePayload.updated_by = user.id;
+            const { error } = await supabase.from(rel.childTable as any).update(updatePayload).eq("id", row.id);
+            if (error) throw error;
+
+            // Save nested children for this existing row
+            if (nestedRels.length > 0 && row.id) {
+              const nestedMap: Record<string, InlineChildRow[]> = {};
+              for (const nr of nestedRels) {
+                const nestedRows = (row[`_children_${nr.childTable}`] || []) as InlineChildRow[];
+                if (nestedRows.length > 0) nestedMap[nr.childTable] = nestedRows;
+              }
+              if (Object.keys(nestedMap).length > 0) {
+                await saveInlineChildren(nestedRels, nestedMap, row.id);
+              }
+            }
+          }
         }
-      }
+      };
+
+      await saveInlineChildren(inlineChildRelations, inlineChildren, itemId!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
-      if (isHuntersTable) {
-        queryClient.invalidateQueries({ queryKey: ["hunter-skills"] });
-      }
+      inlineChildRelations.forEach((rel) => {
+        queryClient.invalidateQueries({ queryKey: ["inline-children", rel.childTable] });
+      });
       manyToManyRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["multi-ref-junctions", rel.junctionTable] });
       });
@@ -648,7 +740,7 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
-  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+  const displayLabel = table ? formatTableLabel(table.label) : "";
   const singularLabel = displayLabel.replace(/s$/, "");
 
   useEffect(() => {
@@ -706,6 +798,7 @@ export default function AdminSchemaItemEditor() {
                   field={field}
                   value={formData[field.name]}
                   onChange={(val) => updateField(field.name, val)}
+                  fkMap={fkMap}
                 />
                 {field.nullable && (
                   <p className="text-xs text-muted-foreground">Optional</p>
@@ -730,6 +823,7 @@ export default function AdminSchemaItemEditor() {
                   field={field}
                   value={formData[field.name]}
                   onChange={(val) => updateField(field.name, val)}
+                  fkMap={fkMap}
                 />
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground font-mono">{field.type}</span>
@@ -771,12 +865,19 @@ export default function AdminSchemaItemEditor() {
         </div>
       )}
 
-      {/* Inline Skills Editor (hunters only) */}
-      {isHuntersTable && (
-        <div className="mt-8">
-          <InlineSkillsEditor skills={inlineSkills} onChange={setInlineSkills} />
+      {/* Inline Child Editors (schema-driven) */}
+      {inlineChildRelations.map((rel) => (
+        <div key={rel.childTable} className="mt-8">
+          <InlineChildEditor
+            relation={rel}
+            parentId={isNew ? null : id!}
+            rows={inlineChildren[rel.childTable] || []}
+            onChange={(rows) =>
+              setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
+            }
+          />
         </div>
-      )}
+      ))}
 
       {/* Read-only metadata for existing items */}
       {!isNew && existingItem && (

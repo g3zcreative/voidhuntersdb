@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchemaRegistry, isAutoField } from "@/hooks/useSchemaRegistry";
+import { formatTableLabel } from "@/lib/format-label";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,12 @@ export default function AdminSchemaData() {
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Reset search when switching tables
+  useEffect(() => {
+    setSearch("");
+    setDeleteId(null);
+  }, [tableName]);
 
   const table = tableName ? getTable(tableName) : undefined;
 
@@ -88,20 +95,25 @@ export default function AdminSchemaData() {
     },
   });
 
-  const displayLabel = table ? table.label.charAt(0).toUpperCase() + table.label.slice(1) : "";
+  const displayLabel = table ? formatTableLabel(table.label) : "";
 
   // Set header breadcrumbs and actions
   useEffect(() => {
-    if (!table) return;
-    setBreadcrumbs([{ label: displayLabel }]);
+    if (!table || !tableName) {
+      setBreadcrumbs([]);
+      setActions(null);
+      return;
+    }
+    const label = formatTableLabel(table.label);
+    setBreadcrumbs([{ label }]);
     setActions(
       <Button size="sm" onClick={() => navigate(`/admin/data/${tableName}/new`)}>
         <Plus className="h-4 w-4 mr-2" />
-        New {displayLabel.replace(/s$/, "")}
+        New {label.replace(/s$/, "")}
       </Button>
     );
     return () => { setBreadcrumbs([]); setActions(null); };
-  }, [table, displayLabel, tableName]);
+  }, [table, tableName, navigate, setBreadcrumbs, setActions]);
 
   if (registryLoading) {
     return <div className="p-6 space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>;

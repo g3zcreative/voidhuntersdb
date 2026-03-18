@@ -44,6 +44,41 @@ export type Database = {
         }
         Relationships: []
       }
+      awakenings: {
+        Row: {
+          awakening_level: number | null
+          created_at: string
+          effect: string | null
+          id: string
+          skill_id: string
+          updated_at: string
+        }
+        Insert: {
+          awakening_level?: number | null
+          created_at?: string
+          effect?: string | null
+          id?: string
+          skill_id: string
+          updated_at?: string
+        }
+        Update: {
+          awakening_level?: number | null
+          created_at?: string
+          effect?: string | null
+          id?: string
+          skill_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_awakenings_skill_id"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boss_skills: {
         Row: {
           boss_id: string | null
@@ -311,6 +346,60 @@ export type Database = {
         }
         Relationships: []
       }
+      hunt_paths: {
+        Row: {
+          affected_stat: string | null
+          created_at: string
+          effect: string | null
+          id: string
+          level: number | null
+          name: string
+          required_trophy_id: string | null
+          required_trophy_qty: number | null
+          unlock_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          affected_stat?: string | null
+          created_at?: string
+          effect?: string | null
+          id?: string
+          level?: number | null
+          name: string
+          required_trophy_id?: string | null
+          required_trophy_qty?: number | null
+          unlock_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          affected_stat?: string | null
+          created_at?: string
+          effect?: string | null
+          id?: string
+          level?: number | null
+          name?: string
+          required_trophy_id?: string | null
+          required_trophy_qty?: number | null
+          unlock_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_hunt_paths_affected_stat"
+            columns: ["affected_stat"]
+            isOneToOne: false
+            referencedRelation: "stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_hunt_paths_required_trophy_id"
+            columns: ["required_trophy_id"]
+            isOneToOne: false
+            referencedRelation: "trophies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunter_tags: {
         Row: {
           created_at: string
@@ -365,6 +454,7 @@ export type Database = {
           name: string
           power: number | null
           rarity: number | null
+          skill_id: string | null
           slug: string
           speed: number | null
           subtitle: string | null
@@ -386,6 +476,7 @@ export type Database = {
           name: string
           power?: number | null
           rarity?: number | null
+          skill_id?: string | null
           slug: string
           speed?: number | null
           subtitle?: string | null
@@ -407,6 +498,7 @@ export type Database = {
           name?: string
           power?: number | null
           rarity?: number | null
+          skill_id?: string | null
           slug?: string
           speed?: number | null
           subtitle?: string | null
@@ -708,6 +800,7 @@ export type Database = {
       }
       skills: {
         Row: {
+          awakening_id: string | null
           cooldown: number | null
           created_at: string
           created_by: string
@@ -725,6 +818,7 @@ export type Database = {
           updated_by: string
         }
         Insert: {
+          awakening_id?: string | null
           cooldown?: number | null
           created_at?: string
           created_by: string
@@ -742,6 +836,7 @@ export type Database = {
           updated_by: string
         }
         Update: {
+          awakening_id?: string | null
           cooldown?: number | null
           created_at?: string
           created_by?: string
@@ -757,6 +852,41 @@ export type Database = {
           type?: string | null
           updated_at?: string
           updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_skills_hunter_id"
+            columns: ["hunter_id"]
+            isOneToOne: false
+            referencedRelation: "hunters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stats: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -790,6 +920,33 @@ export type Database = {
           slug?: string
           updated_at?: string
           updated_by?: string
+        }
+        Relationships: []
+      }
+      trophies: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          rarity: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          rarity?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          rarity?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

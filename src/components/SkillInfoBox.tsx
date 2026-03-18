@@ -1,11 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { EffectHighlightedText } from "@/components/EffectHighlightedText";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SkillEffect {
   [key: string]: any;
 }
 
 interface SkillData {
+  id?: string;
   name: string;
   description?: string | null;
   icon?: string | null;
@@ -22,6 +25,22 @@ interface SkillData {
  */
 export function SkillInfoBox({ skill }: { skill: SkillData }) {
   const maxLvl = skill.max_level ?? 5;
+
+  // Fetch awakenings for this skill
+  const { data: awakenings } = useQuery({
+    queryKey: ["skill-awakenings", skill.id],
+    enabled: !!skill.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("awakenings")
+        .select("*")
+        .eq("skill_id", skill.id!)
+        .order("awakening_level");
+      if (error) throw error;
+      return (data || []) as Array<{ id: string; awakening_level: number | null; effect: string | null }>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Parse effects object: expects keys like "lv2", "lv3" etc
   let levelEffects: { level: number; text: string }[] = [];
@@ -89,6 +108,25 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
                 <span className="text-muted-foreground shrink-0 w-8">Lv. {le.level}</span>
                 <span className="text-secondary-foreground">
                   <EffectHighlightedText text={le.text} />
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Awakening bonuses */}
+      {awakenings && awakenings.length > 0 && (
+        <>
+          <div className="mx-4 h-px bg-border" />
+          <div className="px-4 py-3 space-y-2">
+            {awakenings.map((awk) => (
+              <div key={awk.id} className="flex gap-2 text-xs leading-relaxed items-start">
+                <span className="shrink-0 text-[hsl(40,70%,50%)] tracking-tight" title={`Awakening ${awk.awakening_level ?? 1}`}>
+                  {"★".repeat(awk.awakening_level ?? 1)}
+                </span>
+                <span className="text-secondary-foreground">
+                  {awk.effect ? <EffectHighlightedText text={awk.effect} /> : "—"}
                 </span>
               </div>
             ))}

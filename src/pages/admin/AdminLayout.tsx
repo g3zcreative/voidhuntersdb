@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
+import { formatTableLabel } from "@/lib/format-label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +79,7 @@ function AdminSidebar() {
         return true;
       })
       .map((t) => ({
-        title: t.label.charAt(0).toUpperCase() + t.label.slice(1),
+        title: formatTableLabel(t.label),
         url: `/admin/data/${t.name}`,
         icon: Layers,
       }))
