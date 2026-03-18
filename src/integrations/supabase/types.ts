@@ -69,7 +69,15 @@ export type Database = {
           skill_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_awakenings_skill_id"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       boss_skills: {
         Row: {
@@ -498,15 +506,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_hunters_skill_id"
-            columns: ["skill_id"]
-            isOneToOne: false
-            referencedRelation: "skills"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       news_articles: {
         Row: {
@@ -855,10 +855,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_skills_awakening_id"
-            columns: ["awakening_id"]
+            foreignKeyName: "fk_skills_hunter_id"
+            columns: ["hunter_id"]
             isOneToOne: false
-            referencedRelation: "awakenings"
+            referencedRelation: "hunters"
             referencedColumns: ["id"]
           },
         ]
