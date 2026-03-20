@@ -52,8 +52,7 @@ export default function AdminSettings() {
     mutationFn: async ({ key, value }: { key: string; value: unknown }) => {
       const { error } = await supabase
         .from("site_settings")
-        .update({ value: value as any, updated_at: new Date().toISOString() })
-        .eq("key", key);
+        .upsert({ key, value: value as any, updated_at: new Date().toISOString() }, { onConflict: "key" });
       if (error) throw error;
     },
     onSuccess: (_, { key }) => {
