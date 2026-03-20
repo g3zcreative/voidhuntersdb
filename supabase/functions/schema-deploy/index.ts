@@ -190,7 +190,7 @@ function generateDiffSQL(req: DeployRequest): string[] {
       continue;
 
     statements.push(
-      `ALTER TABLE public.${fk.sourceTable} ADD CONSTRAINT ${name} FOREIGN KEY (${fk.sourceColumn}) REFERENCES public.${fk.targetTable}(${fk.targetColumn});`
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name='${name}') THEN ALTER TABLE public.${fk.sourceTable} ADD CONSTRAINT ${name} FOREIGN KEY (${fk.sourceColumn}) REFERENCES public.${fk.targetTable}(${fk.targetColumn}); END IF; END $$;`
     );
   }
 
