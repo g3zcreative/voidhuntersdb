@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Settings, ToggleLeft, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Settings, ToggleLeft, Save, Gamepad2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface FeatureFlags {
@@ -36,9 +37,16 @@ export default function AdminSettings() {
   const { data: flagsData, isLoading: flagsLoading } = useSiteSettings<FeatureFlags>("feature_flags");
   const [flags, setFlags] = useState<FeatureFlags>({ guides: false, tools: false, database: false, community: true });
 
+  const { data: patchData, isLoading: patchLoading } = useSiteSettings<string>("current_patch");
+  const [currentPatch, setCurrentPatch] = useState("");
+
   useEffect(() => {
     if (flagsData) setFlags(flagsData);
   }, [flagsData]);
+
+  useEffect(() => {
+    if (patchData) setCurrentPatch(patchData);
+  }, [patchData]);
 
   const saveMutation = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: unknown }) => {
@@ -71,9 +79,43 @@ export default function AdminSettings() {
           <Settings className="h-6 w-6" /> Platform Settings
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage feature visibility
+          Manage feature visibility and game info
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Gamepad2 className="h-5 w-5" /> Game Info
+          </CardTitle>
+          <CardDescription>
+            Current game version displayed across the site.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {patchLoading ? (
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          ) : (
+            <div className="flex items-end gap-3">
+              <div className="flex-1 space-y-1.5">
+                <label className="text-sm font-medium">Current Patch</label>
+                <Input
+                  value={currentPatch}
+                  onChange={(e) => setCurrentPatch(e.target.value)}
+                  placeholder="e.g. 1.2.0"
+                />
+              </div>
+              <Button
+                onClick={() => saveMutation.mutate({ key: "current_patch", value: currentPatch })}
+                disabled={saveMutation.isPending}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
