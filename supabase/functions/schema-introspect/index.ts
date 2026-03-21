@@ -32,7 +32,6 @@ Deno.serve(async (req) => {
   // Check for includeSystem query param
   const url = new URL(req.url);
   const includeSystem = url.searchParams.get("includeSystem") === "true";
-  }
 
   try {
     const authHeader = req.headers.get("Authorization");
