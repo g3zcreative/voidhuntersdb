@@ -377,7 +377,7 @@ export default function AdminSchemaItemEditor() {
   const [inlineChildrenInitialized, setInlineChildrenInitialized] = useState(false);
 
   const isNew = id === "new";
-  const table = tableName ? getTable(tableName) : undefined;
+  const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
   const manyToManyRelations = useMemo(
     () => (tableName ? getManyToMany(tableName).filter((r) => r && r.relatedTable && r.junctionTable) : []),
     [tableName, getManyToMany]
