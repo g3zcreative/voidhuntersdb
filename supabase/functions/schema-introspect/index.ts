@@ -29,6 +29,10 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Check for includeSystem query param
+  const url = new URL(req.url);
+  const includeSystem = url.searchParams.get("includeSystem") === "true";
+
   try {
     const authHeader = req.headers.get("Authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -152,7 +156,7 @@ Deno.serve(async (req) => {
       const tableMap: Record<string, any> = {};
       for (const t of dbTables) {
         const name = t.table_name;
-        if (SYSTEM_TABLES.has(name)) continue;
+        if (!includeSystem && SYSTEM_TABLES.has(name)) continue;
         tableMap[name] = {
           name,
           rlsEnabled: rlsMap.get(name) ?? false,

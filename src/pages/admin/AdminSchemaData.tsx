@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchemaRegistry, isAutoField } from "@/hooks/useSchemaRegistry";
+import { useSystemTables } from "@/hooks/useSystemTables";
 import { formatTableLabel } from "@/lib/format-label";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +27,8 @@ export default function AdminSchemaData() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getRegistryTable, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getSystemTable, loading: systemLoading } = useSystemTables();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -37,7 +39,8 @@ export default function AdminSchemaData() {
     setDeleteId(null);
   }, [tableName]);
 
-  const table = tableName ? getTable(tableName) : undefined;
+  const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
+  const isSystemTable = tableName ? !getRegistryTable(tableName) && !!getSystemTable(tableName) : false;
 
   const visibleFields = table?.fields.filter((f) => !isAutoField(f)) || [];
   const allTableColumns = table?.fields.filter((f) => {
@@ -115,7 +118,7 @@ export default function AdminSchemaData() {
     return () => { setBreadcrumbs([]); setActions(null); };
   }, [table, tableName, navigate, setBreadcrumbs, setActions]);
 
-  if (registryLoading) {
+  if (registryLoading || systemLoading) {
     return <div className="p-6 space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>;
   }
 

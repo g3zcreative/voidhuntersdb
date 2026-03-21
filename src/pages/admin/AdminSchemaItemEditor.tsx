@@ -10,6 +10,7 @@ import {
   type ManyToManyRelation,
   type InlineChildRelation,
 } from "@/hooks/useSchemaRegistry";
+import { useSystemTables } from "@/hooks/useSystemTables";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -358,7 +359,8 @@ export default function AdminSchemaItemEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getRegistryTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getSystemTable, loading: systemLoading } = useSystemTables();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
   const { isAdmin, isContributor } = useAdmin();
@@ -375,7 +377,7 @@ export default function AdminSchemaItemEditor() {
   const [inlineChildrenInitialized, setInlineChildrenInitialized] = useState(false);
 
   const isNew = id === "new";
-  const table = tableName ? getTable(tableName) : undefined;
+  const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
   const manyToManyRelations = useMemo(
     () => (tableName ? getManyToMany(tableName).filter((r) => r && r.relatedTable && r.junctionTable) : []),
     [tableName, getManyToMany]
@@ -654,7 +656,7 @@ export default function AdminSchemaItemEditor() {
           const toInsert = childRows.filter((r) => r._status === "new");
           const toUpdate = childRows.filter((r) => r._status === "existing" && r.id);
 
-          const childTable = getTable(rel.childTable);
+          const childTable = getRegistryTable(rel.childTable) || getSystemTable(rel.childTable);
           const childFields = (childTable?.fields || []).filter(
             (f) => !isAutoField(f) && f.name !== rel.fkColumn && f.name !== "created_by" && f.name !== "updated_by"
           );

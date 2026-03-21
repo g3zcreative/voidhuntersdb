@@ -13,7 +13,7 @@ import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
   Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
-  ChevronRight, Clock, GitPullRequest,
+  ChevronRight, Clock, GitPullRequest, Server,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
@@ -45,6 +45,24 @@ const platformItems = [
   { title: "Settings", url: "/admin/settings", icon: Settings },
   { title: "Entity Editor", url: "/admin/entity-editor", icon: Database },
   { title: "Docs", url: "/admin/docs", icon: FileQuestion },
+];
+
+const systemTableItems = [
+  { title: "Profiles", url: "/admin/data/profiles", icon: Server },
+  { title: "User Roles", url: "/admin/data/user_roles", icon: Server },
+  { title: "Site Settings", url: "/admin/data/site_settings", icon: Server },
+  { title: "Entity Definitions", url: "/admin/data/entity_definitions", icon: Server },
+  { title: "Contributions", url: "/admin/data/contributions", icon: Server },
+  { title: "SEO Templates", url: "/admin/data/seo_templates", icon: Server },
+  { title: "Site Changelog", url: "/admin/data/site_changelog", icon: Server },
+  { title: "Roadmap Items", url: "/admin/data/roadmap_items", icon: Server },
+  { title: "Feedback", url: "/admin/data/feedback", icon: Server },
+  { title: "Page Views", url: "/admin/data/page_views", icon: Server },
+  { title: "News Articles", url: "/admin/data/news_articles", icon: Server },
+  { title: "News Comments", url: "/admin/data/news_comments", icon: Server },
+  { title: "Official Posts", url: "/admin/data/official_posts", icon: Server },
+  { title: "Guides", url: "/admin/data/guides", icon: Server },
+  { title: "Authors", url: "/admin/data/authors", icon: Server },
 ];
 
 function AdminSidebar() {
@@ -94,6 +112,26 @@ function AdminSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {collectionItems.map((item) => (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.url} className="hover:bg-muted/50" activeClassName="bg-muted text-primary font-medium">
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+        {/* System tables — admin only */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {systemTableItems.map((item) => (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className="hover:bg-muted/50" activeClassName="bg-muted text-primary font-medium">
