@@ -10,6 +10,7 @@ import {
   type ManyToManyRelation,
   type InlineChildRelation,
 } from "@/hooks/useSchemaRegistry";
+import { useSystemTables } from "@/hooks/useSystemTables";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
