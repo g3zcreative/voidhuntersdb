@@ -1,28 +1,57 @@
-# Dynamic Schema-Driven CMS
 
-## Status: Phase 1 Complete ✅ | Community Contributions ✅ | Edge Config ✅
 
-### Implemented
-1. **DB migration** — `deployed` (boolean) and `public_slug` (text) columns added to `entity_definitions`
-2. **`useSchemaRegistry` hook** — fetches deployed schemas, parses nodes into table/field definitions, maps DB types to input types
-3. **`AdminSchemaData`** — dynamic list page at `/admin/data/:tableName` with search, delete, row-click navigation
-4. **`AdminSchemaItemEditor`** — full-page Webflow-inspired editor at `/admin/data/:tableName/:id` with auto-slug, grouped fields, metadata display
-5. **Routes wired** in `App.tsx` — `/admin/data/:tableName` and `/admin/data/:tableName/:id`
-6. **Dynamic "Collections" sidebar group** in `AdminLayout.tsx` — populated from deployed schemas
-7. **Deploy button** in Entity Editor toolbar — toggles `deployed` flag
-8. **Contributor role** — community members can add/edit game data via admin Collections
-9. **Storage policy** — contributors can upload to `images` bucket
-10. **Junction table DELETE** — contributors can manage many-to-many relationships (hunter_tags)
-11. **Audit columns** — `created_by` and `updated_by` on all game tables, auto-populated on save
-12. **Contribution review system** — contributors save to `contributions` table; admins review at `/admin/contributions`
-13. **Edge Configuration Dialog** — drawing/clicking edges opens a dialog to pick source/target FK columns with auto-create option
-14. **Contributor RLS on deploy** — schema-deploy now generates contributor INSERT/UPDATE policies alongside admin + public-read
+## Plan: Enable Admin CRUD on System Tables
 
-### Phase 2 (Future)
-- Public pages: `/database/:tableName`, `/database/:tableName/:slug`
-- FK fields rendered as searchable select dropdowns
-- Image upload fields
-- Markdown editor fields
-- Batch operations on list page
-- Contributor activity log / "My Submissions" page
-- Email notifications on approval/rejection
+### Problem
+System tables (`profiles`, `user_roles`, `site_settings`, `feedback`, `page_views`, etc.) are excluded from both the schema introspect function and the schema registry, so they never appear in the admin sidebar or CRUD pages.
+
+### Approach
+
+**1. Update `schema-introspect` edge function**
+- Add an optional `includeSystem=true` query parameter
+- When set, skip the `SYSTEM_TABLES` filter so all public tables are returned
+
+**2. Create a `useSystemTables` hook**
+- Calls `schema-introspect` with `includeSystem=true`
+- Returns table metadata (columns, types, PKs) for system tables only (the ones NOT in the schema registry)
+- Provides the same `getTable()` interface as `useSchemaRegistry`
+
+**3. Update `AdminSchemaData` page**
+- When `getTable(tableName)` from the schema registry returns nothing, fall back to `useSystemTables().getTable(tableName)`
+- Same search, column visibility, delete, and navigation logic applies
+
+**4. Update `AdminSchemaItemEditor` page**
+- Same fallback: if schema registry has no metadata for the table, use system table metadata
+- FK lookups and M2M relations won't apply to most system tables (they have simpler schemas)
+
+**5. Add "System" sidebar group in `AdminLayout`**
+- New sidebar section (admin-only) listing system tables: `profiles`, `user_roles`, `site_settings`, `feedback`, `page_views`, `entity_definitions`, `contributions`, `seo_templates`, `site_changelog`, `roadmap_items`
+- Uses the same `/admin/data/:tableName` route
+- Displayed below "Collections" and above "Content"
+
+### Technical Details
+
+```text
+schema-introspect
+  ├── ?includeSystem=true  →  returns ALL public tables
+  └── default              →  filters out SYSTEM_TABLES (unchanged)
+
+AdminSchemaData / AdminSchemaItemEditor
+  ├── Try useSchemaRegistry.getTable(name)
+  └── Fallback: useSystemTables.getTable(name)
+
+AdminLayout sidebar
+  ├── Collections (game tables from schema registry)
+  ├── System (hardcoded list of platform tables)  ← NEW
+  ├── Content
+  ├── Insights
+  └── Platform
+```
+
+### Files Modified
+- `supabase/functions/schema-introspect/index.ts` — optional system table inclusion
+- `src/hooks/useSystemTables.tsx` — new hook
+- `src/pages/admin/AdminSchemaData.tsx` — fallback to system table metadata
+- `src/pages/admin/AdminSchemaItemEditor.tsx` — same fallback
+- `src/pages/admin/AdminLayout.tsx` — add System sidebar group
+
