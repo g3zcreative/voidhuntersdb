@@ -656,7 +656,7 @@ export default function AdminSchemaItemEditor() {
           const toInsert = childRows.filter((r) => r._status === "new");
           const toUpdate = childRows.filter((r) => r._status === "existing" && r.id);
 
-          const childTable = getTable(rel.childTable);
+          const childTable = getRegistryTable(rel.childTable) || getSystemTable(rel.childTable);
           const childFields = (childTable?.fields || []).filter(
             (f) => !isAutoField(f) && f.name !== rel.fkColumn && f.name !== "created_by" && f.name !== "updated_by"
           );
