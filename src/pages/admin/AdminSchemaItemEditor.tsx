@@ -359,7 +359,8 @@ export default function AdminSchemaItemEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getRegistryTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getSystemTable, loading: systemLoading } = useSystemTables();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
   const { isAdmin, isContributor } = useAdmin();
