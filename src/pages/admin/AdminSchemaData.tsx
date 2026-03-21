@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchemaRegistry, isAutoField } from "@/hooks/useSchemaRegistry";
+import { useSystemTables } from "@/hooks/useSystemTables";
 import { formatTableLabel } from "@/lib/format-label";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
