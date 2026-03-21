@@ -13,7 +13,7 @@ import { NavLink } from "@/components/NavLink";
 import {
   Newspaper, BookOpen, MessageSquare, FileText, Map, LogOut, MessageCircle, BarChart3,
   Users, Settings, FileQuestion, ExternalLink, PenTool, Search, Database, Layers,
-  ChevronRight, Clock, GitPullRequest,
+  ChevronRight, Clock, GitPullRequest, Server,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchemaRegistry } from "@/hooks/useSchemaRegistry";
