@@ -39,7 +39,8 @@ export default function AdminSchemaData() {
     setDeleteId(null);
   }, [tableName]);
 
-  const table = tableName ? getTable(tableName) : undefined;
+  const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
+  const isSystemTable = tableName ? !getRegistryTable(tableName) && !!getSystemTable(tableName) : false;
 
   const visibleFields = table?.fields.filter((f) => !isAutoField(f)) || [];
   const allTableColumns = table?.fields.filter((f) => {
