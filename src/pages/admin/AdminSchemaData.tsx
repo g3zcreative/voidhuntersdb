@@ -27,7 +27,8 @@ export default function AdminSchemaData() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getRegistryTable, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getSystemTable, loading: systemLoading } = useSystemTables();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
