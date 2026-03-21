@@ -47,6 +47,24 @@ const platformItems = [
   { title: "Docs", url: "/admin/docs", icon: FileQuestion },
 ];
 
+const systemTableItems = [
+  { title: "Profiles", url: "/admin/data/profiles", icon: Server },
+  { title: "User Roles", url: "/admin/data/user_roles", icon: Server },
+  { title: "Site Settings", url: "/admin/data/site_settings", icon: Server },
+  { title: "Entity Definitions", url: "/admin/data/entity_definitions", icon: Server },
+  { title: "Contributions", url: "/admin/data/contributions", icon: Server },
+  { title: "SEO Templates", url: "/admin/data/seo_templates", icon: Server },
+  { title: "Site Changelog", url: "/admin/data/site_changelog", icon: Server },
+  { title: "Roadmap Items", url: "/admin/data/roadmap_items", icon: Server },
+  { title: "Feedback", url: "/admin/data/feedback", icon: Server },
+  { title: "Page Views", url: "/admin/data/page_views", icon: Server },
+  { title: "News Articles", url: "/admin/data/news_articles", icon: Server },
+  { title: "News Comments", url: "/admin/data/news_comments", icon: Server },
+  { title: "Official Posts", url: "/admin/data/official_posts", icon: Server },
+  { title: "Guides", url: "/admin/data/guides", icon: Server },
+  { title: "Authors", url: "/admin/data/authors", icon: Server },
+];
+
 function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
