@@ -118,7 +118,7 @@ export default function AdminSchemaData() {
     return () => { setBreadcrumbs([]); setActions(null); };
   }, [table, tableName, navigate, setBreadcrumbs, setActions]);
 
-  if (registryLoading) {
+  if (registryLoading || systemLoading) {
     return <div className="p-6 space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>;
   }
 

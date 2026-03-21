@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       const tableMap: Record<string, any> = {};
       for (const t of dbTables) {
         const name = t.table_name;
-        if (SYSTEM_TABLES.has(name)) continue;
+        if (!includeSystem && SYSTEM_TABLES.has(name)) continue;
         tableMap[name] = {
           name,
           rlsEnabled: rlsMap.get(name) ?? false,
