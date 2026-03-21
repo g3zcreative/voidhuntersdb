@@ -29,6 +29,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Check for includeSystem query param
+  const url = new URL(req.url);
+  const includeSystem = url.searchParams.get("includeSystem") === "true";
+  }
+
   try {
     const authHeader = req.headers.get("Authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
