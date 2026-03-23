@@ -403,9 +403,25 @@ export default function DatabaseList() {
                     </div>
                   )}
                   <CardContent className="p-3 flex flex-col gap-1 flex-1">
-                    <span className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                      {item.name || item.title || "Unnamed"}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-sm leading-snug text-white line-clamp-1">
+                        {item.name || item.title || "Unnamed"}
+                      </span>
+                      {item.rarity != null && (() => {
+                        const rarityMap: Record<number, { label: string; color: string }> = {
+                          3: { label: "Rare", color: "#1E90FF" },
+                          4: { label: "Epic", color: "#9b59b6" },
+                          5: { label: "Legendary", color: "#FFD700" },
+                        };
+                        const r = rarityMap[item.rarity];
+                        if (!r) return null;
+                        return (
+                          <span className="text-xs font-medium shrink-0" style={{ color: r.color }}>
+                            {r.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
                     {item.subtitle && (
                       <span className="text-xs text-muted-foreground line-clamp-1">{item.subtitle}</span>
                     )}
@@ -420,11 +436,6 @@ export default function DatabaseList() {
                           </Badge>
                         );
                       })}
-                      {item.rarity != null && (
-                        <Badge variant="outline" className="text-xs font-normal">
-                          ★{item.rarity}
-                        </Badge>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
