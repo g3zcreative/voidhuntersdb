@@ -323,6 +323,67 @@ export default function TierList() {
             })}
           </div>
         )}
+
+        {/* Changelog */}
+        {changelog.length > 0 && (
+          <div className="space-y-3 pt-4 border-t border-border">
+            <h2 className="text-xl font-display font-bold flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              Recent Changes
+            </h2>
+            <div className="space-y-2">
+              {changelog.map((log: any) => {
+                const tierChanged = log.old_tier && log.new_tier && log.old_tier !== log.new_tier;
+                const scoreUp = log.old_score !== null && log.new_score > log.old_score;
+                const scoreDown = log.old_score !== null && log.new_score < log.old_score;
+                const isNew = !log.old_tier && !log.old_score;
+
+                return (
+                  <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
+                    <div className="mt-0.5">
+                      {isNew ? (
+                        <Badge variant="outline" className="text-xs">NEW</Badge>
+                      ) : scoreUp ? (
+                        <ArrowUp className="h-4 w-4 text-green-400" />
+                      ) : scoreDown ? (
+                        <ArrowDown className="h-4 w-4 text-red-400" />
+                      ) : (
+                        <Minus className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <button
+                          onClick={() => navigate(`/database/hunters/${log.hunters?.slug || log.hunter_id}`)}
+                          className="font-semibold text-foreground hover:text-primary transition-colors"
+                        >
+                          {log.hunters?.name || "Unknown Hunter"}
+                        </button>
+                        {isNew ? (
+                          <span className="text-muted-foreground">added at <Badge variant="secondary" className="text-xs">{log.new_tier}</Badge></span>
+                        ) : tierChanged ? (
+                          <span className="text-muted-foreground">
+                            <Badge variant="secondary" className="text-xs">{log.old_tier}</Badge>
+                            {" → "}
+                            <Badge variant="secondary" className="text-xs">{log.new_tier}</Badge>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">score adjusted ({log.old_score} → {log.new_score})</span>
+                        )}
+                      </div>
+                      {log.note && (
+                        <p className="text-xs text-muted-foreground mt-1 italic">"{log.note}"</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {format(new Date(log.changed_at), "MMM d")}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
