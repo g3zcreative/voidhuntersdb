@@ -8,6 +8,8 @@ export interface SchemaField {
   nullable: boolean;
   isPrimaryKey: boolean;
   defaultValue: string;
+  uiWidget?: "text" | "textarea" | "select";
+  uiOptions?: string[];
 }
 
 export interface SchemaTable {

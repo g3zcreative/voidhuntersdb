@@ -1,11 +1,13 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, GripVertical, Key, Globe } from "lucide-react";
+import { Plus, Trash2, GripVertical, Key, Globe, Settings2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 
 export interface EntityField {
   id: string;
@@ -14,6 +16,8 @@ export interface EntityField {
   nullable: boolean;
   isPrimaryKey: boolean;
   defaultValue: string;
+  uiWidget?: "text" | "textarea" | "select";
+  uiOptions?: string[];
 }
 
 export interface EntityNodeData {
@@ -34,6 +38,68 @@ const FIELD_TYPES = [
   "uuid", "text", "integer", "bigint", "numeric", "boolean",
   "jsonb", "timestamptz", "date", "timestamp",
 ];
+
+function FieldSettingsPopover({
+  field,
+  onUpdate,
+}: {
+  field: EntityField;
+  onUpdate: (updates: Partial<EntityField>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const widget = field.uiWidget || "";
+  const optionsStr = (field.uiOptions || []).join(", ");
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-5 w-5 opacity-0 group-hover:opacity-100 ${widget ? "text-primary opacity-100" : "text-muted-foreground"}`}
+          title="Field settings"
+        >
+          <Settings2 className="h-3 w-3" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-3" side="right" align="start">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Widget</Label>
+          <Select
+            value={widget || "auto"}
+            onValueChange={(v) => {
+              const newWidget = v === "auto" ? undefined : (v as EntityField["uiWidget"]);
+              onUpdate({ uiWidget: newWidget, uiOptions: newWidget === "select" ? field.uiOptions || [] : undefined });
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto" className="text-xs">Auto (from type)</SelectItem>
+              <SelectItem value="select" className="text-xs">Select (dropdown)</SelectItem>
+              <SelectItem value="textarea" className="text-xs">Textarea</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {(widget === "select" || (!widget && false)) && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Options (comma-separated)</Label>
+            <Input
+              value={optionsStr}
+              onChange={(e) => {
+                const opts = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                onUpdate({ uiOptions: opts });
+              }}
+              placeholder="Option1, Option2, ..."
+              className="h-7 text-xs"
+            />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function EntityNodeComponent({ id, data, selected }: NodeProps) {
   const {
@@ -145,6 +211,10 @@ function EntityNodeComponent({ id, data, selected }: NodeProps) {
               />
               <span className="text-muted-foreground text-[10px]">N</span>
             </div>
+            <FieldSettingsPopover
+              field={field}
+              onUpdate={(updates) => onUpdateField(id, field.id, updates)}
+            />
             <Button
               variant="ghost"
               size="icon"

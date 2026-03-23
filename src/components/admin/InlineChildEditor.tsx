@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,6 +167,36 @@ function InlineFieldInput({
   value: any;
   onChange: (val: any) => void;
 }) {
+  // uiWidget overrides — select
+  if (field.uiWidget === "select" && field.uiOptions && field.uiOptions.length > 0) {
+    return (
+      <Select value={value || ""} onValueChange={(v) => onChange(v === "__none__" ? null : v)}>
+        <SelectTrigger className="h-8 text-xs">
+          <SelectValue placeholder={`Select...`} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__" className="text-xs">
+            <span className="text-muted-foreground">None</span>
+          </SelectItem>
+          {field.uiOptions.map((opt) => (
+            <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  // uiWidget overrides — textarea
+  if (field.uiWidget === "textarea") {
+    return (
+      <Textarea
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="min-h-[60px]"
+      />
+    );
+  }
+
   const lowerName = field.name.toLowerCase();
   const isImageField = ["image", "icon", "avatar", "logo", "thumbnail", "banner", "cover", "photo"].some(
     (kw) => lowerName.includes(kw)
