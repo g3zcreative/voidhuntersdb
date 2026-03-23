@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { FeedbackWidget } from "./components/FeedbackWidget";
@@ -55,11 +54,6 @@ function PageViewTracker() {
 }
 
 function AppRoutes() {
-  const { flags } = useFeatureFlags();
-
-  const comingSoon = (title: string, desc: string) => (
-    <ComingSoonPage title={title} description={desc} />
-  );
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
@@ -69,8 +63,8 @@ function AppRoutes() {
         <Route path="/news/:slug" element={<NewsDetail />} />
 
         {/* Guides */}
-        <Route path="/guides" element={flags.guides ? <GuidesPage /> : comingSoon("Guides", "Community guides and strategies are being prepared.")} />
-        <Route path="/guides/:slug" element={flags.guides ? <GuideDetail /> : comingSoon("Guides", "Community guides and strategies are being prepared.")} />
+        <Route path="/guides" element={<GuidesPage />} />
+        <Route path="/guides/:slug" element={<GuideDetail />} />
 
 
         {/* Official Posts */}
