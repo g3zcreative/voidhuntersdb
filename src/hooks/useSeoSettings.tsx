@@ -7,7 +7,7 @@ export interface SeoSettings {
 const defaults: SeoSettings = {
   siteTitle: "VoidHuntersDB.com",
   metaDescription: "The premier source for all things Void Hunters, the upcoming hero collector RPG by Artifex Mundi. News, guides, database, and more.",
-  ogImage: "https://voidhuntersdb.lovable.app/og-image.jpg",
+  ogImage: "https://voidhuntersdb.lovable.app/og-image.png",
 };
 
 export function useSeoSettings() {
