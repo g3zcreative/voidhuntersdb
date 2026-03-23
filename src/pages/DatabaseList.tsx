@@ -28,13 +28,11 @@ function fkTableName(fieldName: string) {
   return base + "s";
 }
 
-/** Optimize image URLs for thumbnails */
+/** Optimize image URLs for thumbnails via Supabase render endpoint */
 function thumbnailUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  // Supabase storage URLs support ?width= transform
-  if (url.includes("/storage/v1/object/")) {
-    const separator = url.includes("?") ? "&" : "?";
-    return `${url}${separator}width=400`;
+  if (url.includes("/storage/v1/object/public/")) {
+    return url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") + "?width=400&resize=contain";
   }
   return url;
 }
