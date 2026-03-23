@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { HunterPortrait } from "@/components/HunterPortrait";
-import { ROLES, ROLE_ICONS, TIER_COLORS, TIER_BG, TIER_BANNER, RARITY_LABELS, TIERS } from "@/lib/tier-list-constants";
+import { ROLES, ROLE_ICONS, TIER_BG, TIER_BANNER, RARITY_LABELS, TIERS } from "@/lib/tier-list-constants";
 import { Search, ArrowLeft, Globe, Lock, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,12 +26,6 @@ export default function TierListEditor() {
   const [rarityFilter, setRarityFilter] = useState<number | null>(null);
   const [selectedTier, setSelectedTier] = useState<string>("T0");
   const [selectedRole, setSelectedRole] = useState<string>("DPS");
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  if (!authLoading && !user) {
-    navigate("/auth");
-    return null;
-  }
 
   // Load tier list metadata
   const { data: tierList, isLoading: loadingList } = useQuery({
@@ -142,6 +135,12 @@ export default function TierListEditor() {
 
   const isLoading = loadingList || loadingEntries;
 
+  // Auth redirect
+  if (!authLoading && !user) {
+    navigate("/auth");
+    return null;
+  }
+
   if (isLoading) {
     return (
       <Layout>
@@ -219,7 +218,7 @@ export default function TierListEditor() {
               </button>
             ))}
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             {ROLES.map((r) => (
               <button
                 key={r}
