@@ -16,53 +16,55 @@ interface FeatureFlags {
   community: boolean;
 }
 
-function useSiteSettings<T>(key: string) {
-  return useQuery({
-    queryKey: ["site-settings", key],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", key)
-        .maybeSingle();
-      if (error) throw error;
-      return (data?.value ?? null) as T | null;
-    },
-  });
-}
-
 export default function AdminSettings() {
   const queryClient = useQueryClient();
 
-  const { data: flagsData, isLoading: flagsLoading } = useSiteSettings<FeatureFlags>("feature_flags");
-  const [flags, setFlags] = useState<FeatureFlags>({ guides: false, tools: false, database: false, community: true });
+  // Load current_patch from the actual site_settings table (single-row)
+  const { data: settingsRow, isLoading: patchLoading } = useQuery({
+    queryKey: ["site-settings-row"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("id, current_patch")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const { data: patchData, isLoading: patchLoading } = useSiteSettings<string>("current_patch");
   const [currentPatch, setCurrentPatch] = useState("");
 
   useEffect(() => {
-    if (flagsData) setFlags(flagsData);
-  }, [flagsData]);
+    if (settingsRow?.current_patch) setCurrentPatch(settingsRow.current_patch);
+  }, [settingsRow]);
 
-  useEffect(() => {
-    if (patchData) setCurrentPatch(patchData);
-  }, [patchData]);
-
-  const saveMutation = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: unknown }) => {
-      const { error } = await supabase
-        .from("site_settings")
-        .upsert({ key, value: value as any, updated_at: new Date().toISOString() }, { onConflict: "key" });
-      if (error) throw error;
+  const savePatchMutation = useMutation({
+    mutationFn: async (patch: string) => {
+      if (settingsRow?.id) {
+        const { error } = await supabase
+          .from("site_settings")
+          .update({ current_patch: patch })
+          .eq("id", settingsRow.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("site_settings")
+          .insert({ current_patch: patch });
+        if (error) throw error;
+      }
     },
-    onSuccess: (_, { key }) => {
-      queryClient.invalidateQueries({ queryKey: ["site-settings", key] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["site-settings-row"] });
       toast.success("Settings saved");
     },
     onError: (err: Error) => {
       toast.error(err.message);
     },
   });
+
+  // Feature flags — static for now until storage is added
+  const [flags, setFlags] = useState<FeatureFlags>({ guides: true, tools: false, database: false, community: true });
 
   const featureFlagDescriptions: Record<keyof FeatureFlags, string> = {
     guides: "Community guides and strategies section",
@@ -105,8 +107,8 @@ export default function AdminSettings() {
                 />
               </div>
               <Button
-                onClick={() => saveMutation.mutate({ key: "current_patch", value: currentPatch })}
-                disabled={saveMutation.isPending}
+                onClick={() => savePatchMutation.mutate(currentPatch)}
+                disabled={savePatchMutation.isPending}
               >
                 <Save className="mr-2 h-4 w-4" />
                 Save
@@ -126,40 +128,28 @@ export default function AdminSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          {flagsLoading ? (
-            <p className="text-sm text-muted-foreground">Loading...</p>
-          ) : (
-            <>
-              {(Object.keys(flags) as (keyof FeatureFlags)[]).map((key, i, arr) => (
-                <div key={key}>
-                  <div className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="font-medium capitalize">{key}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {featureFlagDescriptions[key]}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={flags[key]}
-                      onCheckedChange={(checked) =>
-                        setFlags({ ...flags, [key]: checked })
-                      }
-                    />
-                  </div>
-                  {i < arr.length - 1 && <Separator />}
+          {(Object.keys(flags) as (keyof FeatureFlags)[]).map((key, i, arr) => (
+            <div key={key}>
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-medium capitalize">{key}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {featureFlagDescriptions[key]}
+                  </p>
                 </div>
-              ))}
-              <div className="pt-4">
-                <Button
-                  onClick={() => saveMutation.mutate({ key: "feature_flags", value: flags })}
-                  disabled={saveMutation.isPending}
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  {saveMutation.isPending ? "Saving..." : "Save Feature Flags"}
-                </Button>
+                <Switch
+                  checked={flags[key]}
+                  onCheckedChange={(checked) =>
+                    setFlags({ ...flags, [key]: checked })
+                  }
+                />
               </div>
-            </>
-          )}
+              {i < arr.length - 1 && <Separator />}
+            </div>
+          ))}
+          <div className="pt-4 text-xs text-muted-foreground">
+            Feature flag persistence coming soon — changes are session-only for now.
+          </div>
         </CardContent>
       </Card>
     </div>
