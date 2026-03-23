@@ -460,6 +460,63 @@ export type Database = {
           },
         ]
       }
+      hunter_tier_entries: {
+        Row: {
+          context_id: string
+          created_at: string
+          criteria_scores: Json
+          hunter_id: string
+          id: string
+          role: string
+          tags: string[] | null
+          tier: string | null
+          tier_override: string | null
+          total_score: number
+          updated_at: string
+        }
+        Insert: {
+          context_id: string
+          created_at?: string
+          criteria_scores?: Json
+          hunter_id: string
+          id?: string
+          role?: string
+          tags?: string[] | null
+          tier?: string | null
+          tier_override?: string | null
+          total_score?: number
+          updated_at?: string
+        }
+        Update: {
+          context_id?: string
+          created_at?: string
+          criteria_scores?: Json
+          hunter_id?: string
+          id?: string
+          role?: string
+          tags?: string[] | null
+          tier?: string | null
+          tier_override?: string | null
+          total_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hunter_tier_entries_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "tier_list_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hunter_tier_entries_hunter_id_fkey"
+            columns: ["hunter_id"]
+            isOneToOne: false
+            referencedRelation: "hunters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunters: {
         Row: {
           attack: number | null
@@ -947,6 +1004,93 @@ export type Database = {
           slug?: string
           updated_at?: string
           updated_by?: string
+        }
+        Relationships: []
+      }
+      tier_list_contexts: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tier_list_criteria: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          max_score: number
+          name: string
+          sort_order: number
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_score?: number
+          name: string
+          sort_order?: number
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_score?: number
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      tier_score_ranges: {
+        Row: {
+          created_at: string
+          id: string
+          min_score: number
+          sort_order: number
+          tier: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          min_score: number
+          sort_order?: number
+          tier: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          min_score?: number
+          sort_order?: number
+          tier?: string
         }
         Relationships: []
       }
