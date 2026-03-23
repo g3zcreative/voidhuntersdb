@@ -76,6 +76,7 @@ function AppRoutes() {
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/roadmap" element={<RoadmapPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/tier-list" element={<TierListPage />} />
         <Route path="/database/:tableName" element={<DatabaseList />} />
         <Route path="/database/:tableName/:slug" element={<DatabaseDetail />} />
         <Route path="/admin" element={<AdminLayout />}>
