@@ -39,8 +39,12 @@ export default function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username.trim()) {
+      toast({ title: "Username required", description: "Please enter a username.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, username.trim());
     setLoading(false);
     if (error) {
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
