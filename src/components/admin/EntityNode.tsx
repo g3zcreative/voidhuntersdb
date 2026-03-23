@@ -48,7 +48,13 @@ function FieldSettingsPopover({
 }) {
   const [open, setOpen] = useState(false);
   const widget = field.uiWidget || "";
+  const [localOptions, setLocalOptions] = useState((field.uiOptions || []).join(", "));
+
+  // Sync local state when field changes externally
   const optionsStr = (field.uiOptions || []).join(", ");
+  React.useEffect(() => {
+    if (!open) setLocalOptions(optionsStr);
+  }, [optionsStr, open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
