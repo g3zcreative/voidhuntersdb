@@ -24,6 +24,7 @@ const AuthPage = lazy(() => import("./pages/Auth"));
 const DiscordRedirect = lazy(() => import("./pages/Discord"));
 const DatabaseList = lazy(() => import("./pages/DatabaseList"));
 const DatabaseDetail = lazy(() => import("./pages/DatabaseDetail"));
+const TierListPage = lazy(() => import("./pages/TierList"));
 
 // Admin pages (heavy -- always lazy)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
