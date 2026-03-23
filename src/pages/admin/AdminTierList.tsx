@@ -342,7 +342,7 @@ function HunterScoringTab() {
           <Label>Hunter</Label>
           <Select value={selectedHunter} onValueChange={loadEntry} disabled={!selectedContext}>
             <SelectTrigger><SelectValue placeholder="Select hunter..." /></SelectTrigger>
-            <SelectContent>{hunters.map((h: any) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}</SelectContent>
+            <SelectContent>{hunters.map((h: any) => <SelectItem key={h.id} value={h.id}>{h.name} {h.rarity ? `(${({3:"Rare",4:"Epic",5:"Legendary"} as Record<number,string>)[h.rarity] || h.rarity})` : ""}</SelectItem>)}</SelectContent>
           </Select>
         </div>
       </div>
