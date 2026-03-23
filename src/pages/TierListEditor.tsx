@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,8 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HunterPortrait } from "@/components/HunterPortrait";
 import { ROLES, ROLE_ICONS, TIER_BG, TIER_BANNER, RARITY_LABELS, TIERS } from "@/lib/tier-list-constants";
-import { Search, ArrowLeft, Globe, Lock, X } from "lucide-react";
+import { Search, ArrowLeft, Globe, Lock, X, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+// Drag data type key
+const DRAG_TYPE = "application/x-tier-hunter";
 
 export default function TierListEditor() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +29,7 @@ export default function TierListEditor() {
   const [rarityFilter, setRarityFilter] = useState<number | null>(null);
   const [selectedTier, setSelectedTier] = useState<string>("T0");
   const [selectedRole, setSelectedRole] = useState<string>("DPS");
+  const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
 
   // Load tier list metadata
   const { data: tierList, isLoading: loadingList } = useQuery({
@@ -66,10 +70,8 @@ export default function TierListEditor() {
     },
   });
 
-  // Placed hunter IDs
   const placedIds = useMemo(() => new Set(entries.map((e: any) => e.hunter_id)), [entries]);
 
-  // Available hunters (not placed yet)
   const availableHunters = useMemo(() => {
     return allHunters.filter((h: any) => {
       if (placedIds.has(h.id)) return false;
@@ -79,7 +81,6 @@ export default function TierListEditor() {
     });
   }, [allHunters, placedIds, search, rarityFilter]);
 
-  // Group entries by tier -> role
   const tierGroups = useMemo(() => {
     const groups: Record<string, Record<string, any[]>> = {};
     for (const tier of TIERS) {
@@ -96,14 +97,14 @@ export default function TierListEditor() {
     return groups;
   }, [entries]);
 
-  // Add hunter
+  // Add hunter to a specific tier/role
   const addMutation = useMutation({
-    mutationFn: async (hunterId: string) => {
+    mutationFn: async ({ hunterId, tier, role }: { hunterId: string; tier: string; role: string }) => {
       const { error } = await supabase.from("user_tier_entries").insert({
         tier_list_id: id!,
         hunter_id: hunterId,
-        tier: selectedTier,
-        role: selectedRole,
+        tier,
+        role,
       });
       if (error) throw error;
     },
@@ -113,7 +114,21 @@ export default function TierListEditor() {
     onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
-  // Remove hunter
+  // Move an existing entry to a new tier/role
+  const moveMutation = useMutation({
+    mutationFn: async ({ entryId, tier, role }: { entryId: string; tier: string; role: string }) => {
+      const { error } = await supabase
+        .from("user_tier_entries")
+        .update({ tier, role })
+        .eq("id", entryId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user-tier-entries", id] });
+    },
+    onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
   const removeMutation = useMutation({
     mutationFn: async (entryId: string) => {
       await supabase.from("user_tier_entries").delete().eq("id", entryId);
@@ -123,7 +138,6 @@ export default function TierListEditor() {
     },
   });
 
-  // Toggle public
   const togglePublic = useMutation({
     mutationFn: async (isPublic: boolean) => {
       await supabase.from("user_tier_lists").update({ is_public: isPublic }).eq("id", id!);
@@ -133,9 +147,55 @@ export default function TierListEditor() {
     },
   });
 
+  // Drag handlers
+  const handleDragStart = useCallback((e: React.DragEvent, hunterId: string, entryId?: string) => {
+    e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ hunterId, entryId }));
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, targetKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverTarget(targetKey);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverTarget(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, tier: string, role: string) => {
+    e.preventDefault();
+    setDragOverTarget(null);
+    const raw = e.dataTransfer.getData(DRAG_TYPE);
+    if (!raw) return;
+    try {
+      const { hunterId, entryId } = JSON.parse(raw);
+      if (entryId) {
+        // Moving existing entry
+        moveMutation.mutate({ entryId, tier, role });
+      } else {
+        // Adding new hunter from picker
+        addMutation.mutate({ hunterId, tier, role });
+      }
+    } catch {}
+  }, [addMutation, moveMutation]);
+
+  // Drop on "remove" zone (hunter picker area)
+  const handleDropRemove = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverTarget(null);
+    const raw = e.dataTransfer.getData(DRAG_TYPE);
+    if (!raw) return;
+    try {
+      const { entryId } = JSON.parse(raw);
+      if (entryId) {
+        removeMutation.mutate(entryId);
+      }
+    } catch {}
+  }, [removeMutation]);
+
   const isLoading = loadingList || loadingEntries;
 
-  // Auth redirect
   if (!authLoading && !user) {
     navigate("/auth");
     return null;
@@ -202,43 +262,12 @@ export default function TierListEditor() {
           </div>
         </div>
 
-        {/* Placement controls */}
-        <div className="flex flex-wrap gap-2 items-center p-3 rounded-lg bg-secondary/50 border border-border">
-          <span className="text-sm font-medium text-muted-foreground">Place in:</span>
-          <div className="flex gap-1">
-            {TIERS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setSelectedTier(t)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                  selectedTier === t ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-1 flex-wrap">
-            {ROLES.map((r) => (
-              <button
-                key={r}
-                onClick={() => setSelectedRole(r)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                  selectedRole === r ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {ROLE_ICONS[r]} {r}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Hunter picker */}
+        {/* Hunter picker (also drop-to-remove zone) */}
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search hunters to add..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+              <Input placeholder="Search hunters..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <div className="flex gap-1">
               <button
@@ -262,29 +291,77 @@ export default function TierListEditor() {
               ))}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-dashed border-border min-h-[80px] max-h-[200px] overflow-y-auto">
+          <div
+            className={`flex flex-wrap gap-2 p-3 rounded-lg border min-h-[80px] max-h-[200px] overflow-y-auto transition-colors ${
+              dragOverTarget === "remove"
+                ? "border-destructive bg-destructive/10"
+                : "border-dashed border-border"
+            }`}
+            onDragOver={(e) => handleDragOver(e, "remove")}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropRemove}
+          >
             {availableHunters.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {allHunters.length === placedIds.size ? "All hunters placed!" : "No hunters match your search."}
+                {allHunters.length === placedIds.size ? "All hunters placed! Drag a hunter here to remove." : "No hunters match your search."}
               </p>
             ) : (
               availableHunters.map((h: any) => (
-                <HunterPortrait
+                <div
                   key={h.id}
-                  hunter={h}
-                  onClick={() => addMutation.mutate(h.id)}
-                />
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, h.id)}
+                  className="cursor-grab active:cursor-grabbing"
+                >
+                  <HunterPortrait
+                    hunter={h}
+                    onClick={() => addMutation.mutate({ hunterId: h.id, tier: selectedTier, role: selectedRole })}
+                  />
+                </div>
               ))
             )}
           </div>
+          <p className="text-xs text-muted-foreground">
+            Drag hunters into a tier below, or click to place in the selected tier/role.
+          </p>
+
+          {/* Click-to-place controls (for click mode) */}
+          <div className="flex flex-wrap gap-2 items-center p-3 rounded-lg bg-secondary/50 border border-border">
+            <span className="text-sm font-medium text-muted-foreground">Click places in:</span>
+            <div className="flex gap-1">
+              {TIERS.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setSelectedTier(t)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                    selectedTier === t ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {ROLES.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setSelectedRole(r)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                    selectedRole === r ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {ROLE_ICONS[r]} {r}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Tier Grid */}
+        {/* Tier Grid with drop zones */}
         <div className="rounded-lg border border-border overflow-hidden">
           {TIERS.map((tier) => {
             const roleGroups = tierGroups[tier];
             if (!roleGroups) return null;
-            const hasEntries = ROLES.some((r) => roleGroups[r]?.length > 0);
 
             const bannerClass = TIER_BANNER[tier] || TIER_BANNER.T3;
             const bgClass = TIER_BG[tier] || TIER_BG.T3;
@@ -294,22 +371,39 @@ export default function TierListEditor() {
                 <div className={`py-2 px-4 font-display font-bold text-sm ${bannerClass}`}>
                   {tier}
                 </div>
-                <div className="p-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-0 divide-x divide-border">
                   {ROLES.map((role) => {
                     const roleEntries = roleGroups[role] || [];
-                    if (roleEntries.length === 0) return null;
+                    const dropKey = `${tier}-${role}`;
+                    const isOver = dragOverTarget === dropKey;
+
                     return (
-                      <div key={role} className="mb-2">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase">{ROLE_ICONS[role]} {role}</span>
-                        <div className="flex flex-wrap gap-2 mt-1">
+                      <div
+                        key={role}
+                        className={`p-2 min-h-[90px] transition-colors ${
+                          isOver ? "bg-primary/15 ring-1 ring-inset ring-primary/40" : ""
+                        }`}
+                        onDragOver={(e) => handleDragOver(e, dropKey)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, tier, role)}
+                      >
+                        <div className="text-[10px] font-semibold text-muted-foreground uppercase text-center mb-1">
+                          {ROLE_ICONS[role]} {role}
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-1.5">
                           {roleEntries.map((entry: any) => (
-                            <div key={entry.id} className="relative group/entry">
+                            <div
+                              key={entry.id}
+                              className="relative group/entry cursor-grab active:cursor-grabbing"
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, entry.hunter_id, entry.id)}
+                            >
                               <HunterPortrait
                                 hunter={entry.hunters}
                                 onClick={() => removeMutation.mutate(entry.id)}
                               />
                               <button
-                                onClick={() => removeMutation.mutate(entry.id)}
+                                onClick={(e) => { e.stopPropagation(); removeMutation.mutate(entry.id); }}
                                 className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover/entry:opacity-100 transition-opacity"
                               >
                                 <X className="h-3 w-3" />
@@ -317,12 +411,14 @@ export default function TierListEditor() {
                             </div>
                           ))}
                         </div>
+                        {roleEntries.length === 0 && isOver && (
+                          <div className="flex items-center justify-center h-12 text-xs text-primary/60">
+                            Drop here
+                          </div>
+                        )}
                       </div>
                     );
                   })}
-                  {!hasEntries && (
-                    <p className="text-xs text-muted-foreground py-2">Click a hunter above to place them here.</p>
-                  )}
                 </div>
               </div>
             );
