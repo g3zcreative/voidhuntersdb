@@ -46,6 +46,7 @@ const AdminSchemaItemEditor = lazy(() => import("./pages/admin/AdminSchemaItemEd
 const AdminActivityLog = lazy(() => import("./pages/admin/AdminActivityLog"));
 const AdminContributions = lazy(() => import("./pages/admin/AdminContributions"));
 const AdminContributionReview = lazy(() => import("./pages/admin/AdminContributionReview"));
+const AdminTierList = lazy(() => import("./pages/admin/AdminTierList"));
 
 const queryClient = new QueryClient();
 
