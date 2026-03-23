@@ -16,6 +16,7 @@ export default function AuthPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (user) {
