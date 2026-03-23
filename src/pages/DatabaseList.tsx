@@ -310,8 +310,8 @@ export default function DatabaseList() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__all__">All Rarities</SelectItem>
-                    {rarityValues.map((r) => (
-                      <SelectItem key={r} value={String(r)}>★{r}</SelectItem>
+                     {rarityValues.map((r) => (
+                      <SelectItem key={r} value={String(r)}>{rarityLabel(r)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
