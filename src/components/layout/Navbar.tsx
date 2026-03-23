@@ -36,7 +36,9 @@ export function Navbar() {
   const { user, signOut } = useAuth();
   const { canAccessAdmin } = useAdmin();
   const { tables, isJunction } = useSchemaRegistry();
-  const visibleTables = tables.filter((t) => !isJunction(t.name));
+  // Only show tables with public-facing pages
+  const PUBLIC_TABLES = ["hunters", "bosses", "armor_sets"];
+  const visibleTables = tables.filter((t) => PUBLIC_TABLES.includes(t.name));
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">

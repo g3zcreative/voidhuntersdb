@@ -28,6 +28,9 @@ function fkTableName(fieldName: string) {
   return base + "s";
 }
 
+/** Tables that are allowed to have public-facing pages */
+const PUBLIC_TABLES = ["hunters", "bosses", "armor_sets"];
+
 function useFkOptions(tableName: string) {
   return useQuery({
     queryKey: ["fk-options-public", tableName],
