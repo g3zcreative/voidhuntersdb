@@ -81,6 +81,7 @@ export default function DatabaseList() {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [tagFilter, setTagFilter] = useState("__all__");
   const [effectFilter, setEffectFilter] = useState("__all__");
+  const [rarityFilter, setRarityFilter] = useState("__all__");
 
   const table = tableName ? getTable(tableName) : undefined;
   const isPublic = table?.publicPage ?? false;
