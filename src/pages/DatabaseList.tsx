@@ -190,7 +190,8 @@ export default function DatabaseList() {
       });
     });
     return maps;
-  }, [filterableFields, ...filterableFields.map((f) => fkQueries[f.name]?.data)]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterableFields, JSON.stringify(filterableFields.map((f) => fkQueries[f.name]?.data))]);
 
   // Filter + search
   const filtered = useMemo(() => {
