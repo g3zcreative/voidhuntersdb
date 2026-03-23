@@ -389,8 +389,8 @@ export default function DatabaseList() {
                         );
                       })}
                       {item.rarity != null && (
-                        <Badge variant="outline" className="text-xs font-normal">
-                          ★{item.rarity}
+                        <Badge variant="outline" className="text-xs font-normal" style={{ color: rarityColor(item.rarity), borderColor: rarityColor(item.rarity) }}>
+                          {rarityLabel(item.rarity)}
                         </Badge>
                       )}
                     </div>
