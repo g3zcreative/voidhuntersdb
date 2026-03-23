@@ -3,23 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Settings, ToggleLeft, Save, Gamepad2 } from "lucide-react";
+import { Settings, Save, Gamepad2 } from "lucide-react";
 import { toast } from "sonner";
-
-interface FeatureFlags {
-  guides: boolean;
-  tools: boolean;
-  database: boolean;
-  community: boolean;
-}
 
 export default function AdminSettings() {
   const queryClient = useQueryClient();
 
-  // Load current_patch from the actual site_settings table (single-row)
   const { data: settingsRow, isLoading: patchLoading } = useQuery({
     queryKey: ["site-settings-row"],
     queryFn: async () => {
@@ -63,16 +53,6 @@ export default function AdminSettings() {
     },
   });
 
-  // Feature flags — static for now until storage is added
-  const [flags, setFlags] = useState<FeatureFlags>({ guides: true, tools: false, database: false, community: true });
-
-  const featureFlagDescriptions: Record<keyof FeatureFlags, string> = {
-    guides: "Community guides and strategies section",
-    tools: "Interactive tools (tier lists, team builder, calculators)",
-    database: "Full heroes, items, skills, and materials database",
-    community: "Community links and social media page",
-  };
-
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
@@ -80,7 +60,7 @@ export default function AdminSettings() {
           <Settings className="h-6 w-6" /> Platform Settings
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage feature visibility and game info
+          Manage game info and platform configuration
         </p>
       </div>
 
@@ -115,41 +95,6 @@ export default function AdminSettings() {
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <ToggleLeft className="h-5 w-5" /> Feature Flags
-          </CardTitle>
-          <CardDescription>
-            Toggle sections on or off. Disabled sections show a "Coming Soon" page.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-1">
-          {(Object.keys(flags) as (keyof FeatureFlags)[]).map((key, i, arr) => (
-            <div key={key}>
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="font-medium capitalize">{key}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {featureFlagDescriptions[key]}
-                  </p>
-                </div>
-                <Switch
-                  checked={flags[key]}
-                  onCheckedChange={(checked) =>
-                    setFlags({ ...flags, [key]: checked })
-                  }
-                />
-              </div>
-              {i < arr.length - 1 && <Separator />}
-            </div>
-          ))}
-          <div className="pt-4 text-xs text-muted-foreground">
-            Feature flag persistence coming soon — changes are session-only for now.
-          </div>
         </CardContent>
       </Card>
     </div>
