@@ -188,6 +188,18 @@ export default function AdminEntityEditor() {
     [setNodes]
   );
 
+  const onTogglePublicPage = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          return { ...n, data: { ...n.data, publicPage: !(n.data as any).publicPage } };
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const onMoveField = useCallback(
     (nodeId: string, fieldId: string, direction: "up" | "down") => {
       setNodes((nds) =>
