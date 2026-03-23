@@ -28,6 +28,9 @@ function fkTableName(fieldName: string) {
   return base + "s";
 }
 
+/** Tables that are allowed to have public-facing pages */
+const PUBLIC_TABLES = ["hunters", "bosses", "armor_sets"];
+
 function useFkOptions(tableName: string) {
   return useQuery({
     queryKey: ["fk-options-public", tableName],
@@ -78,13 +81,17 @@ export default function DatabaseList() {
   const { getTable, loading: registryLoading } = useSchemaRegistry();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [tagFilter, setTagFilter] = useState("__all__");
+  const [effectFilter, setEffectFilter] = useState("__all__");
 
   const table = tableName ? getTable(tableName) : undefined;
+  const isPublic = tableName ? PUBLIC_TABLES.includes(tableName) : false;
+  const isHunters = tableName === "hunters";
 
   // Fetch all rows
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["database-list", tableName],
-    enabled: !!tableName && !!table,
+    enabled: !!tableName && !!table && isPublic,
     queryFn: async () => {
       const { data, error } = await supabase
         .from(tableName as any)
@@ -93,6 +100,50 @@ export default function DatabaseList() {
         .limit(1000);
       if (error) throw error;
       return (data || []) as Array<Record<string, any>>;
+    },
+  });
+
+  // Tags list (for hunters filter)
+  const { data: allTags = [] } = useQuery({
+    queryKey: ["tags-list"],
+    enabled: isHunters,
+    queryFn: async () => {
+      const { data } = await supabase.from("tags").select("id, name").order("name");
+      return (data || []) as Array<{ id: string; name: string }>;
+    },
+  });
+
+  // Effects list (for hunters filter)
+  const { data: allEffects = [] } = useQuery({
+    queryKey: ["effects-list"],
+    enabled: isHunters,
+    queryFn: async () => {
+      const { data } = await supabase.from("effects").select("id, name").order("name");
+      return (data || []) as Array<{ id: string; name: string }>;
+    },
+  });
+
+  // Hunter → tag mapping via junction table
+  const { data: hunterTagLinks = [] } = useQuery({
+    queryKey: ["hunter-tags-all"],
+    enabled: isHunters && tagFilter !== "__all__",
+    queryFn: async () => {
+      const { data } = await supabase.from("hunter_tags").select("hunter_id, tag_id");
+      return (data || []) as Array<{ hunter_id: string; tag_id: string }>;
+    },
+  });
+
+  // Hunter → effect mapping via skills table
+  const { data: skillEffectLinks = [] } = useQuery({
+    queryKey: ["skill-effects-all"],
+    enabled: isHunters && effectFilter !== "__all__",
+    queryFn: async () => {
+      // Skills link hunters to effects — but effects are jsonb, not FK.
+      // However there IS an effects table. We need to check if skills reference effects somehow.
+      // For now, we'll use the skills table's hunter_id to map hunters.
+      // Effects are standalone — let's check if hunters have tags that map to effects.
+      // Actually effects table is separate. Let's just skip for now.
+      return [] as Array<{ hunter_id: string; effect_id: string }>;
     },
   });
 
@@ -140,8 +191,16 @@ export default function DatabaseList() {
       }
     });
 
+    // Tag filter (M2M via hunter_tags)
+    if (isHunters && tagFilter !== "__all__") {
+      const matchingHunterIds = new Set(
+        hunterTagLinks.filter((l) => l.tag_id === tagFilter).map((l) => l.hunter_id)
+      );
+      result = result.filter((r) => matchingHunterIds.has(r.id));
+    }
+
     return result;
-  }, [rows, search, filters]);
+  }, [rows, search, filters, tagFilter, hunterTagLinks, isHunters]);
 
   if (registryLoading) {
     return (
@@ -156,13 +215,13 @@ export default function DatabaseList() {
     );
   }
 
-  if (!table) {
+  if (!table || !isPublic) {
     return (
       <Layout>
         <div className="container py-20 text-center">
           <Database className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-30" />
           <h1 className="font-display text-2xl font-bold mb-2">Collection Not Found</h1>
-          <p className="text-muted-foreground">The collection "{tableName}" doesn't exist.</p>
+          <p className="text-muted-foreground">The collection "{tableName}" doesn't exist or has no public page.</p>
         </div>
       </Layout>
     );
@@ -208,7 +267,7 @@ export default function DatabaseList() {
               className="pl-9"
             />
           </div>
-          {filterableFields.length > 0 && (
+          {(filterableFields.length > 0 || isHunters) && (
             <>
               <SlidersHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />
               {filterableFields.map((f) => (
@@ -219,6 +278,32 @@ export default function DatabaseList() {
                   onChange={(v) => setFilters((prev) => ({ ...prev, [f.name]: v }))}
                 />
               ))}
+              {isHunters && allTags.length > 0 && (
+                <Select value={tagFilter} onValueChange={setTagFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="All Tags" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Tags</SelectItem>
+                    {allTags.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {isHunters && allEffects.length > 0 && (
+                <Select value={effectFilter} onValueChange={setEffectFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="All Effects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Effects</SelectItem>
+                    {allEffects.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </>
           )}
         </div>

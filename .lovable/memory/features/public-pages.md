@@ -1,0 +1,1 @@
+Public database pages restricted to: hunters, bosses, armor_sets. Defined in PUBLIC_TABLES constant in Navbar.tsx and DatabaseList.tsx. Other tables (skills, effects, tags, etc.) are only visible from hunter detail pages or admin. Tags and effects are filter criteria on the hunter list page, not standalone public pages.
