@@ -1,33 +1,90 @@
+## User-Created Tier Lists
+
+Allow signed-in users to create, edit, and share their own tier lists alongside the official (admin) tier list. These tierlists are central to the viral promotion of the [voidhuntersdb.com](http://voidhuntersdb.com) so make sure to make Sharing a tier list very easy, and make "Create Your Own Tierlist" prominent on shared tier list links.
+
+### Data Model
+
+**New table: `user_tier_lists**`
 
 
-## Performance Optimizations for Hunter List Page
+| Column     | Type                  | Notes                                    |
+| ---------- | --------------------- | ---------------------------------------- |
+| id         | uuid PK               | &nbsp;                                   |
+| user_id    | uuid NOT NULL         | references auth.users, ON DELETE CASCADE |
+| context_id | uuid NOT NULL         | references tier_list_contexts            |
+| name       | text NOT NULL         | e.g. "My PVE Tier List"                  |
+| is_public  | boolean DEFAULT false | whether others can view it               |
+| created_at | timestamptz           | &nbsp;                                   |
+| updated_at | timestamptz           | &nbsp;                                   |
 
-### Problems Identified
 
-1. **Over-fetching columns**: `select("*")` pulls every column (attack, defense, health, speed, description, etc.) when the list only needs `id, name, slug, subtitle, image_url, rarity`.
-2. **Unnecessary FK queries**: The `fkQueries` loop calls `useFkOptions` for every `_id` field in the schema (e.g. `skills` table), even though those FK lookups aren't useful on the hunters list. The `skills` query alone fetches 500 rows with all columns.
-3. **Waterfall loading**: Schema registry must load before the hunters query can start (`enabled: !!table`). We can't eliminate this dependency, but we can prefetch the schema.
-4. **No image optimization**: Full-resolution images load for small card thumbnails. Adding width params to the storage URL or using smaller image variants would help.
-5. **Broken hooks pattern**: `useFkOptions` is still called in a `forEach` loop (lines 167-171), which violates Rules of Hooks when `filterableFields` changes length between renders — this was supposedly fixed but the code still has it.
+**New table: `user_tier_entries**`
 
-### Plan
 
-**File: `src/pages/DatabaseList.tsx`**
+| Column       | Type                        | Notes                                         |
+| ------------ | --------------------------- | --------------------------------------------- |
+| id           | uuid PK                     | &nbsp;                                        |
+| tier_list_id | uuid NOT NULL               | references user_tier_lists, ON DELETE CASCADE |
+| hunter_id    | uuid NOT NULL               | references hunters                            |
+| tier         | text NOT NULL               | e.g. "T0", "T1"                               |
+| role         | text NOT NULL DEFAULT 'DPS' | &nbsp;                                        |
+| notes        | text                        | optional per-hunter note                      |
 
-1. **Select only needed columns** — Change the main query from `select("*")` to `select("id, name, slug, subtitle, image_url, rarity")` for hunters (and a similar minimal set for other tables).
 
-2. **Remove the broken `forEach` hook loop** (lines 167-171) — Replace with a single `useQuery` that fetches all FK lookup tables in one batch using `Promise.all`, keyed by a stable list of table names. This fixes both the hooks violation and reduces network requests.
+**RLS policies:**
 
-3. **Add image size hints** — Append `?width=400` to Supabase storage image URLs for thumbnails, and add `width`/`height` attributes to `<img>` tags so the browser can allocate space before images load (reduces layout shift).
+- Users can CRUD their own lists/entries (`user_id = auth.uid()`)
+- Public lists are readable by anyone (`is_public = true`)
+- Admin can read all
 
-4. **Prefetch schema registry** — Add `staleTime` and `gcTime` to the schema registry query so it persists across navigations (it likely already has `staleTime` but worth confirming).
+### Routes
 
-5. **Remove unused `skillEffectLinks` query** — The effect filter query (lines 142-154) returns an empty array and is dead code. Remove it.
+- `/tier-list` — existing official tier list (unchanged)
+- `/tier-list/my` — user's own tier lists (list view, requires auth)
+- `/tier-list/my/:id` — tier list editor (drag-and-drop or click-to-place)
+- `/tier-list/shared/:id` — public view of a user's shared tier list
+
+### UI Components
+
+**1. "My Tier Lists" page (`src/pages/MyTierLists.tsx`)**
+
+- Lists user's tier lists with create/edit/delete actions
+- "Create New Tier List" button opens a dialog to pick a context and name
+- Each list card shows name, context, hunter count, public/private toggle
+
+**2. Tier List Editor (`src/pages/TierListEditor.tsx`)**
+
+- Left panel: all hunters (searchable, filterable by rarity)
+- Right panel: tier rows (T0 through T3) with role columns
+- Click a hunter to place them in the selected tier/role
+- Click a placed hunter to remove or move them
+- Auto-saves on changes (debounced upsert)
+- Toggle to make list public/private
+
+**3. Shared Tier List View (`src/pages/SharedTierList.tsx`)**
+
+- Read-only view reusing the existing `TierList.tsx` grid layout
+- Shows author name and creation date
+- Add "username" to the Users table if it doesn't exist. So users can set their desired username
+- "Create Your Own" CTA for non-authenticated users
+
+**4. Navigation integration**
+
+- Add "My Tier Lists" link on the `/tier-list` page for signed-in users
+- Add link in user dropdown menu in Navbar
+
+### Implementation Steps
+
+1. **Database migration** — Create `user_tier_lists` and `user_tier_entries` tables with RLS policies
+2. **My Tier Lists page** — List view with CRUD for user's tier lists
+3. **Tier List Editor** — Hunter picker + tier grid with click-to-place interaction and auto-save
+4. **Shared view page** — Read-only render of a public user tier list
+5. **Routing** — Add 3 new routes in App.tsx
+6. **Navigation** — Add "My Tier Lists" button on the tier list page and in the user menu
 
 ### Technical Details
 
-- Selective columns: `supabase.from("hunters").select("id,name,slug,subtitle,image_url,rarity")` — reduces payload ~70%.
-- Single FK batch query: one `useQuery` with `queryKey: ["fk-batch", ...sortedTableNames]` doing `Promise.all` over the unique FK table names, returning `Record<tableName, rows[]>`.
-- Image optimization: Supabase Storage supports `?width=N` transform parameter for on-the-fly resizing.
-- Remove dead `skillEffectLinks` query entirely.
-
+- Reuse existing `TIER_COLORS`, `TIER_BG`, `TIER_BANNER`, `ROLES`, `HunterPortrait` constants/components from `TierList.tsx` by extracting them into a shared file (`src/lib/tier-list-constants.ts`)
+- Editor fetches all hunters via the same optimized selective query used in DatabaseList
+- Auto-save uses `useMutation` with a debounced callback (~1s) to batch upserts
+- The user_tier_entries table uses a composite unique on `(tier_list_id, hunter_id)` to prevent duplicates
