@@ -1,100 +1,33 @@
-## Plan: Hunter Tier List System
 
-### Overview
 
-Build a Prydwen-style tier list page at `/tier-list` with rubric-based scoring, configurable content tabs, role columns (DPS, Debuff, Control, Support, Sustain), and tier rows (T0 through T3 with half-steps).
+## Performance Optimizations for Hunter List Page
 
-### Data Model (4 new tables)
+### Problems Identified
 
-```text
-tier_list_contexts          tier_list_criteria
-┌──────────────────┐       ┌──────────────────────┐
-│ id (uuid PK)     │       │ id (uuid PK)         │
-│ name (text)      │       │ name (text)          │
-│ slug (text)      │       │ weight (numeric)     │
-│ sort_order (int) │       │ description (text)   │
-│ image_url (text) │       │ max_score (int)      │
-└──────────────────┘       └──────────────────────┘
+1. **Over-fetching columns**: `select("*")` pulls every column (attack, defense, health, speed, description, etc.) when the list only needs `id, name, slug, subtitle, image_url, rarity`.
+2. **Unnecessary FK queries**: The `fkQueries` loop calls `useFkOptions` for every `_id` field in the schema (e.g. `skills` table), even though those FK lookups aren't useful on the hunters list. The `skills` query alone fetches 500 rows with all columns.
+3. **Waterfall loading**: Schema registry must load before the hunters query can start (`enabled: !!table`). We can't eliminate this dependency, but we can prefetch the schema.
+4. **No image optimization**: Full-resolution images load for small card thumbnails. Adding width params to the storage URL or using smaller image variants would help.
+5. **Broken hooks pattern**: `useFkOptions` is still called in a `forEach` loop (lines 167-171), which violates Rules of Hooks when `filterableFields` changes length between renders — this was supposedly fixed but the code still has it.
 
-hunter_tier_entries
-┌──────────────────────────────┐
-│ id (uuid PK)                 │
-│ hunter_id (uuid FK→hunters)  │
-│ context_id (uuid FK→contexts)│
-│ role (text)                  │  ← DPS/Debuff/Control/Support/Sustain
-│ criteria_scores (jsonb)      │  ← { "criterion_id": score, ... }
-│ total_score (numeric)        │  ← sum of weighted scores (computed on save)
-│ tier (text)                  │  ← auto-mapped from score, or manual override
-│ tags (text[])                │  ← skill keywords shown below portrait (e.g. "Debuff, Delay")
-│ created/updated_at           │
-│ UNIQUE(hunter_id, context_id)│
-└──────────────────────────────┘
+### Plan
 
-tier_score_ranges
-┌──────────────────────┐
-│ id (uuid PK)         │
-│ tier (text)           │  ← "T0", "T0.5", "T1", etc.
-│ min_score (numeric)   │
-│ sort_order (int)      │
-└──────────────────────┘
-```
+**File: `src/pages/DatabaseList.tsx`**
 
-**How rubric scoring works:**
+1. **Select only needed columns** — Change the main query from `select("*")` to `select("id, name, slug, subtitle, image_url, rarity")` for hunters (and a similar minimal set for other tables).
 
-- Admin defines criteria (e.g. "Damage Output" weight 3, "Utility" weight 2, "Survivability" weight 2) -- shared across all contexts
-- For each hunter + context, admin scores each criterion (0-10)
-- System calculates `total_score = sum(criterion_score * weight)`
-- Score maps to tier via `tier_score_ranges` (e.g. >= 90 = T0, >= 75 = T0.5, etc.)
-- Admin can manually override the tier if needed
+2. **Remove the broken `forEach` hook loop** (lines 167-171) — Replace with a single `useQuery` that fetches all FK lookup tables in one batch using `Promise.all`, keyed by a stable list of table names. This fixes both the hooks violation and reduces network requests.
 
-### Frontend
+3. **Add image size hints** — Append `?width=400` to Supabase storage image URLs for thumbnails, and add `width`/`height` attributes to `<img>` tags so the browser can allocate space before images load (reduces layout shift).
 
-**1. Public Tier List Page** (`/tier-list`)
+4. **Prefetch schema registry** — Add `staleTime` and `gcTime` to the schema registry query so it persists across navigations (it likely already has `staleTime` but worth confirming).
 
-- Top: horizontal scrollable tabs from `tier_list_contexts` (with optional background images like Prydwen)
-- Below tabs: search bar + rarity filter buttons (R, SR, SSR)
-- Content area: 5 role columns (DPS, Debuff, Control, Support, Sustain) as headers
-- Rows grouped by tier (T0, T0.5, T1, ...) with colored left-side tier labels
-- Each cell shows hunter portraits with skill keyword tags below
-- Click a hunter portrait to go to their detail page
-
-**2. Admin Tier List Management** (`/admin/tier-list`)
-
-- CRUD for contexts (tabs) and criteria (with weights)
-- Configure score ranges for tier mapping
-- Per-hunter scoring form: select context, assign role, score each criterion, see computed tier, optionally override
-
-### Implementation Steps
-
-1. **Database migration**: Create 4 tables with RLS (public read, admin write)
-2. **Seed data**: Insert default contexts (Generic PVE, PVP), criteria, and score ranges
-3. **Admin page**: `src/pages/admin/AdminTierList.tsx` with tabs for Contexts, Criteria, Score Ranges, and Hunter Scoring
-4. **Public page**: `src/pages/TierList.tsx` with the Prydwen-style grid layout
-5. **Routing**: Add `/tier-list` public route and `/admin/tier-list` admin route
-6. **Navigation**: Add "Tier List" to the site navbar
-
-### Files Created/Modified
-
-- `src/pages/TierList.tsx` -- new public tier list page
-- `src/pages/admin/AdminTierList.tsx` -- new admin management page
-- `src/App.tsx` -- add routes
-- `src/components/layout/Navbar.tsx` -- add nav link
-- Database migration for 4 new tables
+5. **Remove unused `skillEffectLinks` query** — The effect filter query (lines 142-154) returns an empty array and is dead code. Remove it.
 
 ### Technical Details
 
-**RLS policies** (all 4 tables):
+- Selective columns: `supabase.from("hunters").select("id,name,slug,subtitle,image_url,rarity")` — reduces payload ~70%.
+- Single FK batch query: one `useQuery` with `queryKey: ["fk-batch", ...sortedTableNames]` doing `Promise.all` over the unique FK table names, returning `Record<tableName, rows[]>`.
+- Image optimization: Supabase Storage supports `?width=N` transform parameter for on-the-fly resizing.
+- Remove dead `skillEffectLinks` query entirely.
 
-- `SELECT` open to `anon, authenticated` (public read)
-- `INSERT/UPDATE/DELETE` restricted to admin via `has_role(auth.uid(), 'admin')`
-
-**Tier color scheme** (matching gaming aesthetic):
-
-- T0: red/hot
-- T0.5: orange
-- T1: yellow/gold
-- T1.5: green
-- T2: blue
-- T3: gray
-
-**After implementation, add "How to use" instructions to "Docs" page.**
