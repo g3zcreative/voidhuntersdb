@@ -371,7 +371,7 @@ export default function DatabaseList() {
                     </div>
                   )}
                   <CardContent className="p-3 flex flex-col gap-1 flex-1">
-                    <span className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                    <span className="font-semibold text-sm leading-snug transition-colors line-clamp-2" style={item.rarity ? { color: rarityColor(item.rarity) } : undefined}>
                       {item.name || item.title || "Unnamed"}
                     </span>
                     {item.subtitle && (
