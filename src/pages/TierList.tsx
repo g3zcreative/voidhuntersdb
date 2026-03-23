@@ -2,83 +2,22 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowUp, ArrowDown, Minus, Clock } from "lucide-react";
+import { HunterPortrait } from "@/components/HunterPortrait";
+import { ROLES, ROLE_ICONS, TIER_COLORS, TIER_BG, TIER_BANNER, RARITY_LABELS } from "@/lib/tier-list-constants";
+import { Search, ArrowUp, ArrowDown, Minus, Clock, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 
-const ROLES = ["DPS", "Debuff", "Control", "Support", "Sustain"] as const;
-
-const ROLE_ICONS: Record<string, string> = {
-  DPS: "🗡️",
-  Debuff: "❄️",
-  Control: "⚡",
-  Support: "⚠️",
-  Sustain: "🛡️",
-};
-
-const TIER_COLORS: Record<string, string> = {
-  T0: "bg-red-500/20 border-red-500 text-red-400",
-  "T0.5": "bg-orange-500/20 border-orange-500 text-orange-400",
-  T1: "bg-yellow-500/20 border-yellow-500 text-yellow-400",
-  "T1.5": "bg-green-500/20 border-green-500 text-green-400",
-  T2: "bg-blue-500/20 border-blue-500 text-blue-400",
-  T3: "bg-muted/50 border-muted-foreground/30 text-muted-foreground",
-};
-
-const TIER_BG: Record<string, string> = {
-  T0: "bg-red-500/10",
-  "T0.5": "bg-orange-500/10",
-  T1: "bg-yellow-500/10",
-  "T1.5": "bg-green-500/10",
-  T2: "bg-blue-500/10",
-  T3: "bg-muted/20",
-};
-
-const TIER_BANNER: Record<string, string> = {
-  T0: "bg-red-500/80 text-white",
-  "T0.5": "bg-orange-500/80 text-white",
-  T1: "bg-yellow-500/80 text-black",
-  "T1.5": "bg-green-500/80 text-white",
-  T2: "bg-blue-500/80 text-white",
-  T3: "bg-muted text-muted-foreground",
-};
-
-const RARITY_LABELS: Record<number, string> = { 3: "Rare", 4: "Epic", 5: "Legendary" };
-
-function HunterPortrait({ hunter, tags, onClick }: { hunter: any; tags?: string[]; onClick: () => void }) {
-  const rarityClass = hunter.rarity === 5 ? "ring-yellow-500" : hunter.rarity === 4 ? "ring-purple-500" : "ring-blue-500";
-  return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 group w-16 sm:w-20">
-      <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden ring-2 ${rarityClass} bg-secondary transition-transform group-hover:scale-110`}>
-        {hunter.image_url ? (
-          <img src={hunter.image_url} alt={hunter.name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-muted-foreground">
-            {hunter.name?.slice(0, 2)}
-          </div>
-        )}
-      </div>
-      <span className="text-[10px] sm:text-xs text-center leading-tight line-clamp-2 text-foreground/80 group-hover:text-foreground">
-        {hunter.name}
-      </span>
-      {tags && tags.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-0.5">
-          {tags.map((t) => (
-            <span key={t} className="text-[8px] sm:text-[9px] px-1 py-0 rounded bg-secondary text-muted-foreground">{t}</span>
-          ))}
-        </div>
-      )}
-    </button>
-  );
-}
-
 export default function TierList() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [rarityFilter, setRarityFilter] = useState<number | null>(null);
@@ -166,7 +105,13 @@ export default function TierList() {
     <Layout>
       <SEO title="Tier List | VoidHuntersDB" description="Hunter tier list rankings for Void Hunters — find the best hunters for PVE, PVP, and more." />
       <div className="container py-6 space-y-6">
-        <h1 className="text-3xl font-display font-bold">Void Hunters Tier List</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-display font-bold">Void Hunters Tier List</h1>
+          <Button onClick={() => navigate(user ? "/tier-list/my" : "/auth")} variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            {user ? "My Tier Lists" : "Create Your Own"}
+          </Button>
+        </div>
 
         {/* Context Tabs */}
         <div className="flex flex-col sm:flex-row gap-2 overflow-x-auto pb-2">
@@ -230,7 +175,6 @@ export default function TierList() {
             <p className="text-sm mt-1">Check back soon!</p>
           </div>
         ) : isMobile ? (
-          /* ── Mobile: stacked layout like Prydwen ── */
           <div className="space-y-4">
             {orderedTiers.map((tier: string) => {
               const roleGroups = tierGroups[tier];
@@ -243,12 +187,9 @@ export default function TierList() {
 
               return (
                 <div key={tier} className={`rounded-lg border border-border overflow-hidden ${bgClass}`}>
-                  {/* Tier banner */}
                   <div className={`py-2 text-center font-display font-bold text-lg ${bannerClass}`}>
                     {tier}
                   </div>
-
-                  {/* Role sections */}
                   <div className="divide-y divide-border">
                     {ROLES.map((role) => {
                       const hunters = roleGroups[role] || [];
@@ -281,7 +222,6 @@ export default function TierList() {
             })}
           </div>
         ) : (
-          /* ── Desktop: column grid ── */
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="grid grid-cols-[80px_repeat(5,1fr)] bg-secondary/50 border-b border-border">
               <div className="p-2 text-xs font-semibold text-muted-foreground text-center">TIER</div>

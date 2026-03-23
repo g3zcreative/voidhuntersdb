@@ -25,6 +25,9 @@ const DiscordRedirect = lazy(() => import("./pages/Discord"));
 const DatabaseList = lazy(() => import("./pages/DatabaseList"));
 const DatabaseDetail = lazy(() => import("./pages/DatabaseDetail"));
 const TierListPage = lazy(() => import("./pages/TierList"));
+const MyTierLists = lazy(() => import("./pages/MyTierLists"));
+const TierListEditor = lazy(() => import("./pages/TierListEditor"));
+const SharedTierList = lazy(() => import("./pages/SharedTierList"));
 
 // Admin pages (heavy -- always lazy)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -77,6 +80,9 @@ function AppRoutes() {
         <Route path="/roadmap" element={<RoadmapPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/tier-list" element={<TierListPage />} />
+        <Route path="/tier-list/my" element={<MyTierLists />} />
+        <Route path="/tier-list/my/:id" element={<TierListEditor />} />
+        <Route path="/tier-list/shared/:id" element={<SharedTierList />} />
         <Route path="/database/:tableName" element={<DatabaseList />} />
         <Route path="/database/:tableName/:slug" element={<DatabaseDetail />} />
         <Route path="/admin" element={<AdminLayout />}>

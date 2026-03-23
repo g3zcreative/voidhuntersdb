@@ -1175,6 +1175,86 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tier_entries: {
+        Row: {
+          hunter_id: string
+          id: string
+          notes: string | null
+          role: string
+          tier: string
+          tier_list_id: string
+        }
+        Insert: {
+          hunter_id: string
+          id?: string
+          notes?: string | null
+          role?: string
+          tier: string
+          tier_list_id: string
+        }
+        Update: {
+          hunter_id?: string
+          id?: string
+          notes?: string | null
+          role?: string
+          tier?: string
+          tier_list_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tier_entries_hunter_id_fkey"
+            columns: ["hunter_id"]
+            isOneToOne: false
+            referencedRelation: "hunters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tier_entries_tier_list_id_fkey"
+            columns: ["tier_list_id"]
+            isOneToOne: false
+            referencedRelation: "user_tier_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_tier_lists: {
+        Row: {
+          context_id: string
+          created_at: string
+          id: string
+          is_public: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_id: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_id?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tier_lists_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "tier_list_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
