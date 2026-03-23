@@ -1,57 +1,58 @@
 
 
-## Plan: Enable Admin CRUD on System Tables
+## Plan: Configurable Field Widgets in Entity Editor
 
 ### Problem
-System tables (`profiles`, `user_roles`, `site_settings`, `feedback`, `page_views`, etc.) are excluded from both the schema introspect function and the schema registry, so they never appear in the admin sidebar or CRUD pages.
+The entity editor defines table columns (name, type, nullable) but has no way to control how a field renders in the admin form. You want to mark a text field like `category` as a dropdown with specific options (Class, Homeland, Species, Other).
 
-### Approach
+### Approach: Add per-field UI config to the schema
 
-**1. Update `schema-introspect` edge function**
-- Add an optional `includeSystem=true` query parameter
-- When set, skip the `SYSTEM_TABLES` filter so all public tables are returned
+The entity schema already stores field metadata (name, type, nullable, etc.) as JSON in `entity_definitions.schema`. We extend this with an optional `uiWidget` property on each field.
 
-**2. Create a `useSystemTables` hook**
-- Calls `schema-introspect` with `includeSystem=true`
-- Returns table metadata (columns, types, PKs) for system tables only (the ones NOT in the schema registry)
-- Provides the same `getTable()` interface as `useSchemaRegistry`
+### Changes
 
-**3. Update `AdminSchemaData` page**
-- When `getTable(tableName)` from the schema registry returns nothing, fall back to `useSystemTables().getTable(tableName)`
-- Same search, column visibility, delete, and navigation logic applies
+**1. Extend `EntityField` with UI config** (`src/components/admin/EntityNode.tsx`)
+- Add optional properties to `EntityField`:
+  - `uiWidget?: "text" | "textarea" | "select"` (default: auto from type)
+  - `uiOptions?: string[]` (static select options, e.g. `["Class", "Homeland", "Species", "Other"]`)
 
-**4. Update `AdminSchemaItemEditor` page**
-- Same fallback: if schema registry has no metadata for the table, use system table metadata
-- FK lookups and M2M relations won't apply to most system tables (they have simpler schemas)
+**2. Add field settings UI in Entity Node** (`src/components/admin/EntityNode.tsx`)
+- Add a small settings/gear icon per field that opens a popover or inline config
+- In the popover: a widget type dropdown ("Auto", "Select", "Textarea") and a comma-separated options input when widget is "select"
+- Calls `onUpdateField(nodeId, fieldId, { uiWidget, uiOptions })` to persist
 
-**5. Add "System" sidebar group in `AdminLayout`**
-- New sidebar section (admin-only) listing system tables: `profiles`, `user_roles`, `site_settings`, `feedback`, `page_views`, `entity_definitions`, `contributions`, `seo_templates`, `site_changelog`, `roadmap_items`
-- Uses the same `/admin/data/:tableName` route
-- Displayed below "Collections" and above "Content"
+**3. Pass UI config through schema registry** (`src/hooks/useSchemaRegistry.tsx`)
+- Include `uiWidget` and `uiOptions` in the `SchemaField` interface and map them from the stored node data
+
+**4. Use UI config in form renderer** (`src/pages/admin/AdminSchemaItemEditor.tsx`)
+- In `FieldInput`, before falling through to the type-based switch, check if `field.uiWidget === "select"` and render a `<Select>` with `field.uiOptions` as items
+- Similarly handle `"textarea"` override
+
+**5. Add `category` column to Tags table**
+- In the entity editor, add a `category` text column to Tags
+- Set its widget to "select" with options: Class, Homeland, Species, Other
+- Deploy the schema change
 
 ### Technical Details
 
 ```text
-schema-introspect
-  ├── ?includeSystem=true  →  returns ALL public tables
-  └── default              →  filters out SYSTEM_TABLES (unchanged)
+EntityField (extended)
+├── name, type, nullable, isPrimaryKey, defaultValue  (existing)
+├── uiWidget?: "text" | "textarea" | "select"         (new)
+└── uiOptions?: string[]                               (new)
 
-AdminSchemaData / AdminSchemaItemEditor
-  ├── Try useSchemaRegistry.getTable(name)
-  └── Fallback: useSystemTables.getTable(name)
-
-AdminLayout sidebar
-  ├── Collections (game tables from schema registry)
-  ├── System (hardcoded list of platform tables)  ← NEW
-  ├── Content
-  ├── Insights
-  └── Platform
+Flow:
+  EntityNode gear icon → updates field.uiWidget/uiOptions
+  → saved to entity_definitions.schema JSON
+  → read by useSchemaRegistry into SchemaField
+  → used by FieldInput in AdminSchemaItemEditor
 ```
 
+No database migration needed for the widget config itself -- it's stored in the existing `entity_definitions.schema` JSONB column. A migration (via deploy) will be needed to add the `category` column to the `tags` table, but that's done through the existing entity editor deploy flow.
+
 ### Files Modified
-- `supabase/functions/schema-introspect/index.ts` — optional system table inclusion
-- `src/hooks/useSystemTables.tsx` — new hook
-- `src/pages/admin/AdminSchemaData.tsx` — fallback to system table metadata
-- `src/pages/admin/AdminSchemaItemEditor.tsx` — same fallback
-- `src/pages/admin/AdminLayout.tsx` — add System sidebar group
+- `src/components/admin/EntityNode.tsx` -- add field settings popover
+- `src/hooks/useSchemaRegistry.tsx` -- pass through uiWidget/uiOptions
+- `src/pages/admin/AdminSchemaItemEditor.tsx` -- render select widget
+- `src/components/admin/InlineChildEditor.tsx` -- render select widget for inline forms too
 
