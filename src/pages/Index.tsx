@@ -101,6 +101,8 @@ const Index = () => {
         <h2 className="font-display text-lg font-semibold text-muted-foreground mb-4">Explore</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {[
+            { name: "Hunters", href: "/database/hunters" },
+            { name: "Tier List", href: "/tier-list" },
             { name: "News", href: "/news" },
             { name: "Guides", href: "/guides" },
             { name: "Official Posts", href: "/official-posts" },
