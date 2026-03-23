@@ -146,6 +146,13 @@ export default function DatabaseList() {
     },
   });
 
+  // Unique rarity values for filter
+  const rarityValues = useMemo(() => {
+    if (!isHunters) return [];
+    const vals = [...new Set(rows.map((r) => r.rarity).filter((v) => v != null))] as number[];
+    return vals.sort((a, b) => a - b);
+  }, [rows, isHunters]);
+
   // Pre-load FK lookup maps for display
   const filterableFields = useMemo(
     () => (table?.fields || []).filter(isFilterableField),
