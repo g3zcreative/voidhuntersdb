@@ -149,7 +149,7 @@ export default function TierList() {
     <Layout>
       <SEO title="Tier List | VoidHuntersDB" description="Hunter tier list rankings for Void Hunters — find the best hunters for PVE, PVP, and more." />
       <div className="container py-6 space-y-6">
-        <h1 className="text-3xl font-display font-bold">Tier List</h1>
+        <h1 className="text-3xl font-display font-bold">Void Hunters Tier List</h1>
 
         {/* Context Tabs */}
         <div className="flex flex-col sm:flex-row gap-2 overflow-x-auto pb-2">
