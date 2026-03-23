@@ -10,24 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Database, SlidersHorizontal } from "lucide-react";
-
-const RARITY_MAP: Record<number, { label: string; color: string }> = {
-  3: { label: "Rare", color: "hsl(210, 100%, 56%)" },      // Dodger Blue
-  4: { label: "Epic", color: "hsl(259, 100%, 64%)" },       // Brand Purple
-  5: { label: "Legendary", color: "hsl(43, 100%, 50%)" },   // Gold
-};
-
-function rarityLabel(rarity: number): string {
-  return RARITY_MAP[rarity]?.label ?? `★${rarity}`;
-}
-
-function rarityColor(rarity: number): string {
-  return RARITY_MAP[rarity]?.color ?? "hsl(var(--muted-foreground))";
-}
 
 /** Fields we show as filterable dropdowns (FK selects) */
 function isFilterableField(f: SchemaField) {
@@ -37,11 +21,12 @@ function isFilterableField(f: SchemaField) {
 /** Pluralize simple _id → table name */
 function fkTableName(fieldName: string) {
   const base = fieldName.slice(0, -3);
-  if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith("z")) return base + "es";
-  if (base.endsWith("y") && !["a","e","i","o","u"].includes(base[base.length - 2])) return base.slice(0, -1) + "ies";
+  if (base.endsWith("s") || base.endsWith("sh") || base.endsWith("ch") || base.endsWith("x") || base.endsWith("z"))
+    return base + "es";
+  if (base.endsWith("y") && !["a", "e", "i", "o", "u"].includes(base[base.length - 2]))
+    return base.slice(0, -1) + "ies";
   return base + "s";
 }
-
 
 function useFkOptions(tableName: string) {
   return useQuery({
@@ -168,48 +153,26 @@ export default function DatabaseList() {
   }, [rows, isHunters]);
 
   // Pre-load FK lookup maps for display
-  const filterableFields = useMemo(
-    () => (table?.fields || []).filter(isFilterableField),
-    [table]
-  );
+  const filterableFields = useMemo(() => (table?.fields || []).filter(isFilterableField), [table]);
 
-  // Fetch all FK options in a single query per field (stable hook count)
-  const fkTableNames = useMemo(
-    () => filterableFields.map((f) => fkTableName(f.name)),
-    [filterableFields]
-  );
-
-  const { data: allFkData } = useQuery({
-    queryKey: ["fk-options-all", fkTableNames],
-    enabled: fkTableNames.length > 0,
-    queryFn: async () => {
-      const results: Record<string, Array<Record<string, any>>> = {};
-      await Promise.all(
-        fkTableNames.map(async (tn) => {
-          const { data } = await supabase
-            .from(tn as any)
-            .select("*")
-            .order("name", { ascending: true })
-            .limit(500);
-          results[tn] = (data || []) as Array<Record<string, any>>;
-        })
-      );
-      return results;
-    },
+  // Build FK lookup maps
+  const fkQueries: Record<string, ReturnType<typeof useFkOptions>> = {};
+  filterableFields.forEach((f) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    fkQueries[f.name] = useFkOptions(fkTableName(f.name));
   });
 
   const fkMaps = useMemo(() => {
     const maps: Record<string, Record<string, string>> = {};
     filterableFields.forEach((f) => {
-      const tn = fkTableName(f.name);
-      const data = allFkData?.[tn] || [];
+      const data = fkQueries[f.name]?.data || [];
       maps[f.name] = {};
       data.forEach((r) => {
         maps[f.name][r.id] = r.name || r.title || r.slug || "Unknown";
       });
     });
     return maps;
-  }, [filterableFields, allFkData]);
+  }, [filterableFields, ...filterableFields.map((f) => fkQueries[f.name]?.data)]);
 
   // Filter + search
   const filtered = useMemo(() => {
@@ -218,9 +181,7 @@ export default function DatabaseList() {
     // Text search on name/title/slug
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter((r) =>
-        (r.name || r.title || r.slug || "").toLowerCase().includes(q)
-      );
+      result = result.filter((r) => (r.name || r.title || r.slug || "").toLowerCase().includes(q));
     }
 
     // FK filters
@@ -232,9 +193,7 @@ export default function DatabaseList() {
 
     // Tag filter (M2M via hunter_tags)
     if (isHunters && tagFilter !== "__all__") {
-      const matchingHunterIds = new Set(
-        hunterTagLinks.filter((l) => l.tag_id === tagFilter).map((l) => l.hunter_id)
-      );
+      const matchingHunterIds = new Set(hunterTagLinks.filter((l) => l.tag_id === tagFilter).map((l) => l.hunter_id));
       result = result.filter((r) => matchingHunterIds.has(r.id));
     }
 
@@ -253,7 +212,9 @@ export default function DatabaseList() {
         <div className="container py-10 space-y-4">
           <Skeleton className="h-10 w-48" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-48 w-full" />)}
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-48 w-full" />
+            ))}
           </div>
         </div>
       </Layout>
@@ -287,13 +248,13 @@ export default function DatabaseList() {
       <section className="border-b border-border">
         <div className="container py-8">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+            <Link to="/" className="hover:text-foreground transition-colors">
+              Home
+            </Link>
             <span>/</span>
             <span className="text-foreground">{displayLabel}</span>
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-            {displayLabel}
-          </h1>
+          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">Void Hunters</h1>
           <p className="text-muted-foreground mt-1">
             {filtered.length} {filtered.length === 1 ? "entry" : "entries"} found
           </p>
@@ -331,7 +292,9 @@ export default function DatabaseList() {
                   <SelectContent>
                     <SelectItem value="__all__">All Tags</SelectItem>
                     {allTags.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -343,8 +306,10 @@ export default function DatabaseList() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__all__">All Rarities</SelectItem>
-                     {rarityValues.map((r) => (
-                      <SelectItem key={r} value={String(r)}>{rarityLabel(r)}</SelectItem>
+                    {rarityValues.map((r) => (
+                      <SelectItem key={r} value={String(r)}>
+                        ★{r}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -357,7 +322,9 @@ export default function DatabaseList() {
                   <SelectContent>
                     <SelectItem value="__all__">All Effects</SelectItem>
                     {allEffects.map((e) => (
-                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -371,7 +338,9 @@ export default function DatabaseList() {
       <section className="container py-8">
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <Skeleton key={i} className="h-52 w-full rounded-lg" />)}
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <Skeleton key={i} className="h-52 w-full rounded-lg" />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
@@ -381,14 +350,12 @@ export default function DatabaseList() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filtered.map((item) => (
-              <Link
-                key={item.id}
-                to={`/database/${tableName}/${item.slug || item.id}`}
-                className="group block"
-              >
-                <Card className="overflow-hidden transition-colors h-full flex flex-col" style={{ borderColor: 'transparent' }} onMouseEnter={(e) => { if (item.rarity) e.currentTarget.style.borderColor = rarityColor(item.rarity); }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}>
+              <Link key={item.id} to={`/database/${tableName}/${item.slug || item.id}`} className="group block">
+                <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col">
                   {hasImages && (
-                    <div className={`${tableName === "hunters" ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden bg-secondary`}>
+                    <div
+                      className={`${tableName === "hunters" ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden bg-secondary`}
+                    >
                       {item.image_url ? (
                         <img
                           src={item.image_url}
@@ -404,7 +371,7 @@ export default function DatabaseList() {
                     </div>
                   )}
                   <CardContent className="p-3 flex flex-col gap-1 flex-1">
-                    <span className="font-semibold text-sm leading-snug transition-colors line-clamp-2" style={item.rarity ? { color: rarityColor(item.rarity) } : undefined}>
+                    <span className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
                       {item.name || item.title || "Unnamed"}
                     </span>
                     {item.subtitle && (
@@ -422,8 +389,8 @@ export default function DatabaseList() {
                         );
                       })}
                       {item.rarity != null && (
-                        <Badge variant="outline" className="text-xs font-normal" style={{ color: rarityColor(item.rarity), borderColor: rarityColor(item.rarity) }}>
-                          {rarityLabel(item.rarity)}
+                        <Badge variant="outline" className="text-xs font-normal">
+                          ★{item.rarity}
                         </Badge>
                       )}
                     </div>
