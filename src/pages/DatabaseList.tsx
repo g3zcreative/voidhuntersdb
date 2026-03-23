@@ -267,7 +267,7 @@ export default function DatabaseList() {
               className="pl-9"
             />
           </div>
-          {filterableFields.length > 0 && (
+          {(filterableFields.length > 0 || isHunters) && (
             <>
               <SlidersHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />
               {filterableFields.map((f) => (
@@ -278,6 +278,32 @@ export default function DatabaseList() {
                   onChange={(v) => setFilters((prev) => ({ ...prev, [f.name]: v }))}
                 />
               ))}
+              {isHunters && allTags.length > 0 && (
+                <Select value={tagFilter} onValueChange={setTagFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="All Tags" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Tags</SelectItem>
+                    {allTags.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {isHunters && allEffects.length > 0 && (
+                <Select value={effectFilter} onValueChange={setEffectFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="All Effects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Effects</SelectItem>
+                    {allEffects.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </>
           )}
         </div>
