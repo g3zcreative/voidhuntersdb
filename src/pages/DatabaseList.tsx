@@ -91,6 +91,7 @@ export default function DatabaseList() {
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["database-list", tableName],
     enabled: !!tableName && !!table && isPublic,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from(tableName as any)
@@ -106,6 +107,7 @@ export default function DatabaseList() {
   const { data: allTags = [] } = useQuery({
     queryKey: ["tags-list"],
     enabled: isHunters,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase.from("tags").select("id, name").order("name");
       return (data || []) as Array<{ id: string; name: string }>;
@@ -116,19 +118,24 @@ export default function DatabaseList() {
   const { data: allEffects = [] } = useQuery({
     queryKey: ["effects-list"],
     enabled: isHunters,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase.from("effects").select("id, name").order("name");
       return (data || []) as Array<{ id: string; name: string }>;
     },
   });
 
-  // Hunter → tag mapping via junction table
-  const { data: hunterTagLinks = [] } = useQuery({
-    queryKey: ["hunter-tags-all"],
+  // Hunter IDs matching selected tag — filter server-side for the specific tag
+  const { data: hunterIdsForTag } = useQuery({
+    queryKey: ["hunter-tags-filtered", tagFilter],
     enabled: isHunters && tagFilter !== "__all__",
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data } = await supabase.from("hunter_tags").select("hunter_id, tag_id");
-      return (data || []) as Array<{ hunter_id: string; tag_id: string }>;
+      const { data } = await supabase
+        .from("hunter_tags")
+        .select("hunter_id")
+        .eq("tag_id", tagFilter);
+      return new Set((data || []).map((r: any) => r.hunter_id));
     },
   });
 
