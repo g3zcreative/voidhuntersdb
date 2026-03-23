@@ -292,6 +292,8 @@ export function InlineChildEditor({
       if (isAutoField(f)) return false;
       if (f.name === relation.fkColumn) return false;
       if (f.name === "created_by" || f.name === "updated_by") return false;
+      // Hide complex JSON fields from inline forms — edit them on the full detail page instead
+      if (f.type.toLowerCase() === "jsonb" || f.type.toLowerCase() === "json") return false;
       return true;
     });
   }, [table, relation.fkColumn]);
