@@ -199,10 +199,9 @@ export default function DatabaseList() {
       }
     });
 
-    // Tag filter (M2M via hunter_tags)
-    if (isHunters && tagFilter !== "__all__") {
-      const matchingHunterIds = new Set(hunterTagLinks.filter((l) => l.tag_id === tagFilter).map((l) => l.hunter_id));
-      result = result.filter((r) => matchingHunterIds.has(r.id));
+    // Tag filter (M2M via hunter_tags — filtered server-side)
+    if (isHunters && tagFilter !== "__all__" && hunterIdsForTag) {
+      result = result.filter((r) => hunterIdsForTag.has(r.id));
     }
 
     // Rarity filter
@@ -212,7 +211,7 @@ export default function DatabaseList() {
     }
 
     return result;
-  }, [rows, search, filters, tagFilter, rarityFilter, hunterTagLinks, isHunters]);
+  }, [rows, search, filters, tagFilter, rarityFilter, hunterIdsForTag, isHunters]);
 
   if (registryLoading) {
     return (
