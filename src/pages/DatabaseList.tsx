@@ -75,10 +75,11 @@ function FkFilterSelect({
 
 export default function DatabaseList() {
   const { tableName } = useParams<{ tableName: string }>();
+  const [searchParams] = useSearchParams();
   const { getTable, loading: registryLoading } = useSchemaRegistry();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
-  const [tagFilter, setTagFilter] = useState("__all__");
+  const [tagFilter, setTagFilter] = useState(searchParams.get("tag") || "__all__");
   const [effectFilter, setEffectFilter] = useState("__all__");
   const [rarityFilter, setRarityFilter] = useState("__all__");
 

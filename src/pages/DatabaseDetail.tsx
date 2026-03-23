@@ -178,7 +178,7 @@ function HunterDetailView({
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-5">
               {tags.map((t: any) => (
-                <Link key={t.id} to={`/database/tags/${t.slug || t.id}`}>
+                <Link key={t.id} to={`/database/hunters?tag=${t.id}`}>
                   <Badge variant="secondary" className="hover:bg-primary/20 transition-colors cursor-pointer">
                     {t.name}
                   </Badge>
