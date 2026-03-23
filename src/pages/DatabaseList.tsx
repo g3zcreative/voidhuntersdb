@@ -15,6 +15,20 @@ import {
 } from "@/components/ui/select";
 import { Search, Database, SlidersHorizontal } from "lucide-react";
 
+const RARITY_MAP: Record<number, { label: string; color: string }> = {
+  3: { label: "Rare", color: "hsl(210, 100%, 56%)" },      // Dodger Blue
+  4: { label: "Epic", color: "hsl(259, 100%, 64%)" },       // Brand Purple
+  5: { label: "Legendary", color: "hsl(43, 100%, 50%)" },   // Gold
+};
+
+function rarityLabel(rarity: number): string {
+  return RARITY_MAP[rarity]?.label ?? `★${rarity}`;
+}
+
+function rarityColor(rarity: number): string {
+  return RARITY_MAP[rarity]?.color ?? "hsl(var(--muted-foreground))";
+}
+
 /** Fields we show as filterable dropdowns (FK selects) */
 function isFilterableField(f: SchemaField) {
   return f.name.endsWith("_id") && f.type.toLowerCase() === "uuid";
