@@ -311,23 +311,41 @@ function HunterScoringTab() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const tagsArr = entryTags.split(",").map((t) => t.trim()).filter(Boolean);
+      const newTier = tierOverride || computedTier;
       const payload = {
         hunter_id: selectedHunter,
         context_id: selectedContext,
         role,
         criteria_scores: scores,
         total_score: totalScore,
-        tier: tierOverride || computedTier,
+        tier: newTier,
         tier_override: tierOverride || null,
         tags: tagsArr,
       };
+
+      const oldTier = existingEntry ? ((existingEntry as any).tier_override || (existingEntry as any).tier) : null;
+      const oldScore = existingEntry ? (existingEntry as any).total_score : null;
+
       if (existingEntry) {
         await supabase.from("hunter_tier_entries").update(payload).eq("id", (existingEntry as any).id).throwOnError();
       } else {
         await supabase.from("hunter_tier_entries").insert(payload).throwOnError();
       }
+
+      // Log changelog entry if score or tier changed, or if it's a new entry
+      if (!existingEntry || oldTier !== newTier || oldScore !== totalScore) {
+        await supabase.from("tier_list_changelog").insert({
+          hunter_id: selectedHunter,
+          context_id: selectedContext,
+          old_tier: oldTier,
+          new_tier: newTier,
+          old_score: oldScore,
+          new_score: totalScore,
+          note: changeNote || null,
+        } as any).throwOnError();
+      }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["tier-entries"] }); toast({ title: "Hunter score saved!" }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["tier-entries"] }); setChangeNote(""); toast({ title: "Hunter score saved!" }); },
     onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
