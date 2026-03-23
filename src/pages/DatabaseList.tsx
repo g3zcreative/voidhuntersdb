@@ -83,7 +83,7 @@ export default function DatabaseList() {
   const [effectFilter, setEffectFilter] = useState("__all__");
 
   const table = tableName ? getTable(tableName) : undefined;
-  const isPublic = tableName ? PUBLIC_TABLES.includes(tableName) : false;
+  const isPublic = table?.publicPage ?? false;
   const isHunters = tableName === "hunters";
 
   // Fetch all rows
