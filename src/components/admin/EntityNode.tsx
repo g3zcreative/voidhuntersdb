@@ -92,9 +92,10 @@ function FieldSettingsPopover({
           <div className="space-y-1.5">
             <Label className="text-xs">Options (comma-separated)</Label>
             <Input
-              value={optionsStr}
-              onChange={(e) => {
-                const opts = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+              value={localOptions}
+              onChange={(e) => setLocalOptions(e.target.value)}
+              onBlur={() => {
+                const opts = localOptions.split(",").map((s) => s.trim()).filter(Boolean);
                 onUpdate({ uiOptions: opts });
               }}
               placeholder="Option1, Option2, ..."
