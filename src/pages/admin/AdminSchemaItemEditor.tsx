@@ -396,6 +396,23 @@ export default function AdminSchemaItemEditor() {
     [tableName, getInlineChildren]
   );
 
+  // Collect FK columns that point to inline child tables — these are managed
+  // by the inline editor and should not appear as standalone form fields.
+  const inlineChildFkColumns = useMemo(() => {
+    const cols = new Set<string>();
+    for (const rel of inlineChildRelations) {
+      // The parent table may have a reciprocal FK column (e.g. skill_id on hunters)
+      // pointing to the child table — hide it since children are edited inline.
+      const fks = tableName ? getForeignKeys(tableName) : [];
+      for (const fk of fks) {
+        if (fk.referencedTable === rel.childTable) {
+          cols.add(fk.column);
+        }
+      }
+    }
+    return cols;
+  }, [inlineChildRelations, tableName, getForeignKeys]);
+
   // Fields that are managed by multi-ref should be hidden from the regular form
   // e.g., the "tags" uuid field on hunters that's a leftover single-ref
   const multiRefRelatedTables = useMemo(
@@ -408,9 +425,11 @@ export default function AdminSchemaItemEditor() {
       if (isAutoField(f)) return false;
       // Hide fields that share a name with a multi-ref related table (e.g. "tags" field on hunters)
       if (multiRefRelatedTables.has(f.name)) return false;
+      // Hide FK columns managed by inline child editors (e.g. skill_id on hunters)
+      if (inlineChildFkColumns.has(f.name)) return false;
       return true;
     }),
-    [table, multiRefRelatedTables]
+    [table, multiRefRelatedTables, inlineChildFkColumns]
   );
 
   const nameField = editableFields.find((f) => f.name === "name");
