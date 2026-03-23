@@ -39,6 +39,68 @@ const FIELD_TYPES = [
   "jsonb", "timestamptz", "date", "timestamp",
 ];
 
+function FieldSettingsPopover({
+  field,
+  onUpdate,
+}: {
+  field: EntityField;
+  onUpdate: (updates: Partial<EntityField>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const widget = field.uiWidget || "";
+  const optionsStr = (field.uiOptions || []).join(", ");
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-5 w-5 opacity-0 group-hover:opacity-100 ${widget ? "text-primary opacity-100" : "text-muted-foreground"}`}
+          title="Field settings"
+        >
+          <Settings2 className="h-3 w-3" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-3" side="right" align="start">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Widget</Label>
+          <Select
+            value={widget || "auto"}
+            onValueChange={(v) => {
+              const newWidget = v === "auto" ? undefined : (v as EntityField["uiWidget"]);
+              onUpdate({ uiWidget: newWidget, uiOptions: newWidget === "select" ? field.uiOptions || [] : undefined });
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto" className="text-xs">Auto (from type)</SelectItem>
+              <SelectItem value="select" className="text-xs">Select (dropdown)</SelectItem>
+              <SelectItem value="textarea" className="text-xs">Textarea</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {(widget === "select" || (!widget && false)) && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Options (comma-separated)</Label>
+            <Input
+              value={optionsStr}
+              onChange={(e) => {
+                const opts = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                onUpdate({ uiOptions: opts });
+              }}
+              placeholder="Option1, Option2, ..."
+              className="h-7 text-xs"
+            />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function EntityNodeComponent({ id, data, selected }: NodeProps) {
   const {
     label, fields, color, publicPage,
