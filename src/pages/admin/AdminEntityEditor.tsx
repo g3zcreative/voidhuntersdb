@@ -595,26 +595,35 @@ export default function AdminEntityEditor() {
 
   // --- Deploy flow ---
   const handleDeploy = useCallback(async () => {
-    const current = await introspect();
+    const current = await introspect({ includeSystem: true });
     if (!current) return;
 
     const { desiredTables, desiredForeignKeys } = buildDeployPayload();
+
+    // Only include current tables that are also on the canvas (desired).
+    // This prevents the diff from generating DROP statements for tables
+    // that exist in the DB but aren't managed by the entity editor.
+    const desiredNames = new Set(desiredTables.map((t) => t.name));
 
     const payload = {
       mode: "preview" as const,
       desiredTables,
       desiredForeignKeys,
-      currentTables: current.tables.map((t) => ({
-        name: t.name,
-        columns: t.columns.map((c) => ({
-          name: c.name,
-          type: c.type,
-          nullable: c.nullable,
-          isPrimaryKey: c.isPrimaryKey,
-          defaultValue: c.defaultValue,
+      currentTables: current.tables
+        .filter((t) => desiredNames.has(t.name))
+        .map((t) => ({
+          name: t.name,
+          columns: t.columns.map((c) => ({
+            name: c.name,
+            type: c.type,
+            nullable: c.nullable,
+            isPrimaryKey: c.isPrimaryKey,
+            defaultValue: c.defaultValue,
+          })),
         })),
-      })),
-      currentForeignKeys: current.foreignKeys,
+      currentForeignKeys: current.foreignKeys.filter(
+        (fk) => desiredNames.has(fk.sourceTable) || desiredNames.has(fk.targetTable)
+      ),
     };
 
     const preview = await previewDeploy(payload);
