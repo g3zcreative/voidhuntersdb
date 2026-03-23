@@ -375,6 +375,8 @@ export default function AdminSchemaItemEditor() {
   // Generic inline children state: { [childTable]: InlineChildRow[] }
   const [inlineChildren, setInlineChildren] = useState<Record<string, InlineChildRow[]>>({});
   const [inlineChildrenInitialized, setInlineChildrenInitialized] = useState(false);
+  const inlineChildrenRef = useRef(inlineChildren);
+  inlineChildrenRef.current = inlineChildren;
 
   const isNew = id === "new";
   const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
