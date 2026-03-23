@@ -27,6 +27,7 @@ const contentItems = [
   { title: "News", url: "/admin/news", icon: Newspaper },
   { title: "Guides", url: "/admin/guides", icon: BookOpen },
   { title: "Official Posts", url: "/admin/official-posts", icon: MessageSquare },
+  { title: "Tier List", url: "/admin/tier-list", icon: BarChart3 },
   { title: "Authors", url: "/admin/authors", icon: PenTool },
   { title: "Changelog", url: "/admin/changelog", icon: FileText },
   { title: "Roadmap", url: "/admin/roadmap", icon: Map },

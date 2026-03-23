@@ -97,6 +97,7 @@ function AppRoutes() {
           <Route path="activity" element={<AdminActivityLog />} />
           <Route path="contributions" element={<AdminContributions />} />
           <Route path="contributions/:id" element={<AdminContributionReview />} />
+          <Route path="tier-list" element={<AdminTierList />} />
           <Route path="data/:tableName" element={<AdminSchemaData />} />
           <Route path="data/:tableName/:id" element={<AdminSchemaItemEditor />} />
         </Route>
