@@ -25,6 +25,9 @@ const DiscordRedirect = lazy(() => import("./pages/Discord"));
 const DatabaseList = lazy(() => import("./pages/DatabaseList"));
 const DatabaseDetail = lazy(() => import("./pages/DatabaseDetail"));
 const TierListPage = lazy(() => import("./pages/TierList"));
+const MyTierLists = lazy(() => import("./pages/MyTierLists"));
+const TierListEditor = lazy(() => import("./pages/TierListEditor"));
+const SharedTierList = lazy(() => import("./pages/SharedTierList"));
 
 // Admin pages (heavy -- always lazy)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
