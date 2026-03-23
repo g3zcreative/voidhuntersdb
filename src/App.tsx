@@ -24,6 +24,7 @@ const AuthPage = lazy(() => import("./pages/Auth"));
 const DiscordRedirect = lazy(() => import("./pages/Discord"));
 const DatabaseList = lazy(() => import("./pages/DatabaseList"));
 const DatabaseDetail = lazy(() => import("./pages/DatabaseDetail"));
+const TierListPage = lazy(() => import("./pages/TierList"));
 
 // Admin pages (heavy -- always lazy)
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
@@ -45,6 +46,7 @@ const AdminSchemaItemEditor = lazy(() => import("./pages/admin/AdminSchemaItemEd
 const AdminActivityLog = lazy(() => import("./pages/admin/AdminActivityLog"));
 const AdminContributions = lazy(() => import("./pages/admin/AdminContributions"));
 const AdminContributionReview = lazy(() => import("./pages/admin/AdminContributionReview"));
+const AdminTierList = lazy(() => import("./pages/admin/AdminTierList"));
 
 const queryClient = new QueryClient();
 
@@ -74,6 +76,7 @@ function AppRoutes() {
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/roadmap" element={<RoadmapPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/tier-list" element={<TierListPage />} />
         <Route path="/database/:tableName" element={<DatabaseList />} />
         <Route path="/database/:tableName/:slug" element={<DatabaseDetail />} />
         <Route path="/admin" element={<AdminLayout />}>
@@ -94,6 +97,7 @@ function AppRoutes() {
           <Route path="activity" element={<AdminActivityLog />} />
           <Route path="contributions" element={<AdminContributions />} />
           <Route path="contributions/:id" element={<AdminContributionReview />} />
+          <Route path="tier-list" element={<AdminTierList />} />
           <Route path="data/:tableName" element={<AdminSchemaData />} />
           <Route path="data/:tableName/:id" element={<AdminSchemaItemEditor />} />
         </Route>

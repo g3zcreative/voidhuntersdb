@@ -22,10 +22,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { label: "Tier List", href: "/tier-list" },
   { label: "News", href: "/news" },
   { label: "Guides", href: "/guides" },
   { label: "Official Posts", href: "/official-posts" },
-  
 ];
 
 export function Navbar() {
