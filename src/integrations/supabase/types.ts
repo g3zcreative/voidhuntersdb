@@ -803,19 +803,22 @@ export type Database = {
       }
       site_settings: {
         Row: {
-          key: string
+          created_at: string
+          current_patch: string | null
+          id: string
           updated_at: string
-          value: Json
         }
         Insert: {
-          key: string
+          created_at?: string
+          current_patch?: string | null
+          id?: string
           updated_at?: string
-          value?: Json
         }
         Update: {
-          key?: string
+          created_at?: string
+          current_patch?: string | null
+          id?: string
           updated_at?: string
-          value?: Json
         }
         Relationships: []
       }
