@@ -205,8 +205,14 @@ export default function DatabaseList() {
       result = result.filter((r) => matchingHunterIds.has(r.id));
     }
 
+    // Rarity filter
+    if (isHunters && rarityFilter !== "__all__") {
+      const rarityVal = parseInt(rarityFilter, 10);
+      result = result.filter((r) => r.rarity === rarityVal);
+    }
+
     return result;
-  }, [rows, search, filters, tagFilter, hunterTagLinks, isHunters]);
+  }, [rows, search, filters, tagFilter, rarityFilter, hunterTagLinks, isHunters]);
 
   if (registryLoading) {
     return (
