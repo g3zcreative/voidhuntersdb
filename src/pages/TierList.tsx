@@ -29,7 +29,7 @@ const TIER_BG: Record<string, string> = {
   T3: "bg-muted/20",
 };
 
-const RARITY_LABELS: Record<number, string> = { 3: "R", 4: "SR", 5: "SSR" };
+const RARITY_LABELS: Record<number, string> = { 3: "Rare", 4: "Epic", 5: "Legendary" };
 
 function HunterPortrait({ hunter, tags, onClick }: { hunter: any; tags?: string[]; onClick: () => void }) {
   const rarityClass = hunter.rarity === 5 ? "ring-yellow-500" : hunter.rarity === 4 ? "ring-purple-500" : "ring-blue-500";
