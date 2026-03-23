@@ -6,8 +6,10 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, ArrowUp, ArrowDown, Minus, Clock } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { format } from "date-fns";
 
 const ROLES = ["DPS", "Debuff", "Control", "Support", "Sustain"] as const;
 
