@@ -16,6 +16,7 @@ export interface SchemaTable {
   label: string;
   fields: SchemaField[];
   color: string;
+  publicPage: boolean;
 }
 
 /** Describes a many-to-many relationship via a junction table */
