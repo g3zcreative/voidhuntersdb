@@ -402,6 +402,7 @@ export default function AdminEntityEditor() {
         label: (data as any).label,
         fields: (data as any).fields,
         color: (data as any).color,
+        publicPage: (data as any).publicPage ?? false,
       },
     }));
 
