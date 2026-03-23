@@ -419,6 +419,10 @@ function HunterScoringTab() {
                 </div>
               ))}
             </div>
+            <div>
+              <Label>Change Note (optional — explains why the score changed)</Label>
+              <Textarea value={changeNote} onChange={(e) => setChangeNote(e.target.value)} placeholder="e.g. Buffed in patch 1.2, stronger AoE damage now" rows={2} />
+            </div>
 
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
               <Save className="h-4 w-4 mr-1" /> {existingEntry ? "Update" : "Save"} Score
