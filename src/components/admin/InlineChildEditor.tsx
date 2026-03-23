@@ -174,6 +174,17 @@ function InlineFieldInput({
     return <InlineImageUpload value={value} onChange={onChange} />;
   }
 
+  const isTextArea = lowerName === "description" || lowerName === "content" || lowerName === "notes";
+  if (isTextArea) {
+    return (
+      <Textarea
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="min-h-[60px]"
+      />
+    );
+  }
+
   const inputType = fieldTypeToInputType(field.type);
 
   switch (inputType) {
