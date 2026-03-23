@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import React, { memo, useState } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,13 @@ function FieldSettingsPopover({
 }) {
   const [open, setOpen] = useState(false);
   const widget = field.uiWidget || "";
+  const [localOptions, setLocalOptions] = useState((field.uiOptions || []).join(", "));
+
+  // Sync local state when field changes externally
   const optionsStr = (field.uiOptions || []).join(", ");
+  React.useEffect(() => {
+    if (!open) setLocalOptions(optionsStr);
+  }, [optionsStr, open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -86,9 +92,10 @@ function FieldSettingsPopover({
           <div className="space-y-1.5">
             <Label className="text-xs">Options (comma-separated)</Label>
             <Input
-              value={optionsStr}
-              onChange={(e) => {
-                const opts = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+              value={localOptions}
+              onChange={(e) => setLocalOptions(e.target.value)}
+              onBlur={() => {
+                const opts = localOptions.split(",").map((s) => s.trim()).filter(Boolean);
                 onUpdate({ uiOptions: opts });
               }}
               placeholder="Option1, Option2, ..."
