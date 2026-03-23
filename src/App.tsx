@@ -54,11 +54,6 @@ function PageViewTracker() {
 }
 
 function AppRoutes() {
-  const { flags } = useFeatureFlags();
-
-  const comingSoon = (title: string, desc: string) => (
-    <ComingSoonPage title={title} description={desc} />
-  );
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
