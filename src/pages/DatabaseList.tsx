@@ -353,7 +353,7 @@ export default function DatabaseList() {
                 to={`/database/${tableName}/${item.slug || item.id}`}
                 className="group block"
               >
-                <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col">
+                <Card className="overflow-hidden transition-colors h-full flex flex-col" style={{ borderColor: 'transparent' }} onMouseEnter={(e) => { if (item.rarity) e.currentTarget.style.borderColor = rarityColor(item.rarity); }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}>
                   {hasImages && (
                     <div className={`${tableName === "hunters" ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden bg-secondary`}>
                       {item.image_url ? (
