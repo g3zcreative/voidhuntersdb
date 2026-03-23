@@ -5,11 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ROLES = ["DPS", "Debuff", "Control", "Support", "Sustain"] as const;
+
+const ROLE_ICONS: Record<string, string> = {
+  DPS: "🗡️",
+  Debuff: "❄️",
+  Control: "⚡",
+  Support: "⚠️",
+  Sustain: "🛡️",
+};
 
 const TIER_COLORS: Record<string, string> = {
   T0: "bg-red-500/20 border-red-500 text-red-400",
@@ -27,6 +35,15 @@ const TIER_BG: Record<string, string> = {
   "T1.5": "bg-green-500/10",
   T2: "bg-blue-500/10",
   T3: "bg-muted/20",
+};
+
+const TIER_BANNER: Record<string, string> = {
+  T0: "bg-red-500/80 text-white",
+  "T0.5": "bg-orange-500/80 text-white",
+  T1: "bg-yellow-500/80 text-black",
+  "T1.5": "bg-green-500/80 text-white",
+  T2: "bg-blue-500/80 text-white",
+  T3: "bg-muted text-muted-foreground",
 };
 
 const RARITY_LABELS: Record<number, string> = { 3: "Rare", 4: "Epic", 5: "Legendary" };
@@ -60,6 +77,7 @@ function HunterPortrait({ hunter, tags, onClick }: { hunter: any; tags?: string[
 
 export default function TierList() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [rarityFilter, setRarityFilter] = useState<number | null>(null);
   const [activeContext, setActiveContext] = useState<string>("");
@@ -94,7 +112,6 @@ export default function TierList() {
     enabled: !!activeContext,
   });
 
-  // Filter entries
   const filtered = useMemo(() => {
     return entries.filter((e: any) => {
       const hunter = e.hunters;
@@ -105,7 +122,6 @@ export default function TierList() {
     });
   }, [entries, search, rarityFilter]);
 
-  // Group by tier → role
   const tierGroups = useMemo(() => {
     const groups: Record<string, Record<string, any[]>> = {};
     for (const r of ranges) {
@@ -136,7 +152,7 @@ export default function TierList() {
         <h1 className="text-3xl font-display font-bold">Tier List</h1>
 
         {/* Context Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex flex-col sm:flex-row gap-2 overflow-x-auto pb-2">
           {contexts.map((ctx: any) => (
             <button
               key={ctx.id}
@@ -153,8 +169,8 @@ export default function TierList() {
         </div>
 
         {/* Search + Rarity Filters */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div className="relative flex-1 min-w-0 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search hunters..."
@@ -196,9 +212,60 @@ export default function TierList() {
             <p className="text-lg">No hunters have been scored for this context yet.</p>
             <p className="text-sm mt-1">Check back soon!</p>
           </div>
+        ) : isMobile ? (
+          /* ── Mobile: stacked layout like Prydwen ── */
+          <div className="space-y-4">
+            {orderedTiers.map((tier: string) => {
+              const roleGroups = tierGroups[tier];
+              if (!roleGroups) return null;
+              const hasEntries = ROLES.some((r) => roleGroups[r]?.length > 0);
+              if (!hasEntries && filtered.length > 0) return null;
+
+              const bannerClass = TIER_BANNER[tier] || TIER_BANNER.T3;
+              const bgClass = TIER_BG[tier] || TIER_BG.T3;
+
+              return (
+                <div key={tier} className={`rounded-lg border border-border overflow-hidden ${bgClass}`}>
+                  {/* Tier banner */}
+                  <div className={`py-2 text-center font-display font-bold text-lg ${bannerClass}`}>
+                    {tier}
+                  </div>
+
+                  {/* Role sections */}
+                  <div className="divide-y divide-border">
+                    {ROLES.map((role) => {
+                      const hunters = roleGroups[role] || [];
+                      if (hunters.length === 0 && filtered.length > 0) return null;
+                      return (
+                        <div key={role} className="p-3">
+                          <div className="text-xs font-semibold text-center text-muted-foreground mb-2">
+                            {ROLE_ICONS[role]} <span className="uppercase">{role}</span>
+                          </div>
+                          {hunters.length > 0 ? (
+                            <div className="flex flex-wrap justify-center gap-3">
+                              {hunters.map((entry: any) => (
+                                <HunterPortrait
+                                  key={entry.id}
+                                  hunter={entry.hunters}
+                                  tags={entry.tags}
+                                  onClick={() => navigate(`/database/hunters/${entry.hunters?.slug || entry.hunters?.id}`)}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="h-8" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
+          /* ── Desktop: column grid ── */
           <div className="rounded-lg border border-border overflow-hidden">
-            {/* Role Headers */}
             <div className="grid grid-cols-[80px_repeat(5,1fr)] bg-secondary/50 border-b border-border">
               <div className="p-2 text-xs font-semibold text-muted-foreground text-center">TIER</div>
               {ROLES.map((role) => (
@@ -208,7 +275,6 @@ export default function TierList() {
               ))}
             </div>
 
-            {/* Tier Rows */}
             {orderedTiers.map((tier: string) => {
               const roleGroups = tierGroups[tier];
               if (!roleGroups) return null;
