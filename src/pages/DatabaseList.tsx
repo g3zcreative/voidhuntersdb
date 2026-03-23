@@ -81,6 +81,7 @@ export default function DatabaseList() {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [tagFilter, setTagFilter] = useState("__all__");
   const [effectFilter, setEffectFilter] = useState("__all__");
+  const [rarityFilter, setRarityFilter] = useState("__all__");
 
   const table = tableName ? getTable(tableName) : undefined;
   const isPublic = table?.publicPage ?? false;
@@ -145,6 +146,13 @@ export default function DatabaseList() {
     },
   });
 
+  // Unique rarity values for filter
+  const rarityValues = useMemo(() => {
+    if (!isHunters) return [];
+    const vals = [...new Set(rows.map((r) => r.rarity).filter((v) => v != null))] as number[];
+    return vals.sort((a, b) => a - b);
+  }, [rows, isHunters]);
+
   // Pre-load FK lookup maps for display
   const filterableFields = useMemo(
     () => (table?.fields || []).filter(isFilterableField),
@@ -197,8 +205,14 @@ export default function DatabaseList() {
       result = result.filter((r) => matchingHunterIds.has(r.id));
     }
 
+    // Rarity filter
+    if (isHunters && rarityFilter !== "__all__") {
+      const rarityVal = parseInt(rarityFilter, 10);
+      result = result.filter((r) => r.rarity === rarityVal);
+    }
+
     return result;
-  }, [rows, search, filters, tagFilter, hunterTagLinks, isHunters]);
+  }, [rows, search, filters, tagFilter, rarityFilter, hunterTagLinks, isHunters]);
 
   if (registryLoading) {
     return (
@@ -285,6 +299,19 @@ export default function DatabaseList() {
                     <SelectItem value="__all__">All Tags</SelectItem>
                     {allTags.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {isHunters && rarityValues.length > 0 && (
+                <Select value={rarityFilter} onValueChange={setRarityFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="All Rarities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Rarities</SelectItem>
+                    {rarityValues.map((r) => (
+                      <SelectItem key={r} value={String(r)}>★{r}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
