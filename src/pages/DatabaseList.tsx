@@ -15,6 +15,20 @@ import {
 } from "@/components/ui/select";
 import { Search, Database, SlidersHorizontal } from "lucide-react";
 
+const RARITY_MAP: Record<number, { label: string; color: string }> = {
+  3: { label: "Rare", color: "hsl(210, 100%, 56%)" },      // Dodger Blue
+  4: { label: "Epic", color: "hsl(259, 100%, 64%)" },       // Brand Purple
+  5: { label: "Legendary", color: "hsl(43, 100%, 50%)" },   // Gold
+};
+
+function rarityLabel(rarity: number): string {
+  return RARITY_MAP[rarity]?.label ?? `★${rarity}`;
+}
+
+function rarityColor(rarity: number): string {
+  return RARITY_MAP[rarity]?.color ?? "hsl(var(--muted-foreground))";
+}
+
 /** Fields we show as filterable dropdowns (FK selects) */
 function isFilterableField(f: SchemaField) {
   return f.name.endsWith("_id") && f.type.toLowerCase() === "uuid";
@@ -310,8 +324,8 @@ export default function DatabaseList() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__all__">All Rarities</SelectItem>
-                    {rarityValues.map((r) => (
-                      <SelectItem key={r} value={String(r)}>★{r}</SelectItem>
+                     {rarityValues.map((r) => (
+                      <SelectItem key={r} value={String(r)}>{rarityLabel(r)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -353,7 +367,7 @@ export default function DatabaseList() {
                 to={`/database/${tableName}/${item.slug || item.id}`}
                 className="group block"
               >
-                <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col">
+                <Card className="overflow-hidden transition-colors h-full flex flex-col" style={{ borderColor: 'transparent' }} onMouseEnter={(e) => { if (item.rarity) e.currentTarget.style.borderColor = rarityColor(item.rarity); }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}>
                   {hasImages && (
                     <div className={`${tableName === "hunters" ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden bg-secondary`}>
                       {item.image_url ? (
@@ -371,7 +385,7 @@ export default function DatabaseList() {
                     </div>
                   )}
                   <CardContent className="p-3 flex flex-col gap-1 flex-1">
-                    <span className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                    <span className="font-semibold text-sm leading-snug transition-colors line-clamp-2" style={item.rarity ? { color: rarityColor(item.rarity) } : undefined}>
                       {item.name || item.title || "Unnamed"}
                     </span>
                     {item.subtitle && (
@@ -389,8 +403,8 @@ export default function DatabaseList() {
                         );
                       })}
                       {item.rarity != null && (
-                        <Badge variant="outline" className="text-xs font-normal">
-                          ★{item.rarity}
+                        <Badge variant="outline" className="text-xs font-normal" style={{ color: rarityColor(item.rarity), borderColor: rarityColor(item.rarity) }}>
+                          {rarityLabel(item.rarity)}
                         </Badge>
                       )}
                     </div>
