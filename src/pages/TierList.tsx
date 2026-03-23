@@ -128,6 +128,8 @@ export default function TierList() {
     },
     enabled: !!activeContext,
   });
+
+  const filtered = useMemo(() => {
     return entries.filter((e: any) => {
       const hunter = e.hunters;
       if (!hunter) return false;
