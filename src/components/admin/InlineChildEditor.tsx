@@ -93,7 +93,7 @@ function InlineImageUpload({
   );
 }
 
-// ── JSON key/value editor ──
+// ── JSON key/value editor (string-only inputs) ──
 function JsonFieldEditorInline({
   value,
   onChange,
@@ -104,16 +104,16 @@ function JsonFieldEditorInline({
   const obj = value && typeof value === "object" ? value : {};
   const entries = Object.entries(obj);
 
-  const update = (oldKey: string, newKey: string, newVal: string) => {
+  const updateKey = (index: number, newKey: string) => {
     const next: Record<string, any> = {};
-    entries.forEach(([k, v]) => {
-      if (k === oldKey) {
-        if (newKey.trim()) next[newKey.trim()] = isNaN(Number(newVal)) ? newVal : Number(newVal);
-      } else {
-        next[k] = v;
-      }
+    entries.forEach(([k, v], i) => {
+      next[i === index ? newKey : k] = v;
     });
     onChange(Object.keys(next).length > 0 ? next : null);
+  };
+
+  const updateValue = (key: string, newVal: string) => {
+    onChange({ ...obj, [key]: newVal });
   };
 
   const remove = (key: string) => {
@@ -127,15 +127,15 @@ function JsonFieldEditorInline({
       {entries.map(([key, val], i) => (
         <div key={i} className="flex items-center gap-2">
           <Input
-            placeholder="Key"
+            placeholder="e.g. Lv2"
             value={key}
-            onChange={(e) => update(key, e.target.value, String(val))}
+            onChange={(e) => updateKey(i, e.target.value)}
             className="flex-1 font-mono text-xs"
           />
           <Input
-            placeholder="Value"
+            placeholder="e.g. +2% Healing"
             value={String(val ?? "")}
-            onChange={(e) => update(key, key, e.target.value)}
+            onChange={(e) => updateValue(key, e.target.value)}
             className="flex-1 font-mono text-xs"
           />
           <Button type="button" variant="ghost" size="icon" onClick={() => remove(key)} className="shrink-0 h-8 w-8">
