@@ -215,13 +215,13 @@ export default function DatabaseList() {
     );
   }
 
-  if (!table) {
+  if (!table || !isPublic) {
     return (
       <Layout>
         <div className="container py-20 text-center">
           <Database className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-30" />
           <h1 className="font-display text-2xl font-bold mb-2">Collection Not Found</h1>
-          <p className="text-muted-foreground">The collection "{tableName}" doesn't exist.</p>
+          <p className="text-muted-foreground">The collection "{tableName}" doesn't exist or has no public page.</p>
         </div>
       </Layout>
     );
