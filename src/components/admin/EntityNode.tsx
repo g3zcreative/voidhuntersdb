@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, GripVertical, Key } from "lucide-react";
+import { Plus, Trash2, GripVertical, Key, Globe } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface EntityField {
   id: string;
@@ -19,11 +20,13 @@ export interface EntityNodeData {
   label: string;
   fields: EntityField[];
   color: string;
+  publicPage?: boolean;
   onUpdateLabel: (nodeId: string, label: string) => void;
   onAddField: (nodeId: string) => void;
   onRemoveField: (nodeId: string, fieldId: string) => void;
   onUpdateField: (nodeId: string, fieldId: string, updates: Partial<EntityField>) => void;
   onDeleteNode?: (nodeId: string, label: string) => void;
+  onTogglePublicPage?: (nodeId: string) => void;
   [key: string]: unknown;
 }
 
@@ -34,8 +37,8 @@ const FIELD_TYPES = [
 
 function EntityNodeComponent({ id, data, selected }: NodeProps) {
   const {
-    label, fields, color,
-    onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode,
+    label, fields, color, publicPage,
+    onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode, onTogglePublicPage,
   } = data as unknown as EntityNodeData;
 
   return (
@@ -57,6 +60,24 @@ function EntityNodeComponent({ id, data, selected }: NodeProps) {
           className="h-7 text-sm font-semibold bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
           placeholder="table_name"
         />
+        {onTogglePublicPage && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-6 w-6 shrink-0 ${publicPage ? "text-primary" : "text-muted-foreground/40"}`}
+                onClick={() => onTogglePublicPage(id)}
+                title="Toggle public page"
+              >
+                <Globe className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              {publicPage ? "Has public page — click to hide" : "No public page — click to enable"}
+            </TooltipContent>
+          </Tooltip>
+        )}
         {onDeleteNode && (
           <Button
             variant="ghost"

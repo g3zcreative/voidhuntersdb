@@ -188,6 +188,18 @@ export default function AdminEntityEditor() {
     [setNodes]
   );
 
+  const onTogglePublicPage = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          return { ...n, data: { ...n.data, publicPage: !(n.data as any).publicPage } };
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const onMoveField = useCallback(
     (nodeId: string, fieldId: string, direction: "up" | "down") => {
       setNodes((nds) =>
@@ -248,9 +260,10 @@ export default function AdminEntityEditor() {
           onUpdateField,
           onMoveField,
           onDeleteNode,
+          onTogglePublicPage,
         },
       })),
-    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onMoveField, onDeleteNode]
+    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onMoveField, onDeleteNode, onTogglePublicPage]
   );
 
   const onConnect = useCallback(
@@ -402,6 +415,7 @@ export default function AdminEntityEditor() {
         label: (data as any).label,
         fields: (data as any).fields,
         color: (data as any).color,
+        publicPage: (data as any).publicPage ?? false,
       },
     }));
 
