@@ -245,6 +245,7 @@ function HunterScoringTab() {
   const [role, setRole] = useState<string>("DPS");
   const [tierOverride, setTierOverride] = useState<string>("");
   const [entryTags, setEntryTags] = useState<string>("");
+  const [changeNote, setChangeNote] = useState<string>("");
 
   const { data: contexts = [] } = useQuery({
     queryKey: ["tier-contexts"],
