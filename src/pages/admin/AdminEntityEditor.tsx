@@ -595,7 +595,7 @@ export default function AdminEntityEditor() {
 
   // --- Deploy flow ---
   const handleDeploy = useCallback(async () => {
-    const current = await introspect();
+    const current = await introspect({ includeSystem: true });
     if (!current) return;
 
     const { desiredTables, desiredForeignKeys } = buildDeployPayload();
