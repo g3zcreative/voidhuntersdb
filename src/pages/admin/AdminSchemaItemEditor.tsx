@@ -745,7 +745,7 @@ export default function AdminSchemaItemEditor() {
         }
       };
 
-      await saveInlineChildren(inlineChildRelations, inlineChildren, itemId!);
+      await saveInlineChildren(inlineChildRelations, inlineChildrenRef.current, itemId!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
