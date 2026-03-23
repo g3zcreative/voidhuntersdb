@@ -85,6 +85,10 @@ export default function AuthPage() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                   <div className="space-y-2">
+                    <Label htmlFor="signup-username">Username</Label>
+                    <Input id="signup-username" type="text" value={username} onChange={e => setUsername(e.target.value)} required placeholder="Your public display name" />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input id="signup-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
                   </div>
