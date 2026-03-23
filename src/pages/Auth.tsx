@@ -16,6 +16,7 @@ export default function AuthPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (user) {
@@ -38,8 +39,12 @@ export default function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username.trim()) {
+      toast({ title: "Username required", description: "Please enter a username.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email, password, username.trim());
     setLoading(false);
     if (error) {
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
@@ -79,6 +84,10 @@ export default function AuthPage() {
               </TabsContent>
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-username">Username</Label>
+                    <Input id="signup-username" type="text" value={username} onChange={e => setUsername(e.target.value)} required placeholder="Your public display name" />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input id="signup-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
