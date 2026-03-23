@@ -114,7 +114,20 @@ export default function TierList() {
     enabled: !!activeContext,
   });
 
-  const filtered = useMemo(() => {
+  const { data: changelog = [] } = useQuery({
+    queryKey: ["tier-changelog-public", activeContext],
+    queryFn: async () => {
+      if (!activeContext) return [];
+      const { data } = await supabase
+        .from("tier_list_changelog")
+        .select("*, hunters(name, slug, image_url)")
+        .eq("context_id", activeContext)
+        .order("changed_at", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+    enabled: !!activeContext,
+  });
     return entries.filter((e: any) => {
       const hunter = e.hunters;
       if (!hunter) return false;
