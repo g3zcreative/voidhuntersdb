@@ -88,7 +88,7 @@ export default function DatabaseList() {
   const isHunters = tableName === "hunters";
 
   // Pre-compute filterable fields (stable once table is loaded)
-  const filterableFields = useMemo(() => (table?.fields || []).filter(isFilterableField), [table]);
+  const filterableFields = useMemo(() => (table?.fields || []).filter((f) => isFilterableField(f) && f.name !== "skill_id"), [table]);
 
   // Stable sorted list of FK table names for batch query
   const fkTableNames = useMemo(
