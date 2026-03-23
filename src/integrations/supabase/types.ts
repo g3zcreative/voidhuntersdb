@@ -1007,6 +1007,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tier_list_changelog: {
+        Row: {
+          changed_at: string
+          context_id: string
+          hunter_id: string
+          id: string
+          new_score: number | null
+          new_tier: string | null
+          note: string | null
+          old_score: number | null
+          old_tier: string | null
+        }
+        Insert: {
+          changed_at?: string
+          context_id: string
+          hunter_id: string
+          id?: string
+          new_score?: number | null
+          new_tier?: string | null
+          note?: string | null
+          old_score?: number | null
+          old_tier?: string | null
+        }
+        Update: {
+          changed_at?: string
+          context_id?: string
+          hunter_id?: string
+          id?: string
+          new_score?: number | null
+          new_tier?: string | null
+          note?: string | null
+          old_score?: number | null
+          old_tier?: string | null
+        }
+        Relationships: []
+      }
       tier_list_contexts: {
         Row: {
           created_at: string

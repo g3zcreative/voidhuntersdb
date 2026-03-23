@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -245,6 +246,7 @@ function HunterScoringTab() {
   const [role, setRole] = useState<string>("DPS");
   const [tierOverride, setTierOverride] = useState<string>("");
   const [entryTags, setEntryTags] = useState<string>("");
+  const [changeNote, setChangeNote] = useState<string>("");
 
   const { data: contexts = [] } = useQuery({
     queryKey: ["tier-contexts"],
@@ -283,11 +285,13 @@ function HunterScoringTab() {
       setRole((entry as any).role || "DPS");
       setTierOverride((entry as any).tier_override || "");
       setEntryTags(((entry as any).tags || []).join(", "));
+      setChangeNote("");
     } else {
       setScores({});
       setRole("DPS");
       setTierOverride("");
       setEntryTags("");
+      setChangeNote("");
     }
   };
 
@@ -308,23 +312,41 @@ function HunterScoringTab() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const tagsArr = entryTags.split(",").map((t) => t.trim()).filter(Boolean);
+      const newTier = tierOverride || computedTier;
       const payload = {
         hunter_id: selectedHunter,
         context_id: selectedContext,
         role,
         criteria_scores: scores,
         total_score: totalScore,
-        tier: tierOverride || computedTier,
+        tier: newTier,
         tier_override: tierOverride || null,
         tags: tagsArr,
       };
+
+      const oldTier = existingEntry ? ((existingEntry as any).tier_override || (existingEntry as any).tier) : null;
+      const oldScore = existingEntry ? (existingEntry as any).total_score : null;
+
       if (existingEntry) {
         await supabase.from("hunter_tier_entries").update(payload).eq("id", (existingEntry as any).id).throwOnError();
       } else {
         await supabase.from("hunter_tier_entries").insert(payload).throwOnError();
       }
+
+      // Log changelog entry if score or tier changed, or if it's a new entry
+      if (!existingEntry || oldTier !== newTier || oldScore !== totalScore) {
+        await supabase.from("tier_list_changelog").insert({
+          hunter_id: selectedHunter,
+          context_id: selectedContext,
+          old_tier: oldTier,
+          new_tier: newTier,
+          old_score: oldScore,
+          new_score: totalScore,
+          note: changeNote || null,
+        } as any).throwOnError();
+      }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["tier-entries"] }); toast({ title: "Hunter score saved!" }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["tier-entries"] }); setChangeNote(""); toast({ title: "Hunter score saved!" }); },
     onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
@@ -396,6 +418,10 @@ function HunterScoringTab() {
                   {c.description && <p className="text-xs text-muted-foreground">{c.description}</p>}
                 </div>
               ))}
+            </div>
+            <div>
+              <Label>Change Note (optional — explains why the score changed)</Label>
+              <Textarea value={changeNote} onChange={(e) => setChangeNote(e.target.value)} placeholder="e.g. Buffed in patch 1.2, stronger AoE damage now" rows={2} />
             </div>
 
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
