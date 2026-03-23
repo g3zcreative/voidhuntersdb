@@ -24,11 +24,18 @@ export default function SharedTierList() {
     queryFn: async () => {
       const { data } = await supabase
         .from("user_tier_lists")
-        .select("*, tier_list_contexts(name), profiles(display_name, email)")
+        .select("*, tier_list_contexts(name)")
         .eq("id", id!)
         .eq("is_public", true)
         .single();
-      return data;
+      if (!data) return null;
+      // Fetch author profile separately
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, email")
+        .eq("id", data.user_id)
+        .single();
+      return { ...data, profile };
     },
     enabled: !!id,
   });
