@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,32 +28,32 @@ function fkTableName(fieldName: string) {
   return base + "s";
 }
 
-function useFkOptions(tableName: string) {
-  return useQuery({
-    queryKey: ["fk-options-public", tableName],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from(tableName as any)
-        .select("*")
-        .order("name", { ascending: true })
-        .limit(500);
-      if (error) throw error;
-      return (data || []) as Array<Record<string, any>>;
-    },
-  });
+/** Optimize image URLs for thumbnails */
+function thumbnailUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  // Supabase storage URLs support ?width= transform
+  if (url.includes("/storage/v1/object/")) {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}width=400`;
+  }
+  return url;
 }
+
+/** Columns needed for list cards per table */
+const HUNTER_LIST_COLUMNS = "id, name, slug, subtitle, image_url, rarity";
+const DEFAULT_LIST_COLUMNS = "id, name, slug, subtitle, image_url, title";
 
 function FkFilterSelect({
   field,
   value,
   onChange,
+  options,
 }: {
   field: SchemaField;
   value: string;
   onChange: (v: string) => void;
+  options: Array<Record<string, any>>;
 }) {
-  const table = fkTableName(field.name);
-  const { data: options = [] } = useFkOptions(table);
   const label = field.name.replace(/_id$/, "").replace(/_/g, " ");
 
   return (
@@ -87,15 +87,25 @@ export default function DatabaseList() {
   const isPublic = table?.publicPage ?? false;
   const isHunters = tableName === "hunters";
 
-  // Fetch all rows
+  // Pre-compute filterable fields (stable once table is loaded)
+  const filterableFields = useMemo(() => (table?.fields || []).filter(isFilterableField), [table]);
+
+  // Stable sorted list of FK table names for batch query
+  const fkTableNames = useMemo(
+    () => [...new Set(filterableFields.map((f) => fkTableName(f.name)))].sort(),
+    [filterableFields]
+  );
+
+  // Fetch all rows — select only needed columns
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["database-list", tableName],
     enabled: !!tableName && !!table && isPublic,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      const columns = isHunters ? HUNTER_LIST_COLUMNS : DEFAULT_LIST_COLUMNS;
       const { data, error } = await supabase
         .from(tableName as any)
-        .select("*")
+        .select(columns)
         .order("name", { ascending: true })
         .limit(1000);
       if (error) throw error;
@@ -125,7 +135,7 @@ export default function DatabaseList() {
     },
   });
 
-  // Hunter IDs matching selected tag — filter server-side for the specific tag
+  // Hunter IDs matching selected tag — filter server-side
   const { data: hunterIdsForTag } = useQuery({
     queryKey: ["hunter-tags-filtered", tagFilter],
     enabled: isHunters && tagFilter !== "__all__",
@@ -139,19 +149,50 @@ export default function DatabaseList() {
     },
   });
 
-  // Hunter → effect mapping via skills table
-  const { data: skillEffectLinks = [] } = useQuery({
-    queryKey: ["skill-effects-all"],
-    enabled: isHunters && effectFilter !== "__all__",
+  // Batch FK lookup — single query fetches all FK tables at once
+  const { data: fkBatchData } = useQuery({
+    queryKey: ["fk-batch", ...fkTableNames],
+    enabled: fkTableNames.length > 0,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      // Skills link hunters to effects — but effects are jsonb, not FK.
-      // However there IS an effects table. We need to check if skills reference effects somehow.
-      // For now, we'll use the skills table's hunter_id to map hunters.
-      // Effects are standalone — let's check if hunters have tags that map to effects.
-      // Actually effects table is separate. Let's just skip for now.
-      return [] as Array<{ hunter_id: string; effect_id: string }>;
+      const results: Record<string, Array<Record<string, any>>> = {};
+      const fetches = fkTableNames.map(async (tbl) => {
+        const { data } = await supabase
+          .from(tbl as any)
+          .select("id, name, title, slug")
+          .order("name", { ascending: true })
+          .limit(500);
+        results[tbl] = (data || []) as Array<Record<string, any>>;
+      });
+      await Promise.all(fetches);
+      return results;
     },
   });
+
+  // Build FK lookup maps from batch data
+  const fkMaps = useMemo(() => {
+    const maps: Record<string, Record<string, string>> = {};
+    if (!fkBatchData) return maps;
+    filterableFields.forEach((f) => {
+      const tbl = fkTableName(f.name);
+      const data = fkBatchData[tbl] || [];
+      maps[f.name] = {};
+      data.forEach((r) => {
+        maps[f.name][r.id] = r.name || r.title || r.slug || "Unknown";
+      });
+    });
+    return maps;
+  }, [filterableFields, fkBatchData]);
+
+  // FK options for filter dropdowns (derived from batch data)
+  const fkOptions = useMemo(() => {
+    const opts: Record<string, Array<Record<string, any>>> = {};
+    if (!fkBatchData) return opts;
+    filterableFields.forEach((f) => {
+      opts[f.name] = fkBatchData[fkTableName(f.name)] || [];
+    });
+    return opts;
+  }, [filterableFields, fkBatchData]);
 
   // Unique rarity values for filter
   const rarityValues = useMemo(() => {
@@ -159,28 +200,6 @@ export default function DatabaseList() {
     const vals = [...new Set(rows.map((r) => r.rarity).filter((v) => v != null))] as number[];
     return vals.sort((a, b) => a - b);
   }, [rows, isHunters]);
-
-  // Pre-load FK lookup maps for display
-  const filterableFields = useMemo(() => (table?.fields || []).filter(isFilterableField), [table]);
-
-  // Build FK lookup maps
-  const fkQueries: Record<string, ReturnType<typeof useFkOptions>> = {};
-  filterableFields.forEach((f) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    fkQueries[f.name] = useFkOptions(fkTableName(f.name));
-  });
-
-  const fkMaps = useMemo(() => {
-    const maps: Record<string, Record<string, string>> = {};
-    filterableFields.forEach((f) => {
-      const data = fkQueries[f.name]?.data || [];
-      maps[f.name] = {};
-      data.forEach((r) => {
-        maps[f.name][r.id] = r.name || r.title || r.slug || "Unknown";
-      });
-    });
-    return maps;
-  }, [filterableFields, ...filterableFields.map((f) => fkQueries[f.name]?.data)]);
 
   // Filter + search
   const filtered = useMemo(() => {
@@ -289,6 +308,7 @@ export default function DatabaseList() {
                   field={f}
                   value={filters[f.name] || "__all__"}
                   onChange={(v) => setFilters((prev) => ({ ...prev, [f.name]: v }))}
+                  options={fkOptions[f.name] || []}
                 />
               ))}
               {isHunters && allTags.length > 0 && (
@@ -368,9 +388,11 @@ export default function DatabaseList() {
                     >
                       {item.image_url ? (
                         <img
-                          src={item.image_url}
+                          src={thumbnailUrl(item.image_url) || item.image_url}
                           alt={item.name || item.title || ""}
                           loading="lazy"
+                          width={400}
+                          height={tableName === "hunters" ? 500 : 400}
                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (

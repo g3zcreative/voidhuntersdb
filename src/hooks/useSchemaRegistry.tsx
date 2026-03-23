@@ -163,6 +163,8 @@ function parseSchema(row: any): SchemaDefinition {
 export function useSchemaRegistry(deployedOnly = true) {
   const query = useQuery({
     queryKey: ["schema-registry", deployedOnly],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       let q = supabase.from("entity_definitions").select("*").order("name");
       if (deployedOnly) q = q.eq("deployed", true);
