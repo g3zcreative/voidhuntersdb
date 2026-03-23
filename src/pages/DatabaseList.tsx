@@ -303,6 +303,19 @@ export default function DatabaseList() {
                   </SelectContent>
                 </Select>
               )}
+              {isHunters && rarityValues.length > 0 && (
+                <Select value={rarityFilter} onValueChange={setRarityFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="All Rarities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Rarities</SelectItem>
+                    {rarityValues.map((r) => (
+                      <SelectItem key={r} value={String(r)}>★{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               {isHunters && allEffects.length > 0 && (
                 <Select value={effectFilter} onValueChange={setEffectFilter}>
                   <SelectTrigger className="w-[140px] h-9 text-xs">
