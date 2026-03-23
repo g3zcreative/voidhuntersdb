@@ -260,9 +260,10 @@ export default function AdminEntityEditor() {
           onUpdateField,
           onMoveField,
           onDeleteNode,
+          onTogglePublicPage,
         },
       })),
-    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onMoveField, onDeleteNode]
+    [nodes, onUpdateLabel, onAddField, onRemoveField, onUpdateField, onMoveField, onDeleteNode, onTogglePublicPage]
   );
 
   const onConnect = useCallback(
