@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -375,6 +375,8 @@ export default function AdminSchemaItemEditor() {
   // Generic inline children state: { [childTable]: InlineChildRow[] }
   const [inlineChildren, setInlineChildren] = useState<Record<string, InlineChildRow[]>>({});
   const [inlineChildrenInitialized, setInlineChildrenInitialized] = useState(false);
+  const inlineChildrenRef = useRef(inlineChildren);
+  inlineChildrenRef.current = inlineChildren;
 
   const isNew = id === "new";
   const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
@@ -743,7 +745,7 @@ export default function AdminSchemaItemEditor() {
         }
       };
 
-      await saveInlineChildren(inlineChildRelations, inlineChildren, itemId!);
+      await saveInlineChildren(inlineChildRelations, inlineChildrenRef.current, itemId!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
