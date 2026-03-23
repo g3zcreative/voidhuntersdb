@@ -173,25 +173,43 @@ export default function DatabaseList() {
     [table]
   );
 
-  // Build FK lookup maps
-  const fkQueries: Record<string, ReturnType<typeof useFkOptions>> = {};
-  filterableFields.forEach((f) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    fkQueries[f.name] = useFkOptions(fkTableName(f.name));
+  // Fetch all FK options in a single query per field (stable hook count)
+  const fkTableNames = useMemo(
+    () => filterableFields.map((f) => fkTableName(f.name)),
+    [filterableFields]
+  );
+
+  const { data: allFkData } = useQuery({
+    queryKey: ["fk-options-all", fkTableNames],
+    enabled: fkTableNames.length > 0,
+    queryFn: async () => {
+      const results: Record<string, Array<Record<string, any>>> = {};
+      await Promise.all(
+        fkTableNames.map(async (tn) => {
+          const { data } = await supabase
+            .from(tn as any)
+            .select("*")
+            .order("name", { ascending: true })
+            .limit(500);
+          results[tn] = (data || []) as Array<Record<string, any>>;
+        })
+      );
+      return results;
+    },
   });
 
   const fkMaps = useMemo(() => {
     const maps: Record<string, Record<string, string>> = {};
     filterableFields.forEach((f) => {
-      const data = fkQueries[f.name]?.data || [];
+      const tn = fkTableName(f.name);
+      const data = allFkData?.[tn] || [];
       maps[f.name] = {};
       data.forEach((r) => {
         maps[f.name][r.id] = r.name || r.title || r.slug || "Unknown";
       });
     });
     return maps;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterableFields, JSON.stringify(filterableFields.map((f) => fkQueries[f.name]?.data))]);
+  }, [filterableFields, allFkData]);
 
   // Filter + search
   const filtered = useMemo(() => {
