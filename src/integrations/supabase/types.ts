@@ -916,6 +916,7 @@ export type Database = {
       }
       tags: {
         Row: {
+          category: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -926,6 +927,7 @@ export type Database = {
           updated_by: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -936,6 +938,7 @@ export type Database = {
           updated_by: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
