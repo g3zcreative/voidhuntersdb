@@ -296,7 +296,7 @@ export function InlineChildEditor({
   const lastAddedKeyRef = useRef<string | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Get editable fields (excluding auto fields and the FK column pointing to parent)
+  // Get editable fields (excluding auto fields, FK to parent, audit fields, and extra FK _id fields)
   const editableFields = useMemo(() => {
     if (!table) return [];
     return table.fields.filter((f) => {
@@ -305,6 +305,8 @@ export function InlineChildEditor({
       if (f.name === "created_by" || f.name === "updated_by") return false;
       // Hide json fields EXCEPT "effects" which is used for skill level upgrades
       if ((f.type.toLowerCase() === "jsonb" || f.type.toLowerCase() === "json") && f.name !== "effects") return false;
+      // Hide FK uuid fields ending in _id (e.g. awakening_id) — these are managed by relationships, not inline forms
+      if (f.name.endsWith("_id") && f.type.toLowerCase() === "uuid" && f.name !== "id") return false;
       return true;
     });
   }, [table, relation.fkColumn]);
