@@ -149,6 +149,10 @@ function EntityNodeComponent({ id, data, selected }: NodeProps) {
               />
               <span className="text-muted-foreground text-[10px]">N</span>
             </div>
+            <FieldSettingsPopover
+              field={field}
+              onUpdate={(updates) => onUpdateField(id, field.id, updates)}
+            />
             <Button
               variant="ghost"
               size="icon"
