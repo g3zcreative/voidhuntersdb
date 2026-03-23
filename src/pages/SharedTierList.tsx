@@ -69,7 +69,7 @@ export default function SharedTierList() {
   }, [entries]);
 
   const isLoading = loadingList || loadingEntries;
-  const authorName = (tierList as any)?.profiles?.display_name || (tierList as any)?.profiles?.email?.split("@")[0] || "Anonymous";
+  const authorName = (tierList as any)?.profile?.display_name || (tierList as any)?.profile?.email?.split("@")[0] || "Anonymous";
 
   if (isLoading) {
     return (
