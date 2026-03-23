@@ -138,6 +138,7 @@ function parseSchema(row: any): SchemaDefinition {
     label: n.data?.label || "Unknown",
     fields: ((n.data?.fields || []) as SchemaField[]).filter((f) => f.name && f.name.trim() !== ""),
     color: n.data?.color || "259 100% 64%",
+    publicPage: n.data?.publicPage ?? false,
   }));
 
   return {
