@@ -16,6 +16,8 @@ export interface EntityField {
   nullable: boolean;
   isPrimaryKey: boolean;
   defaultValue: string;
+  uiWidget?: "text" | "textarea" | "select";
+  uiOptions?: string[];
 }
 
 export interface EntityNodeData {
