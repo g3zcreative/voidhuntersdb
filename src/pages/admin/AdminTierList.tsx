@@ -284,11 +284,13 @@ function HunterScoringTab() {
       setRole((entry as any).role || "DPS");
       setTierOverride((entry as any).tier_override || "");
       setEntryTags(((entry as any).tags || []).join(", "));
+      setChangeNote("");
     } else {
       setScores({});
       setRole("DPS");
       setTierOverride("");
       setEntryTags("");
+      setChangeNote("");
     }
   };
 
