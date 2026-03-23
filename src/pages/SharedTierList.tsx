@@ -34,7 +34,7 @@ export default function SharedTierList() {
         .from("profiles")
         .select("display_name, email")
         .eq("id", data.user_id)
-        .single();
+        .maybeSingle();
       return { ...data, profile };
     },
     enabled: !!id,
