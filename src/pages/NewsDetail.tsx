@@ -122,8 +122,8 @@ export default function NewsDetail() {
               </div>
             ) : null}
             {article.content && (
-              <div className="[&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
-                <MDEditor.Markdown source={article.content} className="!bg-transparent !text-foreground" />
+              <div className="prose prose-invert prose-lg max-w-none [&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
+                <MDEditor.Markdown source={article.content} className="!bg-transparent !text-foreground prose prose-invert prose-lg max-w-none" />
               </div>
             )}
             <NewsComments articleId={article.id} />
