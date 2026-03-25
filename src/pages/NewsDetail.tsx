@@ -42,6 +42,20 @@ export default function NewsDetail() {
     enabled: !!slug,
   });
 
+  const { data: author } = useQuery({
+    queryKey: ["news_author", article?.author],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("authors")
+        .select("*")
+        .eq("name", article!.author!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!article?.author,
+  });
+
   return (
     <Layout>
       <div className="container max-w-3xl py-8">
