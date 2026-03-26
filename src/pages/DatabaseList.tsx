@@ -77,8 +77,12 @@ export default function DatabaseList() {
   const { getTable, loading: registryLoading } = useSchemaRegistry();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
-  const [tagFilter, setTagFilter] = useState(searchParams.get("tag") || "__all__");
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    const initial = searchParams.get("tag");
+    return initial ? [initial] : [];
+  });
   const [effectFilter, setEffectFilter] = useState("__all__");
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [rarityFilter, setRarityFilter] = useState("__all__");
 
   const table = tableName ? getTable(tableName) : undefined;
