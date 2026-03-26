@@ -478,8 +478,6 @@ export default function DatabaseDetail() {
   }
 
   // Redirect logic: check redirects table when item not found
-  const location = useLocation();
-  const navigate = useNavigate();
   const { data: redirect } = useQuery({
     queryKey: ["redirect-check", location.pathname],
     enabled: !isLoading && !registryLoading && !item,
