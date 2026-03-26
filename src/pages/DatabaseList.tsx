@@ -415,6 +415,11 @@ export default function DatabaseList() {
                   })}
                 </div>
               )}
+              {isHunters && rarityValues.length > 0 && (
+                <Select value={rarityFilter} onValueChange={setRarityFilter}>
+                  <SelectTrigger className="w-[140px] h-9 text-xs">
+                    <SelectValue placeholder="All Rarities" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__all__">All Rarities</SelectItem>
                     {rarityValues.map((r) => {
