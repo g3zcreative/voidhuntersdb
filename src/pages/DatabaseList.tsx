@@ -235,9 +235,9 @@ export default function DatabaseList() {
       }
     });
 
-    // Tag filter (M2M via hunter_tags — filtered server-side)
-    if (isHunters && tagFilter !== "__all__" && hunterIdsForTag) {
-      result = result.filter((r) => hunterIdsForTag.has(r.id));
+    // Tag filter — show hunters matching ANY selected tag
+    if (isHunters && selectedTags.length > 0) {
+      result = result.filter((r) => (hunterTagMatchCount[r.id] || 0) > 0);
     }
 
     // Rarity filter
@@ -246,8 +246,13 @@ export default function DatabaseList() {
       result = result.filter((r) => r.rarity === rarityVal);
     }
 
+    // Sort by match count descending when tags selected
+    if (isHunters && selectedTags.length > 0) {
+      result = [...result].sort((a, b) => (hunterTagMatchCount[b.id] || 0) - (hunterTagMatchCount[a.id] || 0));
+    }
+
     return result;
-  }, [rows, search, filters, tagFilter, rarityFilter, hunterIdsForTag, isHunters]);
+  }, [rows, search, filters, selectedTags, rarityFilter, hunterTagMatchCount, isHunters]);
 
   if (registryLoading) {
     return (
