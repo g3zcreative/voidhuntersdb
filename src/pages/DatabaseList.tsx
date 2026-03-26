@@ -334,25 +334,87 @@ export default function DatabaseList() {
                 />
               ))}
               {isHunters && allTags.length > 0 && (
-                <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs">
-                    <SelectValue placeholder="All Tags" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">All Tags</SelectItem>
-                    {allTags.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9 text-xs gap-1.5 min-w-[140px]">
+                      <Tag className="h-3.5 w-3.5" />
+                      {selectedTags.length === 0
+                        ? "Wishlist Tags"
+                        : `${selectedTags.length} Tag${selectedTags.length > 1 ? "s" : ""}`}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[280px] p-3" align="start">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-foreground">Wishlist Tags (max 4)</span>
+                      {selectedTags.length > 0 && (
+                        <button
+                          onClick={() => setSelectedTags([])}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                      {allTags.map((t) => {
+                        const isChecked = selectedTags.includes(t.id);
+                        const isDisabled = !isChecked && selectedTags.length >= 4;
+                        return (
+                          <label
+                            key={t.id}
+                            className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs cursor-pointer transition-colors ${
+                              isChecked
+                                ? "bg-primary/10 text-primary"
+                                : isDisabled
+                                ? "opacity-40 cursor-not-allowed"
+                                : "hover:bg-accent"
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              disabled={isDisabled}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedTags((prev) => [...prev, t.id]);
+                                } else {
+                                  setSelectedTags((prev) => prev.filter((id) => id !== t.id));
+                                }
+                              }}
+                              className="h-3.5 w-3.5"
+                            />
+                            <span className="truncate">{t.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {selectedTags.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-border">
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          Summon multiplier: 2× for 1 match, 3× for 2, 4× for 3, 5× for all 4
+                        </p>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               )}
-              {isHunters && rarityValues.length > 0 && (
-                <Select value={rarityFilter} onValueChange={setRarityFilter}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs">
-                    <SelectValue placeholder="All Rarities" />
-                  </SelectTrigger>
+              {isHunters && selectedTags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedTags.map((tagId) => {
+                    const tag = allTags.find((t) => t.id === tagId);
+                    return (
+                      <Badge
+                        key={tagId}
+                        variant="secondary"
+                        className="text-xs gap-1 cursor-pointer hover:bg-destructive/20"
+                        onClick={() => setSelectedTags((prev) => prev.filter((id) => id !== tagId))}
+                      >
+                        {tag?.name || "?"}
+                        <X className="h-3 w-3" />
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
                   <SelectContent>
                     <SelectItem value="__all__">All Rarities</SelectItem>
                     {rarityValues.map((r) => {
