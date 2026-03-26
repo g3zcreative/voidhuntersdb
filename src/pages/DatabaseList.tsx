@@ -470,7 +470,29 @@ export default function DatabaseList() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filtered.map((item) => (
               <Link key={item.id} to={`/database/${tableName}/${item.slug || item.id}`} className="group block">
-                <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col">
+                <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col relative">
+                  {/* Multiplier badge */}
+                  {isHunters && selectedTags.length > 0 && (hunterTagMatchCount[item.id] || 0) > 0 && (() => {
+                    const matches = hunterTagMatchCount[item.id];
+                    const multiplier = matches + 1;
+                    const colorMap: Record<number, string> = {
+                      2: "hsl(var(--primary))",
+                      3: "hsl(200 80% 50%)",
+                      4: "hsl(280 70% 60%)",
+                      5: "hsl(45 100% 50%)",
+                    };
+                    return (
+                      <div
+                        className="absolute top-2 right-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold shadow-lg backdrop-blur-sm"
+                        style={{
+                          backgroundColor: `${colorMap[multiplier] || colorMap[2]}`,
+                          color: multiplier >= 5 ? "#000" : "#fff",
+                        }}
+                      >
+                        {multiplier}×
+                      </div>
+                    );
+                  })()}
                   {hasImages && (
                     <div
                       className={`${tableName === "hunters" ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden bg-secondary`}
