@@ -779,6 +779,8 @@ export default function AdminSchemaItemEditor() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
+      queryClient.invalidateQueries({ queryKey: ["schema-item", tableName] });
+      queryClient.invalidateQueries({ queryKey: ["inline-children-all", tableName] });
       inlineChildRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["inline-children", rel.childTable] });
       });
