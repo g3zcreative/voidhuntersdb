@@ -11,7 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Database, SlidersHorizontal } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Search, Database, SlidersHorizontal, Tag, X } from "lucide-react";
 
 /** Fields we show as filterable dropdowns (FK selects) */
 function isFilterableField(f: SchemaField) {
@@ -77,8 +80,12 @@ export default function DatabaseList() {
   const { getTable, loading: registryLoading } = useSchemaRegistry();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
-  const [tagFilter, setTagFilter] = useState(searchParams.get("tag") || "__all__");
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    const initial = searchParams.get("tag");
+    return initial ? [initial] : [];
+  });
   const [effectFilter, setEffectFilter] = useState("__all__");
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [rarityFilter, setRarityFilter] = useState("__all__");
 
   const table = tableName ? getTable(tableName) : undefined;
@@ -133,19 +140,31 @@ export default function DatabaseList() {
     },
   });
 
-  // Hunter IDs matching selected tag — filter server-side
-  const { data: hunterIdsForTag } = useQuery({
-    queryKey: ["hunter-tags-filtered", tagFilter],
-    enabled: isHunters && tagFilter !== "__all__",
+  // All hunter_tags for computing per-hunter match counts
+  const { data: allHunterTags = [] } = useQuery({
+    queryKey: ["all-hunter-tags"],
+    enabled: isHunters,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase
         .from("hunter_tags")
-        .select("hunter_id")
-        .eq("tag_id", tagFilter);
-      return new Set((data || []).map((r: any) => r.hunter_id));
+        .select("hunter_id, tag_id");
+      return (data || []) as Array<{ hunter_id: string; tag_id: string }>;
     },
   });
+
+  // Per-hunter: how many of selectedTags match
+  const hunterTagMatchCount = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (selectedTags.length === 0) return counts;
+    const selectedSet = new Set(selectedTags);
+    allHunterTags.forEach((ht) => {
+      if (selectedSet.has(ht.tag_id)) {
+        counts[ht.hunter_id] = (counts[ht.hunter_id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [allHunterTags, selectedTags]);
 
   // Batch FK lookup — single query fetches all FK tables at once
   const { data: fkBatchData } = useQuery({
@@ -216,9 +235,9 @@ export default function DatabaseList() {
       }
     });
 
-    // Tag filter (M2M via hunter_tags — filtered server-side)
-    if (isHunters && tagFilter !== "__all__" && hunterIdsForTag) {
-      result = result.filter((r) => hunterIdsForTag.has(r.id));
+    // Tag filter — show hunters matching ANY selected tag
+    if (isHunters && selectedTags.length > 0) {
+      result = result.filter((r) => (hunterTagMatchCount[r.id] || 0) > 0);
     }
 
     // Rarity filter
@@ -227,8 +246,13 @@ export default function DatabaseList() {
       result = result.filter((r) => r.rarity === rarityVal);
     }
 
+    // Sort by match count descending when tags selected
+    if (isHunters && selectedTags.length > 0) {
+      result = [...result].sort((a, b) => (hunterTagMatchCount[b.id] || 0) - (hunterTagMatchCount[a.id] || 0));
+    }
+
     return result;
-  }, [rows, search, filters, tagFilter, rarityFilter, hunterIdsForTag, isHunters]);
+  }, [rows, search, filters, selectedTags, rarityFilter, hunterTagMatchCount, isHunters]);
 
   if (registryLoading) {
     return (
@@ -310,19 +334,86 @@ export default function DatabaseList() {
                 />
               ))}
               {isHunters && allTags.length > 0 && (
-                <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs">
-                    <SelectValue placeholder="All Tags" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">All Tags</SelectItem>
-                    {allTags.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-9 text-xs gap-1.5 min-w-[140px]">
+                      <Tag className="h-3.5 w-3.5" />
+                      {selectedTags.length === 0
+                        ? "Wishlist Tags"
+                        : `${selectedTags.length} Tag${selectedTags.length > 1 ? "s" : ""}`}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[280px] p-3" align="start">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-foreground">Wishlist Tags (max 4)</span>
+                      {selectedTags.length > 0 && (
+                        <button
+                          onClick={() => setSelectedTags([])}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                      {allTags.map((t) => {
+                        const isChecked = selectedTags.includes(t.id);
+                        const isDisabled = !isChecked && selectedTags.length >= 4;
+                        return (
+                          <label
+                            key={t.id}
+                            className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs cursor-pointer transition-colors ${
+                              isChecked
+                                ? "bg-primary/10 text-primary"
+                                : isDisabled
+                                ? "opacity-40 cursor-not-allowed"
+                                : "hover:bg-accent"
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              disabled={isDisabled}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedTags((prev) => [...prev, t.id]);
+                                } else {
+                                  setSelectedTags((prev) => prev.filter((id) => id !== t.id));
+                                }
+                              }}
+                              className="h-3.5 w-3.5"
+                            />
+                            <span className="truncate">{t.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {selectedTags.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-border">
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          Summon multiplier: 2× for 1 match, 3× for 2, 4× for 3, 5× for all 4
+                        </p>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              )}
+              {isHunters && selectedTags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedTags.map((tagId) => {
+                    const tag = allTags.find((t) => t.id === tagId);
+                    return (
+                      <Badge
+                        key={tagId}
+                        variant="secondary"
+                        className="text-xs gap-1 cursor-pointer hover:bg-destructive/20"
+                        onClick={() => setSelectedTags((prev) => prev.filter((id) => id !== tagId))}
+                      >
+                        {tag?.name || "?"}
+                        <X className="h-3 w-3" />
+                      </Badge>
+                    );
+                  })}
+                </div>
               )}
               {isHunters && rarityValues.length > 0 && (
                 <Select value={rarityFilter} onValueChange={setRarityFilter}>
@@ -379,7 +470,29 @@ export default function DatabaseList() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filtered.map((item) => (
               <Link key={item.id} to={`/database/${tableName}/${item.slug || item.id}`} className="group block">
-                <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col">
+                <Card className="overflow-hidden hover:border-primary/40 transition-colors h-full flex flex-col relative">
+                  {/* Multiplier badge */}
+                  {isHunters && selectedTags.length > 0 && (hunterTagMatchCount[item.id] || 0) > 0 && (() => {
+                    const matches = hunterTagMatchCount[item.id];
+                    const multiplier = matches + 1;
+                    const colorMap: Record<number, string> = {
+                      2: "hsl(var(--primary))",
+                      3: "hsl(200 80% 50%)",
+                      4: "hsl(280 70% 60%)",
+                      5: "hsl(45 100% 50%)",
+                    };
+                    return (
+                      <div
+                        className="absolute top-2 right-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold shadow-lg backdrop-blur-sm"
+                        style={{
+                          backgroundColor: `${colorMap[multiplier] || colorMap[2]}`,
+                          color: multiplier >= 5 ? "#000" : "#fff",
+                        }}
+                      >
+                        {multiplier}×
+                      </div>
+                    );
+                  })()}
                   {hasImages && (
                     <div
                       className={`${tableName === "hunters" ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden bg-secondary`}
