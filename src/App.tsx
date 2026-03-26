@@ -50,6 +50,7 @@ const AdminActivityLog = lazy(() => import("./pages/admin/AdminActivityLog"));
 const AdminContributions = lazy(() => import("./pages/admin/AdminContributions"));
 const AdminContributionReview = lazy(() => import("./pages/admin/AdminContributionReview"));
 const AdminTierList = lazy(() => import("./pages/admin/AdminTierList"));
+const AdminRedirects = lazy(() => import("./pages/admin/AdminRedirects"));
 
 const queryClient = new QueryClient();
 
