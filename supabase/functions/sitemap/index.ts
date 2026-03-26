@@ -56,6 +56,16 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Exclude redirected (stale) paths
+  const { data: redirects } = await supabase.from("redirects").select("from_path");
+  const stalePaths = new Set((redirects || []).map((r: any) => r.from_path));
+  const filteredUrls = urls.filter((u: string) => {
+    const match = u.match(/<loc>[^<]*<\/loc>/);
+    if (!match) return true;
+    const loc = match[0].replace(/<\/?loc>/g, "").replace(SITE_URL, "");
+    return !stalePaths.has(loc);
+  });
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join("\n")}
