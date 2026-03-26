@@ -124,8 +124,8 @@ export default function DatabaseList() {
     enabled: isHunters,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data } = await supabase.from("tags").select("id, name").order("name");
-      return (data || []) as Array<{ id: string; name: string }>;
+      const { data } = await supabase.from("tags").select("id, name, category").order("name");
+      return (data || []) as Array<{ id: string; name: string; category: string | null }>;
     },
   });
 
