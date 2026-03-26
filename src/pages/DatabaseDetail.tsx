@@ -463,20 +463,6 @@ export default function DatabaseDetail() {
   });
   const m2mData = m2mQuery.data || {};
 
-  if (registryLoading || isLoading) {
-    return (
-      <Layout>
-        <div className="container py-10 max-w-4xl space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 w-full" />
-          <div className="grid grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
   // Redirect logic: check redirects table when item not found
   const { data: redirect } = useQuery({
     queryKey: ["redirect-check", location.pathname],
@@ -496,6 +482,20 @@ export default function DatabaseDetail() {
       navigate(redirect.to_path, { replace: true });
     }
   }, [redirect, navigate]);
+
+  if (registryLoading || isLoading) {
+    return (
+      <Layout>
+        <div className="container py-10 max-w-4xl space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64 w-full" />
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!table || !item) {
     if (redirect?.to_path) return null; // redirecting
