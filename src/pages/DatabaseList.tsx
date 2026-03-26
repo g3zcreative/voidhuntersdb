@@ -140,19 +140,31 @@ export default function DatabaseList() {
     },
   });
 
-  // Hunter IDs matching selected tag — filter server-side
-  const { data: hunterIdsForTag } = useQuery({
-    queryKey: ["hunter-tags-filtered", tagFilter],
-    enabled: isHunters && tagFilter !== "__all__",
+  // All hunter_tags for computing per-hunter match counts
+  const { data: allHunterTags = [] } = useQuery({
+    queryKey: ["all-hunter-tags"],
+    enabled: isHunters,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase
         .from("hunter_tags")
-        .select("hunter_id")
-        .eq("tag_id", tagFilter);
-      return new Set((data || []).map((r: any) => r.hunter_id));
+        .select("hunter_id, tag_id");
+      return (data || []) as Array<{ hunter_id: string; tag_id: string }>;
     },
   });
+
+  // Per-hunter: how many of selectedTags match
+  const hunterTagMatchCount = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (selectedTags.length === 0) return counts;
+    const selectedSet = new Set(selectedTags);
+    allHunterTags.forEach((ht) => {
+      if (selectedSet.has(ht.tag_id)) {
+        counts[ht.hunter_id] = (counts[ht.hunter_id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [allHunterTags, selectedTags]);
 
   // Batch FK lookup — single query fetches all FK tables at once
   const { data: fkBatchData } = useQuery({
