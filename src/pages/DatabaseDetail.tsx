@@ -409,6 +409,8 @@ function GenericDetailView({
 export default function DatabaseDetail() {
   const { tableName, slug } = useParams<{ tableName: string; slug: string }>();
   const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const table = tableName ? getTable(tableName) : undefined;
   const m2mRelations = tableName ? getManyToMany(tableName) : [];
