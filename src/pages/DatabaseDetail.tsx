@@ -475,7 +475,30 @@ export default function DatabaseDetail() {
     );
   }
 
+  // Redirect logic: check redirects table when item not found
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { data: redirect } = useQuery({
+    queryKey: ["redirect-check", location.pathname],
+    enabled: !isLoading && !registryLoading && !item,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("redirects")
+        .select("to_path")
+        .eq("from_path", location.pathname)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (redirect?.to_path) {
+      navigate(redirect.to_path, { replace: true });
+    }
+  }, [redirect, navigate]);
+
   if (!table || !item) {
+    if (redirect?.to_path) return null; // redirecting
     return (
       <Layout>
         <div className="container py-20 text-center">
