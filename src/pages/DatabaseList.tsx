@@ -355,38 +355,49 @@ export default function DatabaseList() {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-1">
-                      {allTags.map((t) => {
-                        const isChecked = selectedTags.includes(t.id);
-                        const isDisabled = !isChecked && selectedTags.length >= 4;
-                        return (
-                          <label
-                            key={t.id}
-                            className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs cursor-pointer transition-colors ${
-                              isChecked
-                                ? "bg-primary/10 text-primary"
-                                : isDisabled
-                                ? "opacity-40 cursor-not-allowed"
-                                : "hover:bg-accent"
-                            }`}
-                          >
-                            <Checkbox
-                              checked={isChecked}
-                              disabled={isDisabled}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedTags((prev) => [...prev, t.id]);
-                                } else {
-                                  setSelectedTags((prev) => prev.filter((id) => id !== t.id));
-                                }
-                              }}
-                              className="h-3.5 w-3.5"
-                            />
-                            <span className="truncate">{t.name}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
+                    {["Class", "Homeland", "Species", "Other"].map((category) => {
+                      const categoryTags = allTags.filter((t) => (t.category || "Other") === category);
+                      if (categoryTags.length === 0) return null;
+                      return (
+                        <div key={category} className="mb-2 last:mb-0">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-1 block">
+                            {category}
+                          </span>
+                          <div className="grid grid-cols-2 gap-1">
+                            {categoryTags.map((t) => {
+                              const isChecked = selectedTags.includes(t.id);
+                              const isDisabled = !isChecked && selectedTags.length >= 4;
+                              return (
+                                <label
+                                  key={t.id}
+                                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs cursor-pointer transition-colors ${
+                                    isChecked
+                                      ? "bg-primary/10 text-primary"
+                                      : isDisabled
+                                      ? "opacity-40 cursor-not-allowed"
+                                      : "hover:bg-accent"
+                                  }`}
+                                >
+                                  <Checkbox
+                                    checked={isChecked}
+                                    disabled={isDisabled}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedTags((prev) => [...prev, t.id]);
+                                      } else {
+                                        setSelectedTags((prev) => prev.filter((id) => id !== t.id));
+                                      }
+                                    }}
+                                    className="h-3.5 w-3.5"
+                                  />
+                                  <span className="truncate">{t.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
                     {selectedTags.length > 0 && (
                       <div className="mt-3 pt-2 border-t border-border">
                         <p className="text-[10px] text-muted-foreground leading-relaxed">
