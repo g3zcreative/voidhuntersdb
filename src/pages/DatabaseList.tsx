@@ -343,7 +343,7 @@ export default function DatabaseList() {
                         : `${selectedTags.length} Tag${selectedTags.length > 1 ? "s" : ""}`}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[280px] p-3" align="start">
+                  <PopoverContent className="w-[300px] p-3 max-h-[400px] overflow-y-auto" align="start">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-foreground">Wishlist Tags (max 4)</span>
                       {selectedTags.length > 0 && (
