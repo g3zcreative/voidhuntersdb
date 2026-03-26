@@ -50,6 +50,7 @@ const AdminActivityLog = lazy(() => import("./pages/admin/AdminActivityLog"));
 const AdminContributions = lazy(() => import("./pages/admin/AdminContributions"));
 const AdminContributionReview = lazy(() => import("./pages/admin/AdminContributionReview"));
 const AdminTierList = lazy(() => import("./pages/admin/AdminTierList"));
+const AdminRedirects = lazy(() => import("./pages/admin/AdminRedirects"));
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ function AppRoutes() {
           <Route path="contributions" element={<AdminContributions />} />
           <Route path="contributions/:id" element={<AdminContributionReview />} />
           <Route path="tier-list" element={<AdminTierList />} />
+          <Route path="redirects" element={<AdminRedirects />} />
           <Route path="data/:tableName" element={<AdminSchemaData />} />
           <Route path="data/:tableName/:id" element={<AdminSchemaItemEditor />} />
         </Route>
