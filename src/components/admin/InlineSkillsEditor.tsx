@@ -450,7 +450,10 @@ export function InlineSkillsEditor({ skills, onChange }: Props) {
                       {/* Skill Tags */}
                       <div className="mt-3 space-y-1.5">
                         <Label className="text-xs">Skill Tags</Label>
-                        <Input value={skill.skill_tags ?? ""} onChange={(e) => updateSkill(skill._key, "skill_tags", e.target.value || null)} placeholder="Melee, Damage, Debuffs" />
+                        <SkillTagsMultiSelect
+                          value={skill.skill_tags}
+                          onChange={(v) => updateSkill(skill._key, "skill_tags", v)}
+                        />
                       </div>
 
                       {/* Computed preview */}
