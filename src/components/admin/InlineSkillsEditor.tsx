@@ -120,36 +120,42 @@ function JsonFieldEditorInline({
     onChange(Object.keys(next).length > 0 ? next : null);
   };
 
+  const addNextLevel = () => {
+    const existingLevels = entries
+      .map(([k]) => { const m = k.match(/(\d+)/); return m ? parseInt(m[1]) : 0; })
+      .filter((n) => n > 0);
+    const nextLevel = existingLevels.length === 0 ? 2 : Math.max(...existingLevels) + 1;
+    const key = `Level ${nextLevel}`;
+    onChange({ ...obj, [key]: "" });
+  };
+
   return (
     <div className="space-y-2">
       {entries.map(([key, val], i) => (
         <div key={i} className="flex items-center gap-2">
+          <span className="text-xs font-mono text-muted-foreground w-16 shrink-0">{key}</span>
           <Input
-            placeholder="Key (e.g. lv1)"
-            value={key}
-            onChange={(e) => update(key, e.target.value, String(val))}
-            className="flex-1 font-mono text-xs"
-          />
-          <Input
-            placeholder="Value"
+            placeholder="Effect description..."
             value={String(val ?? "")}
             onChange={(e) => update(key, key, e.target.value)}
-            className="flex-1 font-mono text-xs"
+            className="flex-1 text-xs"
           />
           <Button type="button" variant="ghost" size="icon" onClick={() => remove(key)} className="shrink-0 h-8 w-8">
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>
       ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onChange({ ...obj, "": "" })}
-        className="text-xs"
-      >
-        + Add effect level
-      </Button>
+      {entries.length < 5 && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={addNextLevel}
+          className="text-xs"
+        >
+          + Add effect level
+        </Button>
+      )}
     </div>
   );
 }
