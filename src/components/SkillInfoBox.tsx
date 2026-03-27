@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { EffectHighlightedText } from "@/components/EffectHighlightedText";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { calcMinMult, calcMaxMult, getEfficiencyRating, RATING_COLORS, hasHitData, type SkillHitData } from "@/lib/skill-efficiency";
 
 interface SkillEffect {
   [key: string]: any;
@@ -16,6 +17,17 @@ interface SkillData {
   max_level?: number | null;
   effects?: SkillEffect | null;
   sort_order?: string | null;
+  // Efficiency fields
+  target_type?: string | null;
+  hit1_percent?: number | null;
+  hit1_count?: number | null;
+  hit1_book_bonus?: number | null;
+  hit2_percent?: number | null;
+  hit2_count?: number | null;
+  hit2_book_bonus?: number | null;
+  cooldown?: number | null;
+  max_cd?: number | null;
+  skill_tags?: string | null;
 }
 
 /**
