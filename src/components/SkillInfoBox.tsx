@@ -37,6 +37,32 @@ interface SkillData {
  */
 export function SkillInfoBox({ skill }: { skill: SkillData }) {
   const maxLvl = skill.max_level ?? 5;
+  const displayCooldown = skill.max_cd ?? skill.cooldown;
+
+  // Build max-level description by replacing base ATK% with book-bonus-included values
+  const maxLevelDescription = (() => {
+    if (!skill.description) return null;
+    let desc = skill.description;
+    const replacements: { basePercent: number; maxPercent: number }[] = [];
+    if (skill.hit1_percent && skill.hit1_book_bonus != null) {
+      replacements.push({
+        basePercent: Math.round(skill.hit1_percent * 100),
+        maxPercent: Math.round(skill.hit1_percent * (1 + skill.hit1_book_bonus) * 100),
+      });
+    }
+    if (skill.hit2_percent && skill.hit2_book_bonus != null) {
+      replacements.push({
+        basePercent: Math.round(skill.hit2_percent * 100),
+        maxPercent: Math.round(skill.hit2_percent * (1 + skill.hit2_book_bonus) * 100),
+      });
+    }
+    for (const r of replacements) {
+      if (r.basePercent !== r.maxPercent) {
+        desc = desc.replace(`${r.basePercent}%`, `${r.maxPercent}%`);
+      }
+    }
+    return desc;
+  })();
 
   // Fetch awakenings for this skill
   const { data: awakenings } = useQuery({
