@@ -10,7 +10,98 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Plus, Trash2, Upload, Loader2, X } from "lucide-react";
+import { Plus, Trash2, Upload, Loader2, X, ChevronDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+const KNOWN_SKILL_TAGS = [
+  "Melee", "Ranged", "AoE", "Damage", "Healing", "Debuffs", "Buffs",
+  "Support", "Fire", "Light", "Void", "Void Touch", "Turn Meter Down",
+];
+
+function SkillTagsMultiSelect({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
+  const selected = value ? value.split(",").map((t) => t.trim()).filter(Boolean) : [];
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const allTags = Array.from(new Set([...KNOWN_SKILL_TAGS, ...selected])).sort();
+  const filtered = allTags.filter((t) => !selected.includes(t) && t.toLowerCase().includes(search.toLowerCase()));
+
+  const toggle = (tag: string) => {
+    const next = selected.includes(tag) ? selected.filter((t) => t !== tag) : [...selected, tag];
+    onChange(next.length > 0 ? next.join(", ") : null);
+  };
+
+  const addCustom = () => {
+    const tag = search.trim();
+    if (tag && !selected.includes(tag)) {
+      onChange([...selected, tag].join(", "));
+    }
+    setSearch("");
+  };
+
+  return (
+    <div className="space-y-2">
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((tag) => (
+            <Badge key={tag} variant="secondary" className="gap-1 text-xs">
+              {tag}
+              <button type="button" onClick={() => toggle(tag)} className="ml-0.5 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="outline" className="w-full justify-between text-sm font-normal text-muted-foreground">
+            {selected.length > 0 ? `${selected.length} selected` : "Select tags…"}
+            <ChevronDown className="h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-2" align="start">
+          <Input
+            placeholder="Search or create tag…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustom(); } }}
+            className="mb-2"
+          />
+          <div className="max-h-[180px] overflow-y-auto space-y-0.5">
+            {filtered.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggle(tag)}
+                className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent"
+              >
+                {tag}
+              </button>
+            ))}
+            {filtered.length === 0 && search.trim() && (
+              <button
+                type="button"
+                onClick={addCustom}
+                className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent text-primary"
+              >
+                Create "{search.trim()}"
+              </button>
+            )}
+            {filtered.length === 0 && !search.trim() && (
+              <p className="text-xs text-muted-foreground px-2 py-1.5">All tags selected</p>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage, compressedExtension } from "@/lib/image-utils";
 import { toast } from "@/hooks/use-toast";
@@ -450,7 +541,10 @@ export function InlineSkillsEditor({ skills, onChange }: Props) {
                       {/* Skill Tags */}
                       <div className="mt-3 space-y-1.5">
                         <Label className="text-xs">Skill Tags</Label>
-                        <Input value={skill.skill_tags ?? ""} onChange={(e) => updateSkill(skill._key, "skill_tags", e.target.value || null)} placeholder="Melee, Damage, Debuffs" />
+                        <SkillTagsMultiSelect
+                          value={skill.skill_tags}
+                          onChange={(v) => updateSkill(skill._key, "skill_tags", v)}
+                        />
                       </div>
 
                       {/* Computed preview */}
