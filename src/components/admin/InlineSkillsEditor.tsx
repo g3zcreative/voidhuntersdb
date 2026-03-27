@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
+import { calcMinMult, calcMaxMult, getEfficiencyRating, RATING_COLORS } from "@/lib/skill-efficiency";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -69,6 +70,17 @@ export interface InlineSkill {
   description: string | null;
   icon: string | null;
   effects: Record<string, any> | null;
+  // Efficiency fields
+  skill_levels: number | null;
+  max_cd: number | null;
+  skill_tags: string | null;
+  target_type: string | null;
+  hit1_percent: number | null;
+  hit1_count: number | null;
+  hit1_book_bonus: number | null;
+  hit2_percent: number | null;
+  hit2_count: number | null;
+  hit2_book_bonus: number | null;
 }
 
 function slugify(text: string): string {
@@ -147,36 +159,32 @@ function nextKey() {
   return `skill-${++keyCounter}-${Date.now()}`;
 }
 
+const EFFICIENCY_DEFAULTS = {
+  skill_levels: null, max_cd: null, skill_tags: null, target_type: null,
+  hit1_percent: null, hit1_count: null, hit1_book_bonus: null,
+  hit2_percent: null, hit2_count: null, hit2_book_bonus: null,
+};
+
 export function createEmptySkill(): InlineSkill {
   return {
-    _key: nextKey(),
-    _status: "new",
-    name: "",
-    slug: "",
-    type: null,
-    sort_order: null,
-    max_level: null,
-    cooldown: null,
-    description: null,
-    icon: null,
-    effects: null,
+    _key: nextKey(), _status: "new", name: "", slug: "",
+    type: null, sort_order: null, max_level: null, cooldown: null,
+    description: null, icon: null, effects: null, ...EFFICIENCY_DEFAULTS,
   };
 }
 
 export function existingToInlineSkill(row: Record<string, any>): InlineSkill {
   return {
-    _key: row.id || nextKey(),
-    _status: "existing",
-    id: row.id,
-    name: row.name || "",
-    slug: row.slug || "",
-    type: row.type ?? null,
-    sort_order: row.sort_order ?? null,
-    max_level: row.max_level ?? null,
-    cooldown: row.cooldown ?? null,
-    description: row.description ?? null,
-    icon: row.icon ?? null,
-    effects: row.effects ?? null,
+    _key: row.id || nextKey(), _status: "existing", id: row.id,
+    name: row.name || "", slug: row.slug || "", type: row.type ?? null,
+    sort_order: row.sort_order ?? null, max_level: row.max_level ?? null,
+    cooldown: row.cooldown ?? null, description: row.description ?? null,
+    icon: row.icon ?? null, effects: row.effects ?? null,
+    skill_levels: row.skill_levels ?? null, max_cd: row.max_cd ?? null,
+    skill_tags: row.skill_tags ?? null, target_type: row.target_type ?? null,
+    hit1_percent: row.hit1_percent ?? null, hit1_count: row.hit1_count ?? null,
+    hit1_book_bonus: row.hit1_book_bonus ?? null, hit2_percent: row.hit2_percent ?? null,
+    hit2_count: row.hit2_count ?? null, hit2_book_bonus: row.hit2_book_bonus ?? null,
   };
 }
 
@@ -369,6 +377,94 @@ export function InlineSkillsEditor({ skills, onChange }: Props) {
                         value={skill.effects}
                         onChange={(val) => updateSkill(skill._key, "effects", val)}
                       />
+                    </div>
+
+                    {/* ── Damage Efficiency Section ── */}
+                    <div className="col-span-2 mt-2 border-t border-border pt-3">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Damage Efficiency</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        {/* Target Type */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Target Type</Label>
+                          <select
+                            value={skill.target_type ?? ""}
+                            onChange={(e) => updateSkill(skill._key, "target_type", e.target.value || null)}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                          >
+                            <option value="">—</option>
+                            <option value="ST">ST (Single)</option>
+                            <option value="AoE">AoE</option>
+                            <option value="RND">RND (Random)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Skill Levels</Label>
+                          <Input type="number" value={skill.skill_levels ?? ""} onChange={(e) => updateSkill(skill._key, "skill_levels", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Max CD</Label>
+                          <Input type="number" value={skill.max_cd ?? ""} onChange={(e) => updateSkill(skill._key, "max_cd", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                      </div>
+
+                      {/* Hit 1 */}
+                      <p className="text-xs text-muted-foreground mt-3 mb-1.5">Hit 1</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">ATK %</Label>
+                          <Input type="number" step="0.01" value={skill.hit1_percent ?? ""} onChange={(e) => updateSkill(skill._key, "hit1_percent", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Count</Label>
+                          <Input type="number" value={skill.hit1_count ?? ""} onChange={(e) => updateSkill(skill._key, "hit1_count", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Book Bonus</Label>
+                          <Input type="number" step="0.01" value={skill.hit1_book_bonus ?? ""} onChange={(e) => updateSkill(skill._key, "hit1_book_bonus", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                      </div>
+
+                      {/* Hit 2 */}
+                      <p className="text-xs text-muted-foreground mt-3 mb-1.5">Hit 2</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">ATK %</Label>
+                          <Input type="number" step="0.01" value={skill.hit2_percent ?? ""} onChange={(e) => updateSkill(skill._key, "hit2_percent", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Count</Label>
+                          <Input type="number" value={skill.hit2_count ?? ""} onChange={(e) => updateSkill(skill._key, "hit2_count", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Book Bonus</Label>
+                          <Input type="number" step="0.01" value={skill.hit2_book_bonus ?? ""} onChange={(e) => updateSkill(skill._key, "hit2_book_bonus", e.target.value === "" ? null : Number(e.target.value))} />
+                        </div>
+                      </div>
+
+                      {/* Skill Tags */}
+                      <div className="mt-3 space-y-1.5">
+                        <Label className="text-xs">Skill Tags</Label>
+                        <Input value={skill.skill_tags ?? ""} onChange={(e) => updateSkill(skill._key, "skill_tags", e.target.value || null)} placeholder="Melee, Damage, Debuffs" />
+                      </div>
+
+                      {/* Computed preview */}
+                      {skill.hit1_percent && skill.hit1_count ? (() => {
+                        const min = calcMinMult(skill);
+                        const max = calcMaxMult(skill);
+                        const rating = getEfficiencyRating(skill);
+                        const colors = rating ? RATING_COLORS[rating] : null;
+                        return (
+                          <div className="mt-3 flex items-center gap-3 text-xs">
+                            <span className="text-muted-foreground">Min: <strong className="text-foreground">{min.toFixed(1)}x</strong></span>
+                            <span className="text-muted-foreground">Max: <strong className="text-foreground">{max.toFixed(1)}x</strong></span>
+                            {rating && colors && (
+                              <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${colors.bg} ${colors.text} ${colors.border}`}>
+                                {rating}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })() : null}
                     </div>
                   </div>
                 </AccordionContent>

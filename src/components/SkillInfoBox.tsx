@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { EffectHighlightedText } from "@/components/EffectHighlightedText";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { calcMinMult, calcMaxMult, getEfficiencyRating, RATING_COLORS, hasHitData, type SkillHitData } from "@/lib/skill-efficiency";
 
 interface SkillEffect {
   [key: string]: any;
@@ -16,6 +17,17 @@ interface SkillData {
   max_level?: number | null;
   effects?: SkillEffect | null;
   sort_order?: string | null;
+  // Efficiency fields
+  target_type?: string | null;
+  hit1_percent?: number | null;
+  hit1_count?: number | null;
+  hit1_book_bonus?: number | null;
+  hit2_percent?: number | null;
+  hit2_count?: number | null;
+  hit2_book_bonus?: number | null;
+  cooldown?: number | null;
+  max_cd?: number | null;
+  skill_tags?: string | null;
 }
 
 /**
@@ -90,6 +102,31 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
       </div>
 
       <div className="mx-4 h-px bg-border" />
+
+      {/* Damage Efficiency */}
+      {hasHitData(skill as SkillHitData) && (() => {
+        const d = skill as SkillHitData;
+        const min = calcMinMult(d);
+        const max = calcMaxMult(d);
+        const rating = getEfficiencyRating(d);
+        const colors = rating ? RATING_COLORS[rating] : null;
+        return (
+          <div className="px-4 py-2.5 flex items-center gap-3 text-xs">
+            <span className="text-muted-foreground">Base: <strong className="text-foreground">{min.toFixed(1)}x</strong></span>
+            <span className="text-muted-foreground">Max: <strong className="text-foreground">{max.toFixed(1)}x</strong></span>
+            {rating && colors && (
+              <span className={`ml-auto px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide ${colors.bg} ${colors.text} ${colors.border}`}>
+                {rating}
+              </span>
+            )}
+            {skill.target_type && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-border text-muted-foreground">
+                {skill.target_type}
+              </Badge>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Description */}
       {skill.description && (
