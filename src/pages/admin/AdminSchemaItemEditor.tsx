@@ -35,6 +35,12 @@ import {
   createEmptyRow,
   existingToRow,
 } from "@/components/admin/InlineChildEditor";
+import {
+  InlineSkillsEditor,
+  type InlineSkill,
+  createEmptySkill,
+  existingToInlineSkill,
+} from "@/components/admin/InlineSkillsEditor";
 
 function slugify(text: string): string {
   return text
