@@ -103,6 +103,31 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
 
       <div className="mx-4 h-px bg-border" />
 
+      {/* Damage Efficiency */}
+      {hasHitData(skill as SkillHitData) && (() => {
+        const d = skill as SkillHitData;
+        const min = calcMinMult(d);
+        const max = calcMaxMult(d);
+        const rating = getEfficiencyRating(d);
+        const colors = rating ? RATING_COLORS[rating] : null;
+        return (
+          <div className="px-4 py-2.5 flex items-center gap-3 text-xs">
+            <span className="text-muted-foreground">Base: <strong className="text-foreground">{min.toFixed(1)}x</strong></span>
+            <span className="text-muted-foreground">Max: <strong className="text-foreground">{max.toFixed(1)}x</strong></span>
+            {rating && colors && (
+              <span className={`ml-auto px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide ${colors.bg} ${colors.text} ${colors.border}`}>
+                {rating}
+              </span>
+            )}
+            {skill.target_type && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-border text-muted-foreground">
+                {skill.target_type}
+              </Badge>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Description */}
       {skill.description && (
         <div className="px-4 py-3 text-sm leading-relaxed text-secondary-foreground whitespace-pre-line">
