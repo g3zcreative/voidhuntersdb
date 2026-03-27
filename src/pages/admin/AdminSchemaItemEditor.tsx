@@ -35,6 +35,12 @@ import {
   createEmptyRow,
   existingToRow,
 } from "@/components/admin/InlineChildEditor";
+import {
+  InlineSkillsEditor,
+  type InlineSkill,
+  createEmptySkill,
+  existingToInlineSkill,
+} from "@/components/admin/InlineSkillsEditor";
 
 function slugify(text: string): string {
   return text
@@ -562,7 +568,11 @@ export default function AdminSchemaItemEditor() {
       const children: Record<string, InlineChildRow[]> = {};
       for (const rel of inlineChildRelations) {
         const rows = loadedInlineChildren[rel.childTable] || [];
-        children[rel.childTable] = rows.map(existingToRow);
+        if (rel.childTable === "skills") {
+          children[rel.childTable] = rows.map(existingToInlineSkill) as unknown as InlineChildRow[];
+        } else {
+          children[rel.childTable] = rows.map(existingToRow);
+        }
       }
       setInlineChildren(children);
       setInlineChildrenInitialized(true);
@@ -931,18 +941,33 @@ export default function AdminSchemaItemEditor() {
       )}
 
       {/* Inline Child Editors (schema-driven) */}
-      {inlineChildRelations.map((rel) => (
-        <div key={rel.childTable} className="mt-8">
-          <InlineChildEditor
-            relation={rel}
-            parentId={isNew ? null : id!}
-            rows={inlineChildren[rel.childTable] || []}
-            onChange={(rows) =>
-              setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
-            }
-          />
-        </div>
-      ))}
+      {inlineChildRelations.map((rel) => {
+        if (rel.childTable === "skills") {
+          const skillRows = (inlineChildren[rel.childTable] || []) as unknown as InlineSkill[];
+          return (
+            <div key={rel.childTable} className="mt-8">
+              <InlineSkillsEditor
+                skills={skillRows}
+                onChange={(updated) =>
+                  setInlineChildren((prev) => ({ ...prev, [rel.childTable]: updated as unknown as InlineChildRow[] }))
+                }
+              />
+            </div>
+          );
+        }
+        return (
+          <div key={rel.childTable} className="mt-8">
+            <InlineChildEditor
+              relation={rel}
+              parentId={isNew ? null : id!}
+              rows={inlineChildren[rel.childTable] || []}
+              onChange={(rows) =>
+                setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
+              }
+            />
+          </div>
+        );
+      })}
 
       {/* Read-only metadata for existing items */}
       {!isNew && existingItem && (
