@@ -535,11 +535,20 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
+  useEffect(() => {
+    setInlineChildren({});
+    setInlineChildrenInitialized(false);
+  }, [tableName, id, inlineChildRelationsKey, isNew]);
+
   // Initialize inline children from loaded data
   useEffect(() => {
     if (inlineChildrenInitialized) return;
+    if (registryLoading) return;
     if (inlineChildRelations.length === 0) {
-      setInlineChildrenInitialized(true);
+      if (isNew) {
+        setInlineChildren({});
+        setInlineChildrenInitialized(true);
+      }
       return;
     }
     if (isNew) {
@@ -551,13 +560,14 @@ export default function AdminSchemaItemEditor() {
     }
     if (loadedInlineChildren) {
       const children: Record<string, InlineChildRow[]> = {};
-      for (const [childTable, rows] of Object.entries(loadedInlineChildren)) {
-        children[childTable] = rows.map(existingToRow);
+      for (const rel of inlineChildRelations) {
+        const rows = loadedInlineChildren[rel.childTable] || [];
+        children[rel.childTable] = rows.map(existingToRow);
       }
       setInlineChildren(children);
       setInlineChildrenInitialized(true);
     }
-  }, [isNew, inlineChildrenInitialized, inlineChildRelations, loadedInlineChildren]);
+  }, [isNew, inlineChildrenInitialized, inlineChildRelations, loadedInlineChildren, registryLoading]);
 
   // Load existing junction rows for multi-ref fields (single query, no hooks-in-loop)
   const m2mKey = manyToManyRelations.map((r) => `${r.junctionTable}:${r.junctionFkToSelf}`).join(",");
