@@ -940,13 +940,23 @@ export type Database = {
           created_by: string
           description: string | null
           effects: Json | null
+          hit1_book_bonus: number | null
+          hit1_count: number | null
+          hit1_percent: number | null
+          hit2_book_bonus: number | null
+          hit2_count: number | null
+          hit2_percent: number | null
           hunter_id: string | null
           icon: string | null
           id: string
+          max_cd: number | null
           max_level: number | null
           name: string
+          skill_levels: number | null
+          skill_tags: string | null
           slug: string
           sort_order: number | null
+          target_type: string | null
           type: string | null
           updated_at: string
           updated_by: string
@@ -958,13 +968,23 @@ export type Database = {
           created_by: string
           description?: string | null
           effects?: Json | null
+          hit1_book_bonus?: number | null
+          hit1_count?: number | null
+          hit1_percent?: number | null
+          hit2_book_bonus?: number | null
+          hit2_count?: number | null
+          hit2_percent?: number | null
           hunter_id?: string | null
           icon?: string | null
           id?: string
+          max_cd?: number | null
           max_level?: number | null
           name: string
+          skill_levels?: number | null
+          skill_tags?: string | null
           slug: string
           sort_order?: number | null
+          target_type?: string | null
           type?: string | null
           updated_at?: string
           updated_by: string
@@ -976,13 +996,23 @@ export type Database = {
           created_by?: string
           description?: string | null
           effects?: Json | null
+          hit1_book_bonus?: number | null
+          hit1_count?: number | null
+          hit1_percent?: number | null
+          hit2_book_bonus?: number | null
+          hit2_count?: number | null
+          hit2_percent?: number | null
           hunter_id?: string | null
           icon?: string | null
           id?: string
+          max_cd?: number | null
           max_level?: number | null
           name?: string
+          skill_levels?: number | null
+          skill_tags?: string | null
           slug?: string
           sort_order?: number | null
+          target_type?: string | null
           type?: string | null
           updated_at?: string
           updated_by?: string
