@@ -158,9 +158,9 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
       })()}
 
       {/* Description */}
-      {skill.description && (
+      {(maxLevelDescription || skill.description) && (
         <div className="px-4 py-3 text-sm leading-relaxed text-secondary-foreground whitespace-pre-line">
-          <EffectHighlightedText text={skill.description} />
+          <EffectHighlightedText text={maxLevelDescription || skill.description!} />
         </div>
       )}
 
