@@ -568,7 +568,11 @@ export default function AdminSchemaItemEditor() {
       const children: Record<string, InlineChildRow[]> = {};
       for (const rel of inlineChildRelations) {
         const rows = loadedInlineChildren[rel.childTable] || [];
-        children[rel.childTable] = rows.map(existingToRow);
+        if (rel.childTable === "skills") {
+          children[rel.childTable] = rows.map(existingToInlineSkill) as unknown as InlineChildRow[];
+        } else {
+          children[rel.childTable] = rows.map(existingToRow);
+        }
       }
       setInlineChildren(children);
       setInlineChildrenInitialized(true);
