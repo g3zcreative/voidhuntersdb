@@ -158,36 +158,32 @@ function nextKey() {
   return `skill-${++keyCounter}-${Date.now()}`;
 }
 
+const EFFICIENCY_DEFAULTS = {
+  skill_levels: null, max_cd: null, skill_tags: null, target_type: null,
+  hit1_percent: null, hit1_count: null, hit1_book_bonus: null,
+  hit2_percent: null, hit2_count: null, hit2_book_bonus: null,
+};
+
 export function createEmptySkill(): InlineSkill {
   return {
-    _key: nextKey(),
-    _status: "new",
-    name: "",
-    slug: "",
-    type: null,
-    sort_order: null,
-    max_level: null,
-    cooldown: null,
-    description: null,
-    icon: null,
-    effects: null,
+    _key: nextKey(), _status: "new", name: "", slug: "",
+    type: null, sort_order: null, max_level: null, cooldown: null,
+    description: null, icon: null, effects: null, ...EFFICIENCY_DEFAULTS,
   };
 }
 
 export function existingToInlineSkill(row: Record<string, any>): InlineSkill {
   return {
-    _key: row.id || nextKey(),
-    _status: "existing",
-    id: row.id,
-    name: row.name || "",
-    slug: row.slug || "",
-    type: row.type ?? null,
-    sort_order: row.sort_order ?? null,
-    max_level: row.max_level ?? null,
-    cooldown: row.cooldown ?? null,
-    description: row.description ?? null,
-    icon: row.icon ?? null,
-    effects: row.effects ?? null,
+    _key: row.id || nextKey(), _status: "existing", id: row.id,
+    name: row.name || "", slug: row.slug || "", type: row.type ?? null,
+    sort_order: row.sort_order ?? null, max_level: row.max_level ?? null,
+    cooldown: row.cooldown ?? null, description: row.description ?? null,
+    icon: row.icon ?? null, effects: row.effects ?? null,
+    skill_levels: row.skill_levels ?? null, max_cd: row.max_cd ?? null,
+    skill_tags: row.skill_tags ?? null, target_type: row.target_type ?? null,
+    hit1_percent: row.hit1_percent ?? null, hit1_count: row.hit1_count ?? null,
+    hit1_book_bonus: row.hit1_book_bonus ?? null, hit2_percent: row.hit2_percent ?? null,
+    hit2_count: row.hit2_count ?? null, hit2_book_bonus: row.hit2_book_bonus ?? null,
   };
 }
 
