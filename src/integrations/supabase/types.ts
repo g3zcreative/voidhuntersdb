@@ -900,6 +900,38 @@ export type Database = {
         }
         Relationships: []
       }
+      skill_tags: {
+        Row: {
+          created_at: string
+          id: string
+          skill_id: string | null
+          skill_tag_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          skill_id?: string | null
+          skill_tag_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          skill_id?: string | null
+          skill_tag_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_skill_tags_skill_id"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       skills: {
         Row: {
           awakening_id: string | null
