@@ -22,8 +22,8 @@ export function calcMinMult(d: SkillHitData): number {
 }
 
 export function calcMaxMult(d: SkillHitData): number {
-  const h1 = (d.hit1_percent ?? 0) * (d.hit1_count ?? 0) * (1 + (d.hit1_book_bonus ?? 0));
-  const h2 = (d.hit2_percent ?? 0) * (d.hit2_count ?? 0) * (1 + (d.hit2_book_bonus ?? 0));
+  const h1 = ((d.hit1_percent ?? 0) + (d.hit1_book_bonus ?? 0)) * (d.hit1_count ?? 0);
+  const h2 = ((d.hit2_percent ?? 0) + (d.hit2_book_bonus ?? 0)) * (d.hit2_count ?? 0);
   return h1 + h2;
 }
 
