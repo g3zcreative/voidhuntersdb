@@ -69,6 +69,17 @@ export interface InlineSkill {
   description: string | null;
   icon: string | null;
   effects: Record<string, any> | null;
+  // Efficiency fields
+  skill_levels: number | null;
+  max_cd: number | null;
+  skill_tags: string | null;
+  target_type: string | null;
+  hit1_percent: number | null;
+  hit1_count: number | null;
+  hit1_book_bonus: number | null;
+  hit2_percent: number | null;
+  hit2_count: number | null;
+  hit2_book_bonus: number | null;
 }
 
 function slugify(text: string): string {
