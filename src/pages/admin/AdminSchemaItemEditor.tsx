@@ -937,8 +937,6 @@ export default function AdminSchemaItemEditor() {
       )}
 
       {/* Inline Child Editors (schema-driven) */}
-      {inlineChildRelations.map((rel) => (
-        <div key={rel.childTable} className="mt-8">
       {inlineChildRelations.map((rel) => {
         if (rel.childTable === "skills") {
           const skillRows = (inlineChildren[rel.childTable] || []) as unknown as InlineSkill[];
