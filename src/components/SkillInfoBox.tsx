@@ -47,7 +47,7 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
     if (skill.hit1_percent && skill.hit1_book_bonus != null) {
       replacements.push({
         basePercent: Math.round(skill.hit1_percent * 100),
-        maxPercent: Math.round(skill.hit1_percent * (1 + skill.hit1_book_bonus) * 100),
+        maxPercent: Math.round((skill.hit1_percent + skill.hit1_book_bonus) * 100),
       });
     }
     if (skill.hit2_percent && skill.hit2_book_bonus != null) {
