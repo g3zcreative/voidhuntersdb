@@ -939,16 +939,33 @@ export default function AdminSchemaItemEditor() {
       {/* Inline Child Editors (schema-driven) */}
       {inlineChildRelations.map((rel) => (
         <div key={rel.childTable} className="mt-8">
-          <InlineChildEditor
-            relation={rel}
-            parentId={isNew ? null : id!}
-            rows={inlineChildren[rel.childTable] || []}
-            onChange={(rows) =>
-              setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
-            }
-          />
-        </div>
-      ))}
+      {inlineChildRelations.map((rel) => {
+        if (rel.childTable === "skills") {
+          const skillRows = (inlineChildren[rel.childTable] || []) as unknown as InlineSkill[];
+          return (
+            <div key={rel.childTable} className="mt-8">
+              <InlineSkillsEditor
+                skills={skillRows}
+                onChange={(updated) =>
+                  setInlineChildren((prev) => ({ ...prev, [rel.childTable]: updated as unknown as InlineChildRow[] }))
+                }
+              />
+            </div>
+          );
+        }
+        return (
+          <div key={rel.childTable} className="mt-8">
+            <InlineChildEditor
+              relation={rel}
+              parentId={isNew ? null : id!}
+              rows={inlineChildren[rel.childTable] || []}
+              onChange={(rows) =>
+                setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
+              }
+            />
+          </div>
+        );
+      })}
 
       {/* Read-only metadata for existing items */}
       {!isNew && existingItem && (
