@@ -18,6 +18,8 @@ import { ArrowLeft, Database, Swords, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkillInfoBox } from "@/components/SkillInfoBox";
 import { EffectHighlightedText } from "@/components/EffectHighlightedText";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { RARITY_LABELS } from "@/lib/tier-list-constants";
 
 /* ── FK helpers ─────────────────────────────────────── */
 
