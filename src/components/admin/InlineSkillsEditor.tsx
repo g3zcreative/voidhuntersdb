@@ -584,6 +584,80 @@ export function InlineSkillsEditor({ skills, onChange }: Props) {
                         );
                       })() : null}
                     </div>
+
+                    {/* ── Awakenings Section ── */}
+                    <div className="col-span-2 mt-2 border-t border-border pt-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Awakenings</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => {
+                            const awakenings = skill._children_awakenings || [];
+                            const visibleAwk = awakenings.filter(a => a._status !== "deleted");
+                            const nextLevel = visibleAwk.length === 0 ? 1 : Math.max(...visibleAwk.map(a => a.awakening_level ?? 0)) + 1;
+                            const newAwk: InlineAwakening = {
+                              _key: `awk-${++keyCounter}-${Date.now()}`,
+                              _status: "new",
+                              awakening_level: nextLevel,
+                              effect: null,
+                            };
+                            updateSkill(skill._key, "_children_awakenings", [...awakenings, newAwk]);
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add Awakening
+                        </Button>
+                      </div>
+                      {(skill._children_awakenings || []).filter(a => a._status !== "deleted").map((awk) => (
+                        <div key={awk._key} className="flex items-center gap-3 mb-2">
+                          <div className="space-y-1 w-20">
+                            <Label className="text-xs">Level</Label>
+                            <Input
+                              type="number"
+                              value={awk.awakening_level ?? ""}
+                              onChange={(e) => {
+                                const awakenings = (skill._children_awakenings || []).map(a =>
+                                  a._key === awk._key ? { ...a, awakening_level: e.target.value === "" ? null : Number(e.target.value) } : a
+                                );
+                                updateSkill(skill._key, "_children_awakenings", awakenings);
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1 flex-1">
+                            <Label className="text-xs">Effect</Label>
+                            <Input
+                              value={awk.effect ?? ""}
+                              onChange={(e) => {
+                                const awakenings = (skill._children_awakenings || []).map(a =>
+                                  a._key === awk._key ? { ...a, effect: e.target.value || null } : a
+                                );
+                                updateSkill(skill._key, "_children_awakenings", awakenings);
+                              }}
+                              placeholder="Awakening effect..."
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive mt-5"
+                            onClick={() => {
+                              const awakenings = (skill._children_awakenings || []).map(a =>
+                                a._key === awk._key ? { ...a, _status: "deleted" as const } : a
+                              );
+                              updateSkill(skill._key, "_children_awakenings", awakenings);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      {(skill._children_awakenings || []).filter(a => a._status !== "deleted").length === 0 && (
+                        <p className="text-xs text-muted-foreground">No awakenings yet.</p>
+                      )}
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
