@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchemaRegistry, isAutoField } from "@/hooks/useSchemaRegistry";
@@ -16,11 +16,13 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Trash2, Columns3 } from "lucide-react";
+import { Plus, Search, Trash2, Columns3, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
+
+type SortDir = "asc" | "desc";
 
 export default function AdminSchemaData() {
   const { tableName } = useParams<{ tableName: string }>();
@@ -32,11 +34,15 @@ export default function AdminSchemaData() {
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // Reset search when switching tables
+  // Reset search and sort when switching tables
   useEffect(() => {
     setSearch("");
     setDeleteId(null);
+    setSortColumn(null);
+    setSortDir("asc");
   }, [tableName]);
 
   const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
@@ -67,6 +73,16 @@ export default function AdminSchemaData() {
       localStorage.setItem(storageKey, JSON.stringify([...next]));
       return next;
     });
+  };
+
+  const handleSort = (colName: string) => {
+    if (sortColumn === colName) {
+      if (sortDir === "asc") setSortDir("desc");
+      else { setSortColumn(null); setSortDir("asc"); }
+    } else {
+      setSortColumn(colName);
+      setSortDir("asc");
+    }
   };
 
   const { data: rows, isLoading: rowsLoading } = useQuery({
@@ -118,6 +134,37 @@ export default function AdminSchemaData() {
     return () => { setBreadcrumbs([]); setActions(null); };
   }, [table, tableName, navigate, setBreadcrumbs, setActions]);
 
+  const filtered = useMemo(() => {
+    let result = (rows || []).filter((row: any) => {
+      if (!search) return true;
+      const s = search.toLowerCase();
+      return tableColumns.some((col) => {
+        const val = row[col.name];
+        return val != null && String(val).toLowerCase().includes(s);
+      });
+    });
+
+    if (sortColumn) {
+      result = [...result].sort((a: any, b: any) => {
+        const aVal = a[sortColumn];
+        const bVal = b[sortColumn];
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+        }
+        if (typeof aVal === "boolean" && typeof bVal === "boolean") {
+          return sortDir === "asc" ? (aVal === bVal ? 0 : aVal ? -1 : 1) : (aVal === bVal ? 0 : aVal ? 1 : -1);
+        }
+        const cmp = String(aVal).localeCompare(String(bVal), undefined, { numeric: true, sensitivity: "base" });
+        return sortDir === "asc" ? cmp : -cmp;
+      });
+    }
+
+    return result;
+  }, [rows, search, tableColumns, sortColumn, sortDir]);
+
   if (registryLoading || systemLoading) {
     return <div className="p-6 space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>;
   }
@@ -132,15 +179,6 @@ export default function AdminSchemaData() {
       </div>
     );
   }
-
-  const filtered = (rows || []).filter((row: any) => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    return tableColumns.some((col) => {
-      const val = row[col.name];
-      return val != null && String(val).toLowerCase().includes(s);
-    });
-  });
 
   return (
     <div className="space-y-4">
@@ -183,7 +221,20 @@ export default function AdminSchemaData() {
             <TableHeader>
               <TableRow>
                 {tableColumns.map((col) => (
-                  <TableHead key={col.id}>{col.name}</TableHead>
+                  <TableHead
+                    key={col.id}
+                    className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                    onClick={() => handleSort(col.name)}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {col.name}
+                      {sortColumn === col.name ? (
+                        sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-foreground" /> : <ArrowDown className="h-3.5 w-3.5 text-foreground" />
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                    </span>
+                  </TableHead>
                 ))}
                 <TableHead className="w-12" />
               </TableRow>
