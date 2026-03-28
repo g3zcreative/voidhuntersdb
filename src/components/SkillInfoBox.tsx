@@ -123,7 +123,7 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
               </div>
             )}
           </div>
-          {skill.sort_order && <p className="text-xs text-muted-foreground">{skill.sort_order}</p>}
+          
           {displayCooldown != null && (
             <p className="text-xs text-muted-foreground mt-0.5">Cooldown: <span className="text-foreground font-medium">{displayCooldown}</span></p>
           )}
