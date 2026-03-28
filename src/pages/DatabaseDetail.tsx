@@ -183,6 +183,47 @@ function HunterDetailView({
               </span>
             )}
           </div>
+          {item.subtitle && (
+            <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
+          )}
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-5">
+              {tags.map((t: any) => (
+                <Link key={t.id} to={`/database/hunters?tag=${t.id}`}>
+                  <Badge variant="secondary" className="hover:bg-primary/20 transition-colors cursor-pointer">
+                    {t.name}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Stats table */}
+          {(() => {
+            const stats = [
+              { label: "Level", value: item.level },
+              { label: "Power", value: item.power },
+              { label: "Attack", value: item.attack },
+              { label: "Defense", value: item.defense },
+              { label: "Health", value: item.health },
+              { label: "Speed", value: item.speed },
+            ].filter((s) => s.value != null);
+            if (stats.length === 0) return null;
+            return (
+              <Table className="w-auto">
+                <TableBody>
+                  {stats.map((s) => (
+                    <TableRow key={s.label} className="border-border/50">
+                      <TableCell className="py-1.5 px-3 text-xs text-muted-foreground uppercase tracking-wider font-medium">{s.label}</TableCell>
+                      <TableCell className="py-1.5 px-3 font-display font-bold text-foreground">{s.value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            );
+          })()}
 
           {/* Description */}
           {item.description && (
