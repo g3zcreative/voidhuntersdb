@@ -31,7 +31,7 @@ export default function TierListEditor() {
   const [selectedRole, setSelectedRole] = useState<string>("DPS");
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
 
-  // Load tier list metadata
+  // Load tier list metadata (always try, so we can redirect non-owners to shared view)
   const { data: tierList, isLoading: loadingList } = useQuery({
     queryKey: ["user-tier-list", id],
     queryFn: async () => {
@@ -42,7 +42,7 @@ export default function TierListEditor() {
         .single();
       return data;
     },
-    enabled: !!id && !!user,
+    enabled: !!id,
   });
 
   // Load entries
@@ -196,8 +196,15 @@ export default function TierListEditor() {
 
   const isLoading = loadingList || loadingEntries;
 
+  // If not logged in, redirect to shared view (not auth) so shared links work
   if (!authLoading && !user) {
-    navigate("/auth");
+    navigate(`/tier-list/shared/${id}`, { replace: true });
+    return null;
+  }
+
+  // If loaded and user is not the owner, redirect to shared view
+  if (!isLoading && tierList && tierList.user_id !== user?.id) {
+    navigate(`/tier-list/shared/${id}`, { replace: true });
     return null;
   }
 
@@ -213,14 +220,10 @@ export default function TierListEditor() {
   }
 
   if (!tierList) {
-    return (
-      <Layout>
-        <div className="container py-16 text-center text-muted-foreground">
-          <p>Tier list not found.</p>
-          <Button className="mt-4" onClick={() => navigate("/tier-list/my")}>Back to My Tier Lists</Button>
-        </div>
-      </Layout>
-    );
+    // Tier list not found via RLS — could be a public list by another user
+    // Try redirecting to shared view
+    navigate(`/tier-list/shared/${id}`, { replace: true });
+    return null;
   }
 
   return (
