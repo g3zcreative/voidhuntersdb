@@ -94,29 +94,29 @@ export function SkillInfoBox({ skill, compact = false }: { skill: SkillData; com
   }
 
   return (
-    <div className="relative rounded-lg overflow-hidden border border-[hsl(35,60%,30%)] bg-gradient-to-b from-[hsl(228,15%,12%)] to-[hsl(228,15%,8%)] shadow-xl max-w-md w-full flex flex-col">
+    <div className={`relative rounded-lg overflow-hidden border border-[hsl(35,60%,30%)] bg-gradient-to-b from-[hsl(228,15%,12%)] to-[hsl(228,15%,8%)] shadow-xl w-full flex flex-col ${compact ? "max-w-full" : "max-w-md"}`}>
       {/* Subtle golden top edge glow */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(40,70%,45%)] to-transparent" />
 
       {/* Header: Icon + Name + Type */}
-      <div className="p-4 pb-3 flex items-start gap-3">
+      <div className={`${compact ? "p-2.5 pb-2" : "p-4 pb-3"} flex items-start gap-2.5`}>
         {skill.icon && (
-          <div className="h-14 w-14 shrink-0 rounded-full border-2 border-[hsl(35,60%,40%)] bg-secondary overflow-hidden shadow-[0_0_12px_hsl(35,60%,30%/0.4)]">
+          <div className={`${compact ? "h-9 w-9" : "h-14 w-14"} shrink-0 rounded-full border-2 border-[hsl(35,60%,40%)] bg-secondary overflow-hidden shadow-[0_0_12px_hsl(35,60%,30%/0.4)]`}>
             <img src={skill.icon} alt={skill.name} className="h-full w-full object-contain" />
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-display text-lg font-bold tracking-tight text-foreground uppercase leading-tight">
+          <div className="flex items-start justify-between gap-1.5">
+            <h3 className={`font-display ${compact ? "text-sm" : "text-lg"} font-bold tracking-tight text-foreground uppercase leading-tight`}>
               {skill.name}
               {maxLvl > 1 && (
-                <span className="text-muted-foreground text-sm font-normal normal-case ml-1.5">(Lv.{maxLvl})</span>
+                <span className={`text-muted-foreground ${compact ? "text-[10px]" : "text-sm"} font-normal normal-case ml-1`}>(Lv.{maxLvl})</span>
               )}
             </h3>
             {skill.type && (
-              <div className="flex flex-wrap gap-1.5 shrink-0">
+              <div className="flex flex-wrap gap-1 shrink-0">
                 {skill.type.split(/[,/]+/).map((t) => t.trim()).filter(Boolean).map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-[10px] px-2 py-0.5 border-border text-muted-foreground font-medium">
+                  <Badge key={tag} variant="outline" className={`${compact ? "text-[8px] px-1.5 py-0" : "text-[10px] px-2 py-0.5"} border-border text-muted-foreground font-medium`}>
                     {tag}
                   </Badge>
                 ))}
@@ -125,12 +125,12 @@ export function SkillInfoBox({ skill, compact = false }: { skill: SkillData; com
           </div>
           
           {displayCooldown != null && (
-            <p className="text-xs text-muted-foreground mt-0.5">Cooldown: <span className="text-foreground font-medium">{displayCooldown}</span></p>
+            <p className={`${compact ? "text-[10px]" : "text-xs"} text-muted-foreground mt-0.5`}>Cooldown: <span className="text-foreground font-medium">{displayCooldown}</span></p>
           )}
         </div>
       </div>
 
-      <div className="mx-4 h-px bg-border" />
+      <div className={`${compact ? "mx-2.5" : "mx-4"} h-px bg-border`} />
 
       {/* Damage Efficiency */}
       {hasHitData(skill as SkillHitData) && (() => {
@@ -140,11 +140,11 @@ export function SkillInfoBox({ skill, compact = false }: { skill: SkillData; com
         const rating = getEfficiencyRating(d);
         const colors = rating ? RATING_COLORS[rating] : null;
         return (
-          <div className="px-4 py-2.5 flex items-center gap-3 text-xs">
+          <div className={`${compact ? "px-2.5 py-1.5" : "px-4 py-2.5"} flex items-center gap-2 text-xs`}>
             <span className="text-muted-foreground">Base: <strong className="text-foreground">{min.toFixed(1)}x</strong></span>
             <span className="text-muted-foreground">Max: <strong className="text-foreground">{max.toFixed(1)}x</strong></span>
             {rating && colors && (
-              <span className={`ml-auto px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide ${colors.bg} ${colors.text} ${colors.border}`}>
+              <span className={`ml-auto px-2 py-0 rounded-full border text-[10px] font-bold tracking-wide ${colors.bg} ${colors.text} ${colors.border}`}>
                 {rating}
               </span>
             )}
@@ -159,7 +159,7 @@ export function SkillInfoBox({ skill, compact = false }: { skill: SkillData; com
 
       {/* Description */}
       {(maxLevelDescription || skill.description) && (
-        <div className="px-4 py-3 text-sm leading-relaxed text-secondary-foreground whitespace-pre-line">
+        <div className={`${compact ? "px-2.5 py-2 text-xs" : "px-4 py-3 text-sm"} leading-relaxed text-secondary-foreground whitespace-pre-line`}>
           <EffectHighlightedText text={maxLevelDescription || skill.description!} />
         </div>
       )}
@@ -167,11 +167,11 @@ export function SkillInfoBox({ skill, compact = false }: { skill: SkillData; com
       {/* Level progression */}
       {levelEffects.length > 0 && (
         <>
-          <div className="mx-4 h-px bg-border" />
-          <div className="px-4 py-3 space-y-1.5">
+          <div className={`${compact ? "mx-2.5" : "mx-4"} h-px bg-border`} />
+          <div className={`${compact ? "px-2.5 py-2 space-y-1" : "px-4 py-3 space-y-1.5"}`}>
             {levelEffects.map((le) => (
-              <div key={le.level} className="flex gap-2 text-xs leading-relaxed">
-                <span className="text-muted-foreground shrink-0 w-8">Lv. {le.level}</span>
+              <div key={le.level} className={`flex gap-2 ${compact ? "text-[10px]" : "text-xs"} leading-relaxed`}>
+                <span className="text-muted-foreground shrink-0 w-7">Lv.{le.level}</span>
                 <span className="text-secondary-foreground">
                   <EffectHighlightedText text={le.text} />
                 </span>
@@ -184,10 +184,10 @@ export function SkillInfoBox({ skill, compact = false }: { skill: SkillData; com
       {/* Awakening bonuses */}
       {awakenings && awakenings.length > 0 && (
         <>
-          <div className="mx-4 h-px bg-border" />
-          <div className="px-4 py-3 space-y-2">
+          <div className={`${compact ? "mx-2.5" : "mx-4"} h-px bg-border`} />
+          <div className={`${compact ? "px-2.5 py-2 space-y-1" : "px-4 py-3 space-y-2"}`}>
             {awakenings.map((awk) => (
-              <div key={awk.id} className="flex gap-2 text-xs leading-relaxed items-start">
+              <div key={awk.id} className={`flex gap-2 ${compact ? "text-[10px]" : "text-xs"} leading-relaxed items-start`}>
                 <span className="shrink-0 text-[hsl(40,70%,50%)] tracking-tight" title={`Awakening ${awk.awakening_level ?? 1}`}>
                   {"★".repeat(awk.awakening_level ?? 1)}
                 </span>
