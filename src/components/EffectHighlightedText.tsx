@@ -23,29 +23,59 @@ function useEffects() {
   });
 }
 
+/** Color mapping by effect type */
+function getEffectColors(type: string | null): { text: string; border: string; bg: string; iconFallbackBg: string; iconFallbackText: string; symbol: string } {
+  const t = (type || "").toLowerCase();
+  if (t === "buff") return {
+    text: "text-[hsl(210,90%,60%)]",
+    border: "border-[hsl(210,90%,50%)]",
+    bg: "bg-[hsl(210,90%,15%)]",
+    iconFallbackBg: "bg-[hsl(210,90%,15%)]",
+    iconFallbackText: "text-[hsl(210,90%,60%)]",
+    symbol: "↑",
+  };
+  if (t === "debuff") return {
+    text: "text-destructive",
+    border: "border-destructive",
+    bg: "bg-destructive/20",
+    iconFallbackBg: "bg-destructive/20",
+    iconFallbackText: "text-destructive",
+    symbol: "↓",
+  };
+  if (t === "healing") return {
+    text: "text-[hsl(145,70%,50%)]",
+    border: "border-[hsl(145,70%,40%)]",
+    bg: "bg-[hsl(145,70%,15%)]",
+    iconFallbackBg: "bg-[hsl(145,70%,15%)]",
+    iconFallbackText: "text-[hsl(145,70%,50%)]",
+    symbol: "+",
+  };
+  // Status, Combat Mechanics, or anything else → sky blue
+  return {
+    text: "text-[hsl(195,90%,60%)]",
+    border: "border-[hsl(195,90%,50%)]",
+    bg: "bg-[hsl(195,90%,15%)]",
+    iconFallbackBg: "bg-[hsl(195,90%,15%)]",
+    iconFallbackText: "text-[hsl(195,90%,60%)]",
+    symbol: "◆",
+  };
+}
+
 function BuffPopoverCard({ buff }: { buff: EffectData }) {
-  const isBuff = buff.type === "buff";
+  const colors = getEffectColors(buff.type);
 
   return (
     <div className="w-72 space-y-3 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2.5">
         <div
-          className={`h-10 w-10 shrink-0 rounded-full border-2 overflow-hidden shadow-md ${
-            isBuff
-              ? "border-[hsl(170,80%,40%)] shadow-[0_0_8px_hsl(170,80%,40%/0.3)]"
-              : "border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.3)]"
-          }`}
+          className={`h-10 w-10 shrink-0 rounded-full border-2 overflow-hidden shadow-md ${colors.border} shadow-[0_0_8px_hsl(0,0%,0%/0.3)]`}
         >
           {buff.icon ? (
             <img src={buff.icon} alt={buff.name} className="h-full w-full object-contain" />
           ) : (
-            <div
-              className={`h-full w-full flex items-center justify-center text-xs font-bold ${
-                isBuff ? "bg-[hsl(170,80%,15%)] text-[hsl(170,80%,50%)]" : "bg-destructive/20 text-destructive"
-              }`}
-            >
-              {isBuff ? "↑" : "↓"}
+            <div className={`h-full w-full flex items-center justify-center text-xs font-bold ${colors.iconFallbackBg} ${colors.iconFallbackText}`}>
+              {colors.symbol}
             </div>
           )}
         </div>
@@ -53,11 +83,7 @@ function BuffPopoverCard({ buff }: { buff: EffectData }) {
           <h4 className="font-display text-sm font-bold text-foreground">{buff.name}</h4>
           <Badge
             variant="outline"
-            className={`text-[9px] px-1.5 py-0 ${
-              isBuff
-                ? "border-[hsl(170,80%,40%)] text-[hsl(170,80%,50%)]"
-                : "border-destructive text-destructive"
-            }`}
+            className={`text-[9px] px-1.5 py-0 ${colors.border} ${colors.text}`}
           >
             {(buff.type || "effect").toUpperCase()}
           </Badge>
@@ -103,15 +129,13 @@ export function EffectHighlightedText({ text }: { text: string }) {
 
         const matchedBuff = buffMap.get(part.toLowerCase());
         if (matchedBuff) {
-          const isBuff = matchedBuff.type === "buff";
+          const colors = getEffectColors(matchedBuff.type);
           return (
             <Popover key={i}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className={`inline-flex items-center gap-1 font-semibold cursor-pointer underline decoration-dotted underline-offset-2 transition-colors hover:brightness-125 ${
-                    isBuff ? "text-[hsl(170,80%,50%)]" : "text-destructive"
-                  }`}
+                  className={`inline-flex items-center gap-1 font-semibold cursor-pointer underline decoration-dotted underline-offset-2 transition-colors hover:brightness-125 ${colors.text}`}
                 >
                   {matchedBuff.icon && (
                     <img
