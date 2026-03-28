@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Clock } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ArrowLeft, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import MDEditor from "@uiw/react-md-editor";
 import { SEO } from "@/components/SEO";
@@ -40,6 +41,20 @@ export default function NewsDetail() {
       return data;
     },
     enabled: !!slug,
+  });
+
+  const { data: author } = useQuery({
+    queryKey: ["news_author", article?.author],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("authors")
+        .select("*")
+        .eq("name", article!.author!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!article?.author,
   });
 
   return (
@@ -79,6 +94,19 @@ export default function NewsDetail() {
                     ? { image: `https://img.youtube.com/vi/${extractYouTubeId(article.video_url)}/maxresdefault.jpg` }
                     : {}),
                 ...(article.published_at ? { datePublished: article.published_at } : {}),
+                ...(article.author ? {
+                  author: {
+                    "@type": "Person",
+                    name: article.author,
+                    ...(author?.avatar_url ? { image: author.avatar_url } : {}),
+                    ...(author?.slug ? { url: `https://voidhuntersdb.com/authors/${author.slug}` } : {}),
+                  },
+                } : {}),
+                publisher: {
+                  "@type": "Organization",
+                  name: "VoidHuntersDB",
+                  url: "https://voidhuntersdb.com",
+                },
                 ...(article.video_url ? {
                   video: {
                     "@type": "VideoObject",
@@ -103,6 +131,24 @@ export default function NewsDetail() {
               )}
             </div>
             <h1 className="text-3xl font-display font-bold mb-6">{article.title}</h1>
+            {(article.author || author) && (
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border">
+                <Avatar className="h-10 w-10">
+                  {author?.avatar_url ? (
+                    <AvatarImage src={author.avatar_url} alt={article.author || "Author"} />
+                  ) : null}
+                  <AvatarFallback className="bg-muted text-muted-foreground">
+                    <User className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{article.author}</p>
+                  {author?.role && (
+                    <p className="text-xs text-muted-foreground">{author.role}</p>
+                  )}
+                </div>
+              </div>
+            )}
             {article.video_url ? (
               <div className="mb-6">
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Watch Instead:</h2>
@@ -122,8 +168,8 @@ export default function NewsDetail() {
               </div>
             ) : null}
             {article.content && (
-              <div className="[&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
-                <MDEditor.Markdown source={article.content} className="!bg-transparent !text-foreground" />
+              <div className="prose prose-invert prose-lg max-w-none [&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
+                <MDEditor.Markdown source={article.content} className="!bg-transparent !text-foreground prose prose-invert prose-lg max-w-none" />
               </div>
             )}
             <NewsComments articleId={article.id} />

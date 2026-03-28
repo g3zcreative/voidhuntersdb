@@ -1,10 +1,13 @@
-import { memo } from "react";
+import React, { memo, useState } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, GripVertical, Key } from "lucide-react";
+import { Plus, Trash2, GripVertical, Key, Globe, Settings2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 
 export interface EntityField {
   id: string;
@@ -13,17 +16,21 @@ export interface EntityField {
   nullable: boolean;
   isPrimaryKey: boolean;
   defaultValue: string;
+  uiWidget?: "text" | "textarea" | "select";
+  uiOptions?: string[];
 }
 
 export interface EntityNodeData {
   label: string;
   fields: EntityField[];
   color: string;
+  publicPage?: boolean;
   onUpdateLabel: (nodeId: string, label: string) => void;
   onAddField: (nodeId: string) => void;
   onRemoveField: (nodeId: string, fieldId: string) => void;
   onUpdateField: (nodeId: string, fieldId: string, updates: Partial<EntityField>) => void;
   onDeleteNode?: (nodeId: string, label: string) => void;
+  onTogglePublicPage?: (nodeId: string) => void;
   [key: string]: unknown;
 }
 
@@ -32,10 +39,79 @@ const FIELD_TYPES = [
   "jsonb", "timestamptz", "date", "timestamp",
 ];
 
+function FieldSettingsPopover({
+  field,
+  onUpdate,
+}: {
+  field: EntityField;
+  onUpdate: (updates: Partial<EntityField>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const widget = field.uiWidget || "";
+  const [localOptions, setLocalOptions] = useState((field.uiOptions || []).join(", "));
+
+  // Sync local state when field changes externally
+  const optionsStr = (field.uiOptions || []).join(", ");
+  React.useEffect(() => {
+    if (!open) setLocalOptions(optionsStr);
+  }, [optionsStr, open]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-5 w-5 opacity-0 group-hover:opacity-100 ${widget ? "text-primary opacity-100" : "text-muted-foreground"}`}
+          title="Field settings"
+        >
+          <Settings2 className="h-3 w-3" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-3" side="right" align="start">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Widget</Label>
+          <Select
+            value={widget || "auto"}
+            onValueChange={(v) => {
+              const newWidget = v === "auto" ? undefined : (v as EntityField["uiWidget"]);
+              onUpdate({ uiWidget: newWidget, uiOptions: newWidget === "select" ? field.uiOptions || [] : undefined });
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto" className="text-xs">Auto (from type)</SelectItem>
+              <SelectItem value="select" className="text-xs">Select (dropdown)</SelectItem>
+              <SelectItem value="textarea" className="text-xs">Textarea</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {(widget === "select" || (!widget && false)) && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Options (comma-separated)</Label>
+            <Input
+              value={localOptions}
+              onChange={(e) => setLocalOptions(e.target.value)}
+              onBlur={() => {
+                const opts = localOptions.split(",").map((s) => s.trim()).filter(Boolean);
+                onUpdate({ uiOptions: opts });
+              }}
+              placeholder="Option1, Option2, ..."
+              className="h-7 text-xs"
+            />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function EntityNodeComponent({ id, data, selected }: NodeProps) {
   const {
-    label, fields, color,
-    onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode,
+    label, fields, color, publicPage,
+    onUpdateLabel, onAddField, onRemoveField, onUpdateField, onDeleteNode, onTogglePublicPage,
   } = data as unknown as EntityNodeData;
 
   return (
@@ -57,6 +133,24 @@ function EntityNodeComponent({ id, data, selected }: NodeProps) {
           className="h-7 text-sm font-semibold bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
           placeholder="table_name"
         />
+        {onTogglePublicPage && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-6 w-6 shrink-0 ${publicPage ? "text-primary" : "text-muted-foreground/40"}`}
+                onClick={() => onTogglePublicPage(id)}
+                title="Toggle public page"
+              >
+                <Globe className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">
+              {publicPage ? "Has public page — click to hide" : "No public page — click to enable"}
+            </TooltipContent>
+          </Tooltip>
+        )}
         {onDeleteNode && (
           <Button
             variant="ghost"
@@ -124,6 +218,10 @@ function EntityNodeComponent({ id, data, selected }: NodeProps) {
               />
               <span className="text-muted-foreground text-[10px]">N</span>
             </div>
+            <FieldSettingsPopover
+              field={field}
+              onUpdate={(updates) => onUpdateField(id, field.id, updates)}
+            />
             <Button
               variant="ghost"
               size="icon"

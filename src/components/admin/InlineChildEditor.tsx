@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,7 +94,7 @@ function InlineImageUpload({
   );
 }
 
-// ── JSON key/value editor ──
+// ── JSON key/value editor (string-only inputs) ──
 function JsonFieldEditorInline({
   value,
   onChange,
@@ -104,16 +105,16 @@ function JsonFieldEditorInline({
   const obj = value && typeof value === "object" ? value : {};
   const entries = Object.entries(obj);
 
-  const update = (oldKey: string, newKey: string, newVal: string) => {
+  const updateKey = (index: number, newKey: string) => {
     const next: Record<string, any> = {};
-    entries.forEach(([k, v]) => {
-      if (k === oldKey) {
-        if (newKey.trim()) next[newKey.trim()] = isNaN(Number(newVal)) ? newVal : Number(newVal);
-      } else {
-        next[k] = v;
-      }
+    entries.forEach(([k, v], i) => {
+      next[i === index ? newKey : k] = v;
     });
     onChange(Object.keys(next).length > 0 ? next : null);
+  };
+
+  const updateValue = (key: string, newVal: string) => {
+    onChange({ ...obj, [key]: newVal });
   };
 
   const remove = (key: string) => {
@@ -127,15 +128,15 @@ function JsonFieldEditorInline({
       {entries.map(([key, val], i) => (
         <div key={i} className="flex items-center gap-2">
           <Input
-            placeholder="Key"
+            placeholder="e.g. Lv2"
             value={key}
-            onChange={(e) => update(key, e.target.value, String(val))}
+            onChange={(e) => updateKey(i, e.target.value)}
             className="flex-1 font-mono text-xs"
           />
           <Input
-            placeholder="Value"
+            placeholder="e.g. +2% Healing"
             value={String(val ?? "")}
-            onChange={(e) => update(key, key, e.target.value)}
+            onChange={(e) => updateValue(key, e.target.value)}
             className="flex-1 font-mono text-xs"
           />
           <Button type="button" variant="ghost" size="icon" onClick={() => remove(key)} className="shrink-0 h-8 w-8">
@@ -166,12 +167,53 @@ function InlineFieldInput({
   value: any;
   onChange: (val: any) => void;
 }) {
+  // uiWidget overrides — select
+  if (field.uiWidget === "select" && field.uiOptions && field.uiOptions.length > 0) {
+    return (
+      <Select value={value || ""} onValueChange={(v) => onChange(v === "__none__" ? null : v)}>
+        <SelectTrigger className="h-8 text-xs">
+          <SelectValue placeholder={`Select...`} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__" className="text-xs">
+            <span className="text-muted-foreground">None</span>
+          </SelectItem>
+          {field.uiOptions.map((opt) => (
+            <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  // uiWidget overrides — textarea
+  if (field.uiWidget === "textarea") {
+    return (
+      <Textarea
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="min-h-[60px]"
+      />
+    );
+  }
+
   const lowerName = field.name.toLowerCase();
   const isImageField = ["image", "icon", "avatar", "logo", "thumbnail", "banner", "cover", "photo"].some(
     (kw) => lowerName.includes(kw)
   );
   if (isImageField) {
     return <InlineImageUpload value={value} onChange={onChange} />;
+  }
+
+  const isTextArea = lowerName === "description" || lowerName === "content" || lowerName === "notes";
+  if (isTextArea) {
+    return (
+      <Textarea
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="min-h-[60px]"
+      />
+    );
   }
 
   const inputType = fieldTypeToInputType(field.type);
@@ -285,13 +327,17 @@ export function InlineChildEditor({
   const lastAddedKeyRef = useRef<string | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Get editable fields (excluding auto fields and the FK column pointing to parent)
+  // Get editable fields (excluding auto fields, FK to parent, audit fields, and extra FK _id fields)
   const editableFields = useMemo(() => {
     if (!table) return [];
     return table.fields.filter((f) => {
       if (isAutoField(f)) return false;
       if (f.name === relation.fkColumn) return false;
       if (f.name === "created_by" || f.name === "updated_by") return false;
+      // Hide json fields EXCEPT "effects" which is used for skill level upgrades
+      if ((f.type.toLowerCase() === "jsonb" || f.type.toLowerCase() === "json") && f.name !== "effects") return false;
+      // Hide FK uuid fields ending in _id (e.g. awakening_id) — these are managed by relationships, not inline forms
+      if (f.name.endsWith("_id") && f.type.toLowerCase() === "uuid" && f.name !== "id") return false;
       return true;
     });
   }, [table, relation.fkColumn]);

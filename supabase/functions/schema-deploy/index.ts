@@ -99,22 +99,19 @@ function generateDiffSQL(req: DeployRequest): string[] {
         return col;
       });
 
-    statements.push(`CREATE TABLE public.${name} (\n${colDefs.join(",\n")}\n);`);
+    statements.push(`CREATE TABLE IF NOT EXISTS public.${name} (\n${colDefs.join(",\n")}\n);`);
     statements.push(`ALTER TABLE public.${name} ENABLE ROW LEVEL SECURITY;`);
-    // Admin policies
     statements.push(
-      `CREATE POLICY "Admins can do everything on ${name}" ON public.${name} FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));`
-    );
-    // Public read
-    statements.push(
-      `CREATE POLICY "Public can read ${name}" ON public.${name} FOR SELECT TO anon, authenticated USING (true);`
-    );
-    // Contributor policies
-    statements.push(
-      `CREATE POLICY "Contributors can insert ${name}" ON public.${name} FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'contributor'));`
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='${name}' AND policyname='Admins can do everything on ${name}') THEN CREATE POLICY "Admins can do everything on ${name}" ON public.${name} FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin')); END IF; END $$;`
     );
     statements.push(
-      `CREATE POLICY "Contributors can update ${name}" ON public.${name} FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'contributor')) WITH CHECK (public.has_role(auth.uid(), 'contributor'));`
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='${name}' AND policyname='Public can read ${name}') THEN CREATE POLICY "Public can read ${name}" ON public.${name} FOR SELECT TO anon, authenticated USING (true); END IF; END $$;`
+    );
+    statements.push(
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='${name}' AND policyname='Contributors can insert ${name}') THEN CREATE POLICY "Contributors can insert ${name}" ON public.${name} FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'contributor')); END IF; END $$;`
+    );
+    statements.push(
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='${name}' AND policyname='Contributors can update ${name}') THEN CREATE POLICY "Contributors can update ${name}" ON public.${name} FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'contributor')) WITH CHECK (public.has_role(auth.uid(), 'contributor')); END IF; END $$;`
     );
   }
 
@@ -180,7 +177,7 @@ function generateDiffSQL(req: DeployRequest): string[] {
     }
   }
 
-  // 5. Add new foreign keys
+  // 5. Add new foreign keys (with type-matching fix)
   for (const fk of req.desiredForeignKeys) {
     const name = fk.constraintName || `fk_${fk.sourceTable}_${fk.sourceColumn}`;
     if (currentFkSet.has(name)) continue;
@@ -192,8 +189,23 @@ function generateDiffSQL(req: DeployRequest): string[] {
     )
       continue;
 
+    // Ensure source column type matches target column type to prevent FK type mismatch errors
+    const targetTable = desiredMap.get(fk.targetTable) || currentMap.get(fk.targetTable);
+    const sourceTable = desiredMap.get(fk.sourceTable) || currentMap.get(fk.sourceTable);
+    if (targetTable && sourceTable) {
+      const targetCol = targetTable.columns.find((c) => c.name === fk.targetColumn);
+      const sourceCol = sourceTable.columns.find((c) => c.name === fk.sourceColumn);
+      if (targetCol && sourceCol && targetCol.type.toLowerCase() !== sourceCol.type.toLowerCase()) {
+        if (ALLOWED_TYPES.has(targetCol.type.toLowerCase())) {
+          statements.push(
+            `ALTER TABLE public.${fk.sourceTable} ALTER COLUMN ${fk.sourceColumn} TYPE ${targetCol.type.toUpperCase()} USING ${fk.sourceColumn}::${targetCol.type.toUpperCase()};`
+          );
+        }
+      }
+    }
+
     statements.push(
-      `ALTER TABLE public.${fk.sourceTable} ADD CONSTRAINT ${name} FOREIGN KEY (${fk.sourceColumn}) REFERENCES public.${fk.targetTable}(${fk.targetColumn});`
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name='${name}') THEN ALTER TABLE public.${fk.sourceTable} ADD CONSTRAINT ${name} FOREIGN KEY (${fk.sourceColumn}) REFERENCES public.${fk.targetTable}(${fk.targetColumn}); END IF; END $$;`
     );
   }
 

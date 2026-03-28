@@ -1,0 +1,1 @@
+Public database pages controlled by `publicPage` boolean on each table node in the entity editor schema. The globe icon in the entity editor header toggles this flag. Navbar and DatabaseList read `table.publicPage` from the schema registry to decide which tables are shown publicly. No more hardcoded PUBLIC_TABLES array.

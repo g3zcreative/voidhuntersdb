@@ -22,10 +22,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { label: "Tier List", href: "/tier-list" },
   { label: "News", href: "/news" },
   { label: "Guides", href: "/guides" },
   { label: "Official Posts", href: "/official-posts" },
-  
 ];
 
 export function Navbar() {
@@ -36,7 +36,7 @@ export function Navbar() {
   const { user, signOut } = useAuth();
   const { canAccessAdmin } = useAdmin();
   const { tables, isJunction } = useSchemaRegistry();
-  const visibleTables = tables.filter((t) => !isJunction(t.name));
+  const visibleTables = tables.filter((t) => t.publicPage && !isJunction(t.name));
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">

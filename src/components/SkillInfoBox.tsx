@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { EffectHighlightedText } from "@/components/EffectHighlightedText";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { calcMinMult, calcMaxMult, getEfficiencyRating, RATING_COLORS, hasHitData, type SkillHitData } from "@/lib/skill-efficiency";
 
 interface SkillEffect {
   [key: string]: any;
@@ -16,6 +17,17 @@ interface SkillData {
   max_level?: number | null;
   effects?: SkillEffect | null;
   sort_order?: string | null;
+  // Efficiency fields
+  target_type?: string | null;
+  hit1_percent?: number | null;
+  hit1_count?: number | null;
+  hit1_book_bonus?: number | null;
+  hit2_percent?: number | null;
+  hit2_count?: number | null;
+  hit2_book_bonus?: number | null;
+  cooldown?: number | null;
+  max_cd?: number | null;
+  skill_tags?: string | null;
 }
 
 /**
@@ -25,6 +37,32 @@ interface SkillData {
  */
 export function SkillInfoBox({ skill }: { skill: SkillData }) {
   const maxLvl = skill.max_level ?? 5;
+  const displayCooldown = skill.max_cd ?? skill.cooldown;
+
+  // Build max-level description by replacing base ATK% with book-bonus-included values
+  const maxLevelDescription = (() => {
+    if (!skill.description) return null;
+    let desc = skill.description;
+    const replacements: { basePercent: number; maxPercent: number }[] = [];
+    if (skill.hit1_percent && skill.hit1_book_bonus != null) {
+      replacements.push({
+        basePercent: Math.round(skill.hit1_percent * 100),
+        maxPercent: Math.round((skill.hit1_percent + skill.hit1_book_bonus) * 100),
+      });
+    }
+    if (skill.hit2_percent && skill.hit2_book_bonus != null) {
+      replacements.push({
+        basePercent: Math.round(skill.hit2_percent * 100),
+        maxPercent: Math.round((skill.hit2_percent + skill.hit2_book_bonus) * 100),
+      });
+    }
+    for (const r of replacements) {
+      if (r.basePercent !== r.maxPercent) {
+        desc = desc.replace(`${r.basePercent}%`, `${r.maxPercent}%`);
+      }
+    }
+    return desc;
+  })();
 
   // Fetch awakenings for this skill
   const { data: awakenings } = useQuery({
@@ -86,15 +124,43 @@ export function SkillInfoBox({ skill }: { skill: SkillData }) {
             )}
           </div>
           {skill.sort_order && <p className="text-xs text-muted-foreground">{skill.sort_order}</p>}
+          {displayCooldown != null && (
+            <p className="text-xs text-muted-foreground mt-0.5">Cooldown: <span className="text-foreground font-medium">{displayCooldown}</span></p>
+          )}
         </div>
       </div>
 
       <div className="mx-4 h-px bg-border" />
 
+      {/* Damage Efficiency */}
+      {hasHitData(skill as SkillHitData) && (() => {
+        const d = skill as SkillHitData;
+        const min = calcMinMult(d);
+        const max = calcMaxMult(d);
+        const rating = getEfficiencyRating(d);
+        const colors = rating ? RATING_COLORS[rating] : null;
+        return (
+          <div className="px-4 py-2.5 flex items-center gap-3 text-xs">
+            <span className="text-muted-foreground">Base: <strong className="text-foreground">{min.toFixed(1)}x</strong></span>
+            <span className="text-muted-foreground">Max: <strong className="text-foreground">{max.toFixed(1)}x</strong></span>
+            {rating && colors && (
+              <span className={`ml-auto px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide ${colors.bg} ${colors.text} ${colors.border}`}>
+                {rating}
+              </span>
+            )}
+            {skill.target_type && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-border text-muted-foreground">
+                {skill.target_type}
+              </Badge>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Description */}
-      {skill.description && (
+      {(maxLevelDescription || skill.description) && (
         <div className="px-4 py-3 text-sm leading-relaxed text-secondary-foreground whitespace-pre-line">
-          <EffectHighlightedText text={skill.description} />
+          <EffectHighlightedText text={maxLevelDescription || skill.description!} />
         </div>
       )}
 

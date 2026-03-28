@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      armor_sets: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       authors: {
         Row: {
           avatar_url: string | null
@@ -439,6 +460,63 @@ export type Database = {
           },
         ]
       }
+      hunter_tier_entries: {
+        Row: {
+          context_id: string
+          created_at: string
+          criteria_scores: Json
+          hunter_id: string
+          id: string
+          role: string
+          tags: string[] | null
+          tier: string | null
+          tier_override: string | null
+          total_score: number
+          updated_at: string
+        }
+        Insert: {
+          context_id: string
+          created_at?: string
+          criteria_scores?: Json
+          hunter_id: string
+          id?: string
+          role?: string
+          tags?: string[] | null
+          tier?: string | null
+          tier_override?: string | null
+          total_score?: number
+          updated_at?: string
+        }
+        Update: {
+          context_id?: string
+          created_at?: string
+          criteria_scores?: Json
+          hunter_id?: string
+          id?: string
+          role?: string
+          tags?: string[] | null
+          tier?: string | null
+          tier_override?: string | null
+          total_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hunter_tier_entries_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "tier_list_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hunter_tier_entries_hunter_id_fkey"
+            columns: ["hunter_id"]
+            isOneToOne: false
+            referencedRelation: "hunters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hunters: {
         Row: {
           attack: number | null
@@ -684,6 +762,27 @@ export type Database = {
         }
         Relationships: []
       }
+      redirects: {
+        Row: {
+          created_at: string
+          from_path: string
+          id: string
+          to_path: string
+        }
+        Insert: {
+          created_at?: string
+          from_path: string
+          id?: string
+          to_path: string
+        }
+        Update: {
+          created_at?: string
+          from_path?: string
+          id?: string
+          to_path?: string
+        }
+        Relationships: []
+      }
       roadmap_items: {
         Row: {
           category: string | null
@@ -782,21 +881,56 @@ export type Database = {
       }
       site_settings: {
         Row: {
-          key: string
+          created_at: string
+          current_patch: string | null
+          id: string
           updated_at: string
-          value: Json
         }
         Insert: {
-          key: string
+          created_at?: string
+          current_patch?: string | null
+          id?: string
           updated_at?: string
-          value?: Json
         }
         Update: {
-          key?: string
+          created_at?: string
+          current_patch?: string | null
+          id?: string
           updated_at?: string
-          value?: Json
         }
         Relationships: []
+      }
+      skill_tags: {
+        Row: {
+          created_at: string
+          id: string
+          skill_id: string | null
+          skill_tag_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          skill_id?: string | null
+          skill_tag_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          skill_id?: string | null
+          skill_tag_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_skill_tags_skill_id"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       skills: {
         Row: {
@@ -806,13 +940,23 @@ export type Database = {
           created_by: string
           description: string | null
           effects: Json | null
+          hit1_book_bonus: number | null
+          hit1_count: number | null
+          hit1_percent: number | null
+          hit2_book_bonus: number | null
+          hit2_count: number | null
+          hit2_percent: number | null
           hunter_id: string | null
           icon: string | null
           id: string
+          max_cd: number | null
           max_level: number | null
           name: string
+          skill_levels: number | null
+          skill_tags: string | null
           slug: string
           sort_order: number | null
+          target_type: string | null
           type: string | null
           updated_at: string
           updated_by: string
@@ -824,13 +968,23 @@ export type Database = {
           created_by: string
           description?: string | null
           effects?: Json | null
+          hit1_book_bonus?: number | null
+          hit1_count?: number | null
+          hit1_percent?: number | null
+          hit2_book_bonus?: number | null
+          hit2_count?: number | null
+          hit2_percent?: number | null
           hunter_id?: string | null
           icon?: string | null
           id?: string
+          max_cd?: number | null
           max_level?: number | null
           name: string
+          skill_levels?: number | null
+          skill_tags?: string | null
           slug: string
           sort_order?: number | null
+          target_type?: string | null
           type?: string | null
           updated_at?: string
           updated_by: string
@@ -842,13 +996,23 @@ export type Database = {
           created_by?: string
           description?: string | null
           effects?: Json | null
+          hit1_book_bonus?: number | null
+          hit1_count?: number | null
+          hit1_percent?: number | null
+          hit2_book_bonus?: number | null
+          hit2_count?: number | null
+          hit2_percent?: number | null
           hunter_id?: string | null
           icon?: string | null
           id?: string
+          max_cd?: number | null
           max_level?: number | null
           name?: string
+          skill_levels?: number | null
+          skill_tags?: string | null
           slug?: string
           sort_order?: number | null
+          target_type?: string | null
           type?: string | null
           updated_at?: string
           updated_by?: string
@@ -892,6 +1056,7 @@ export type Database = {
       }
       tags: {
         Row: {
+          category: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -902,6 +1067,7 @@ export type Database = {
           updated_by: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -912,6 +1078,7 @@ export type Database = {
           updated_by: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -920,6 +1087,129 @@ export type Database = {
           slug?: string
           updated_at?: string
           updated_by?: string
+        }
+        Relationships: []
+      }
+      tier_list_changelog: {
+        Row: {
+          changed_at: string
+          context_id: string
+          hunter_id: string
+          id: string
+          new_score: number | null
+          new_tier: string | null
+          note: string | null
+          old_score: number | null
+          old_tier: string | null
+        }
+        Insert: {
+          changed_at?: string
+          context_id: string
+          hunter_id: string
+          id?: string
+          new_score?: number | null
+          new_tier?: string | null
+          note?: string | null
+          old_score?: number | null
+          old_tier?: string | null
+        }
+        Update: {
+          changed_at?: string
+          context_id?: string
+          hunter_id?: string
+          id?: string
+          new_score?: number | null
+          new_tier?: string | null
+          note?: string | null
+          old_score?: number | null
+          old_tier?: string | null
+        }
+        Relationships: []
+      }
+      tier_list_contexts: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tier_list_criteria: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          max_score: number
+          name: string
+          sort_order: number
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_score?: number
+          name: string
+          sort_order?: number
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_score?: number
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      tier_score_ranges: {
+        Row: {
+          created_at: string
+          id: string
+          min_score: number
+          sort_order: number
+          tier: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          min_score: number
+          sort_order?: number
+          tier: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          min_score?: number
+          sort_order?: number
+          tier?: string
         }
         Relationships: []
       }
@@ -967,6 +1257,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_tier_entries: {
+        Row: {
+          hunter_id: string
+          id: string
+          notes: string | null
+          role: string
+          tier: string
+          tier_list_id: string
+        }
+        Insert: {
+          hunter_id: string
+          id?: string
+          notes?: string | null
+          role?: string
+          tier: string
+          tier_list_id: string
+        }
+        Update: {
+          hunter_id?: string
+          id?: string
+          notes?: string | null
+          role?: string
+          tier?: string
+          tier_list_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tier_entries_hunter_id_fkey"
+            columns: ["hunter_id"]
+            isOneToOne: false
+            referencedRelation: "hunters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tier_entries_tier_list_id_fkey"
+            columns: ["tier_list_id"]
+            isOneToOne: false
+            referencedRelation: "user_tier_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_tier_lists: {
+        Row: {
+          context_id: string
+          created_at: string
+          id: string
+          is_public: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_id: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_id?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tier_lists_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "tier_list_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

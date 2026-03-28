@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -10,6 +10,7 @@ import {
   type ManyToManyRelation,
   type InlineChildRelation,
 } from "@/hooks/useSchemaRegistry";
+import { useSystemTables } from "@/hooks/useSystemTables";
 import { useAdminHeader } from "@/hooks/useAdminHeader";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +35,12 @@ import {
   createEmptyRow,
   existingToRow,
 } from "@/components/admin/InlineChildEditor";
+import {
+  InlineSkillsEditor,
+  type InlineSkill,
+  createEmptySkill,
+  existingToInlineSkill,
+} from "@/components/admin/InlineSkillsEditor";
 
 function slugify(text: string): string {
   return text
@@ -285,6 +292,36 @@ function FieldInput({
   onChange: (val: any) => void;
   fkMap?: Map<string, string>;
 }) {
+  // uiWidget overrides — select
+  if (field.uiWidget === "select" && field.uiOptions && field.uiOptions.length > 0) {
+    return (
+      <Select value={value || ""} onValueChange={(v) => onChange(v === "__none__" ? null : v)}>
+        <SelectTrigger>
+          <SelectValue placeholder={`Select ${field.name.replace(/_/g, " ")}...`} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">
+            <span className="text-muted-foreground">None</span>
+          </SelectItem>
+          {field.uiOptions.map((opt) => (
+            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  // uiWidget overrides — textarea
+  if (field.uiWidget === "textarea") {
+    return (
+      <Textarea
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="min-h-[100px]"
+      />
+    );
+  }
+
   // Image URL fields get upload support — match any field with image/icon/avatar/logo/thumbnail in the name
   const lowerName = field.name.toLowerCase();
   const isImageField = ["image", "icon", "avatar", "logo", "thumbnail", "banner", "cover", "photo"].some(
@@ -358,7 +395,8 @@ export default function AdminSchemaItemEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getRegistryTable, getManyToMany, getForeignKeys, getInlineChildren, loading: registryLoading } = useSchemaRegistry();
+  const { getTable: getSystemTable, loading: systemLoading } = useSystemTables();
   const { setBreadcrumbs, setActions } = useAdminHeader();
   const { user } = useAuth();
   const { isAdmin, isContributor } = useAdmin();
@@ -373,9 +411,11 @@ export default function AdminSchemaItemEditor() {
   // Generic inline children state: { [childTable]: InlineChildRow[] }
   const [inlineChildren, setInlineChildren] = useState<Record<string, InlineChildRow[]>>({});
   const [inlineChildrenInitialized, setInlineChildrenInitialized] = useState(false);
+  const inlineChildrenRef = useRef(inlineChildren);
+  inlineChildrenRef.current = inlineChildren;
 
   const isNew = id === "new";
-  const table = tableName ? getTable(tableName) : undefined;
+  const table = tableName ? (getRegistryTable(tableName) || getSystemTable(tableName)) : undefined;
   const manyToManyRelations = useMemo(
     () => (tableName ? getManyToMany(tableName).filter((r) => r && r.relatedTable && r.junctionTable) : []),
     [tableName, getManyToMany]
@@ -394,6 +434,23 @@ export default function AdminSchemaItemEditor() {
     [tableName, getInlineChildren]
   );
 
+  // Collect FK columns that point to inline child tables — these are managed
+  // by the inline editor and should not appear as standalone form fields.
+  const inlineChildFkColumns = useMemo(() => {
+    const cols = new Set<string>();
+    for (const rel of inlineChildRelations) {
+      // The parent table may have a reciprocal FK column (e.g. skill_id on hunters)
+      // pointing to the child table — hide it since children are edited inline.
+      const fks = tableName ? getForeignKeys(tableName) : [];
+      for (const fk of fks) {
+        if (fk.referencedTable === rel.childTable) {
+          cols.add(fk.column);
+        }
+      }
+    }
+    return cols;
+  }, [inlineChildRelations, tableName, getForeignKeys]);
+
   // Fields that are managed by multi-ref should be hidden from the regular form
   // e.g., the "tags" uuid field on hunters that's a leftover single-ref
   const multiRefRelatedTables = useMemo(
@@ -406,9 +463,11 @@ export default function AdminSchemaItemEditor() {
       if (isAutoField(f)) return false;
       // Hide fields that share a name with a multi-ref related table (e.g. "tags" field on hunters)
       if (multiRefRelatedTables.has(f.name)) return false;
+      // Hide FK columns managed by inline child editors (e.g. skill_id on hunters)
+      if (inlineChildFkColumns.has(f.name)) return false;
       return true;
     }),
-    [table, multiRefRelatedTables]
+    [table, multiRefRelatedTables, inlineChildFkColumns]
   );
 
   const nameField = editableFields.find((f) => f.name === "name");
@@ -482,11 +541,20 @@ export default function AdminSchemaItemEditor() {
     },
   });
 
+  useEffect(() => {
+    setInlineChildren({});
+    setInlineChildrenInitialized(false);
+  }, [tableName, id, inlineChildRelationsKey, isNew]);
+
   // Initialize inline children from loaded data
   useEffect(() => {
     if (inlineChildrenInitialized) return;
+    if (registryLoading) return;
     if (inlineChildRelations.length === 0) {
-      setInlineChildrenInitialized(true);
+      if (isNew) {
+        setInlineChildren({});
+        setInlineChildrenInitialized(true);
+      }
       return;
     }
     if (isNew) {
@@ -498,13 +566,18 @@ export default function AdminSchemaItemEditor() {
     }
     if (loadedInlineChildren) {
       const children: Record<string, InlineChildRow[]> = {};
-      for (const [childTable, rows] of Object.entries(loadedInlineChildren)) {
-        children[childTable] = rows.map(existingToRow);
+      for (const rel of inlineChildRelations) {
+        const rows = loadedInlineChildren[rel.childTable] || [];
+        if (rel.childTable === "skills") {
+          children[rel.childTable] = rows.map(existingToInlineSkill) as unknown as InlineChildRow[];
+        } else {
+          children[rel.childTable] = rows.map(existingToRow);
+        }
       }
       setInlineChildren(children);
       setInlineChildrenInitialized(true);
     }
-  }, [isNew, inlineChildrenInitialized, inlineChildRelations, loadedInlineChildren]);
+  }, [isNew, inlineChildrenInitialized, inlineChildRelations, loadedInlineChildren, registryLoading]);
 
   // Load existing junction rows for multi-ref fields (single query, no hooks-in-loop)
   const m2mKey = manyToManyRelations.map((r) => `${r.junctionTable}:${r.junctionFkToSelf}`).join(",");
@@ -654,7 +727,7 @@ export default function AdminSchemaItemEditor() {
           const toInsert = childRows.filter((r) => r._status === "new");
           const toUpdate = childRows.filter((r) => r._status === "existing" && r.id);
 
-          const childTable = getTable(rel.childTable);
+          const childTable = getRegistryTable(rel.childTable) || getSystemTable(rel.childTable);
           const childFields = (childTable?.fields || []).filter(
             (f) => !isAutoField(f) && f.name !== rel.fkColumn && f.name !== "created_by" && f.name !== "updated_by"
           );
@@ -722,10 +795,12 @@ export default function AdminSchemaItemEditor() {
         }
       };
 
-      await saveInlineChildren(inlineChildRelations, inlineChildren, itemId!);
+      await saveInlineChildren(inlineChildRelations, inlineChildrenRef.current, itemId!);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
+      queryClient.invalidateQueries({ queryKey: ["schema-item", tableName] });
+      queryClient.invalidateQueries({ queryKey: ["inline-children-all", tableName] });
       inlineChildRelations.forEach((rel) => {
         queryClient.invalidateQueries({ queryKey: ["inline-children", rel.childTable] });
       });
@@ -866,18 +941,33 @@ export default function AdminSchemaItemEditor() {
       )}
 
       {/* Inline Child Editors (schema-driven) */}
-      {inlineChildRelations.map((rel) => (
-        <div key={rel.childTable} className="mt-8">
-          <InlineChildEditor
-            relation={rel}
-            parentId={isNew ? null : id!}
-            rows={inlineChildren[rel.childTable] || []}
-            onChange={(rows) =>
-              setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
-            }
-          />
-        </div>
-      ))}
+      {inlineChildRelations.map((rel) => {
+        if (rel.childTable === "skills") {
+          const skillRows = (inlineChildren[rel.childTable] || []) as unknown as InlineSkill[];
+          return (
+            <div key={rel.childTable} className="mt-8">
+              <InlineSkillsEditor
+                skills={skillRows}
+                onChange={(updated) =>
+                  setInlineChildren((prev) => ({ ...prev, [rel.childTable]: updated as unknown as InlineChildRow[] }))
+                }
+              />
+            </div>
+          );
+        }
+        return (
+          <div key={rel.childTable} className="mt-8">
+            <InlineChildEditor
+              relation={rel}
+              parentId={isNew ? null : id!}
+              rows={inlineChildren[rel.childTable] || []}
+              onChange={(rows) =>
+                setInlineChildren((prev) => ({ ...prev, [rel.childTable]: rows }))
+              }
+            />
+          </div>
+        );
+      })}
 
       {/* Read-only metadata for existing items */}
       {!isNew && existingItem && (

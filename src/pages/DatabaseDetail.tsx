@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useMemo, useEffect } from "react";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -178,7 +178,7 @@ function HunterDetailView({
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-5">
               {tags.map((t: any) => (
-                <Link key={t.id} to={`/database/tags/${t.slug || t.id}`}>
+                <Link key={t.id} to={`/database/hunters?tag=${t.id}`}>
                   <Badge variant="secondary" className="hover:bg-primary/20 transition-colors cursor-pointer">
                     {t.name}
                   </Badge>
@@ -409,6 +409,8 @@ function GenericDetailView({
 export default function DatabaseDetail() {
   const { tableName, slug } = useParams<{ tableName: string; slug: string }>();
   const { getTable, getManyToMany, loading: registryLoading } = useSchemaRegistry();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const table = tableName ? getTable(tableName) : undefined;
   const m2mRelations = tableName ? getManyToMany(tableName) : [];
@@ -461,6 +463,26 @@ export default function DatabaseDetail() {
   });
   const m2mData = m2mQuery.data || {};
 
+  // Redirect logic: check redirects table when item not found
+  const { data: redirect } = useQuery({
+    queryKey: ["redirect-check", location.pathname],
+    enabled: !isLoading && !registryLoading && !item,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("redirects")
+        .select("to_path")
+        .eq("from_path", location.pathname)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (redirect?.to_path) {
+      navigate(redirect.to_path, { replace: true });
+    }
+  }, [redirect, navigate]);
+
   if (registryLoading || isLoading) {
     return (
       <Layout>
@@ -476,6 +498,7 @@ export default function DatabaseDetail() {
   }
 
   if (!table || !item) {
+    if (redirect?.to_path) return null; // redirecting
     return (
       <Layout>
         <div className="container py-20 text-center">

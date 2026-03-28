@@ -8,6 +8,8 @@ export interface SchemaField {
   nullable: boolean;
   isPrimaryKey: boolean;
   defaultValue: string;
+  uiWidget?: "text" | "textarea" | "select";
+  uiOptions?: string[];
 }
 
 export interface SchemaTable {
@@ -16,6 +18,7 @@ export interface SchemaTable {
   label: string;
   fields: SchemaField[];
   color: string;
+  publicPage: boolean;
 }
 
 /** Describes a many-to-many relationship via a junction table */
@@ -137,6 +140,7 @@ function parseSchema(row: any): SchemaDefinition {
     label: n.data?.label || "Unknown",
     fields: ((n.data?.fields || []) as SchemaField[]).filter((f) => f.name && f.name.trim() !== ""),
     color: n.data?.color || "259 100% 64%",
+    publicPage: n.data?.publicPage ?? false,
   }));
 
   return {
@@ -159,6 +163,8 @@ function parseSchema(row: any): SchemaDefinition {
 export function useSchemaRegistry(deployedOnly = true) {
   const query = useQuery({
     queryKey: ["schema-registry", deployedOnly],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       let q = supabase.from("entity_definitions").select("*").order("name");
       if (deployedOnly) q = q.eq("deployed", true);

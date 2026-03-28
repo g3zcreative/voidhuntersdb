@@ -43,9 +43,28 @@ export function useSchemaIntrospect() {
   const [loading, setLoading] = useState(false);
   const [deploying, setDeploying] = useState(false);
 
-  const introspect = useCallback(async () => {
+  const introspect = useCallback(async (options?: { includeSystem?: boolean }) => {
     setLoading(true);
     try {
+      // When includeSystem is true, call via fetch with query param
+      if (options?.includeSystem) {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const session = (await supabase.auth.getSession()).data.session;
+        if (!session) throw new Error("Not authenticated");
+        const res = await fetch(
+          `${supabaseUrl}/functions/v1/schema-introspect?includeSystem=true`,
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+        if (!res.ok) throw new Error("Failed to introspect");
+        const data = await res.json();
+        setIntrospection(data as IntrospectionResult);
+        return data as IntrospectionResult;
+      }
       const { data, error } = await supabase.functions.invoke("schema-introspect");
       if (error) throw error;
       setIntrospection(data as IntrospectionResult);

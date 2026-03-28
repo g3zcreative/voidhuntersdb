@@ -1,0 +1,1 @@
+UPDATE profiles SET display_name = 'test' WHERE email = 'godforgehub+test2@gmail.com';
