@@ -18,6 +18,8 @@ import { ArrowLeft, Database, Swords, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkillInfoBox } from "@/components/SkillInfoBox";
 import { EffectHighlightedText } from "@/components/EffectHighlightedText";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { RARITY_LABELS } from "@/lib/tier-list-constants";
 
 /* ── FK helpers ─────────────────────────────────────── */
 
@@ -167,9 +169,20 @@ function HunterDetailView({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-1">
-            {item.name}
-          </h1>
+          <div className="flex items-baseline gap-3 mb-1">
+            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
+              {item.name}
+            </h1>
+            {item.rarity != null && (
+              <span className={`text-sm font-semibold ${
+                item.rarity === 5 ? "text-[hsl(45,100%,55%)]" :
+                item.rarity === 4 ? "text-[hsl(265,90%,65%)]" :
+                "text-[hsl(210,100%,55%)]"
+              }`}>
+                {RARITY_LABELS[item.rarity] || `${item.rarity}★`}
+              </span>
+            )}
+          </div>
           {item.subtitle && (
             <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
           )}
@@ -187,26 +200,30 @@ function HunterDetailView({
             </div>
           )}
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-            {[
-              { label: "Rarity", value: item.rarity },
+          {/* Stats table */}
+          {(() => {
+            const stats = [
               { label: "Level", value: item.level },
               { label: "Power", value: item.power },
               { label: "Attack", value: item.attack },
               { label: "Defense", value: item.defense },
               { label: "Health", value: item.health },
               { label: "Speed", value: item.speed },
-              { label: "Awakening", value: item.awakening_level },
-            ]
-              .filter((s) => s.value != null)
-              .map((s) => (
-                <div key={s.label} className="bg-secondary rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{s.label}</p>
-                  <p className="font-display text-xl font-bold text-foreground">{s.value}</p>
-                </div>
-              ))}
-          </div>
+            ].filter((s) => s.value != null);
+            if (stats.length === 0) return null;
+            return (
+              <Table className="w-auto">
+                <TableBody>
+                  {stats.map((s) => (
+                    <TableRow key={s.label} className="border-border/50">
+                      <TableCell className="py-1.5 px-3 text-xs text-muted-foreground uppercase tracking-wider font-medium">{s.label}</TableCell>
+                      <TableCell className="py-1.5 px-3 font-display font-bold text-foreground">{s.value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            );
+          })()}
 
           {/* Description */}
           {item.description && (
