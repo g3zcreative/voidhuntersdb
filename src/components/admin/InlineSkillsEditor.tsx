@@ -281,6 +281,13 @@ export function createEmptySkill(): InlineSkill {
 }
 
 export function existingToInlineSkill(row: Record<string, any>): InlineSkill {
+  const awakenings = (row._children_awakenings || []).map((a: any) => ({
+    _key: a.id || a._key || `awk-${++keyCounter}-${Date.now()}`,
+    _status: a._status || "existing" as const,
+    id: a.id,
+    awakening_level: a.awakening_level ?? null,
+    effect: a.effect ?? null,
+  }));
   return {
     _key: row.id || nextKey(), _status: "existing", id: row.id,
     name: row.name || "", slug: row.slug || "", type: row.type ?? null,
@@ -292,6 +299,7 @@ export function existingToInlineSkill(row: Record<string, any>): InlineSkill {
     hit1_percent: row.hit1_percent ?? null, hit1_count: row.hit1_count ?? null,
     hit1_book_bonus: row.hit1_book_bonus ?? null, hit2_percent: row.hit2_percent ?? null,
     hit2_count: row.hit2_count ?? null, hit2_book_bonus: row.hit2_book_bonus ?? null,
+    _children_awakenings: awakenings,
   };
 }
 
