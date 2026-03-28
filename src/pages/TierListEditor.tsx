@@ -31,7 +31,7 @@ export default function TierListEditor() {
   const [selectedRole, setSelectedRole] = useState<string>("DPS");
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
 
-  // Load tier list metadata
+  // Load tier list metadata (always try, so we can redirect non-owners to shared view)
   const { data: tierList, isLoading: loadingList } = useQuery({
     queryKey: ["user-tier-list", id],
     queryFn: async () => {
@@ -42,7 +42,7 @@ export default function TierListEditor() {
         .single();
       return data;
     },
-    enabled: !!id && !!user,
+    enabled: !!id,
   });
 
   // Load entries
