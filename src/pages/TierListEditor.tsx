@@ -224,9 +224,6 @@ export default function TierListEditor() {
     // Try redirecting to shared view
     navigate(`/tier-list/shared/${id}`, { replace: true });
     return null;
-        </div>
-      </Layout>
-    );
   }
 
   return (
