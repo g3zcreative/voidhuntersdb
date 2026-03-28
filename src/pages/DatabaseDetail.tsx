@@ -169,21 +169,19 @@ function HunterDetailView({
 
         {/* Right column: Info + Skills */}
         <div className="flex-1 min-w-0">
-          {/* Name + Rarity */}
-          <div className="flex items-baseline gap-3 mb-1">
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-              {item.name}
-            </h1>
-            {item.rarity != null && (
-              <span className={`text-sm font-semibold ${
-                item.rarity === 5 ? "text-[hsl(45,100%,55%)]" :
-                item.rarity === 4 ? "text-[hsl(265,90%,65%)]" :
-                "text-[hsl(210,100%,55%)]"
-              }`}>
-                {RARITY_LABELS[item.rarity] || `${item.rarity}★`}
-              </span>
-            )}
-          </div>
+          {/* Rarity + Name */}
+          {item.rarity != null && (
+            <span className={`text-xs font-semibold uppercase tracking-wider ${
+              item.rarity === 5 ? "text-[hsl(45,100%,55%)]" :
+              item.rarity === 4 ? "text-[hsl(265,90%,65%)]" :
+              "text-[hsl(210,100%,55%)]"
+            }`}>
+              {RARITY_LABELS[item.rarity] || `${item.rarity}★`}
+            </span>
+          )}
+          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-1">
+            {item.name}
+          </h1>
           {item.subtitle && (
             <p className="text-base text-muted-foreground mb-3">{item.subtitle}</p>
           )}
