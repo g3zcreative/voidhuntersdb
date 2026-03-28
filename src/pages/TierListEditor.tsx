@@ -196,8 +196,15 @@ export default function TierListEditor() {
 
   const isLoading = loadingList || loadingEntries;
 
+  // If not logged in, redirect to shared view (not auth) so shared links work
   if (!authLoading && !user) {
-    navigate("/auth");
+    navigate(`/tier-list/shared/${id}`, { replace: true });
+    return null;
+  }
+
+  // If loaded and user is not the owner, redirect to shared view
+  if (!isLoading && tierList && tierList.user_id !== user?.id) {
+    navigate(`/tier-list/shared/${id}`, { replace: true });
     return null;
   }
 
@@ -213,11 +220,10 @@ export default function TierListEditor() {
   }
 
   if (!tierList) {
-    return (
-      <Layout>
-        <div className="container py-16 text-center text-muted-foreground">
-          <p>Tier list not found.</p>
-          <Button className="mt-4" onClick={() => navigate("/tier-list/my")}>Back to My Tier Lists</Button>
+    // Tier list not found via RLS — could be a public list by another user
+    // Try redirecting to shared view
+    navigate(`/tier-list/shared/${id}`, { replace: true });
+    return null;
         </div>
       </Layout>
     );
