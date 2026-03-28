@@ -152,10 +152,11 @@ function HunterDetailView({
 
   return (
     <div>
-      {/* Top row: Image | Header + Stats + Skills on a shared grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6 items-start">
-        {/* Image — fixed width, top-aligned */}
-        <div className="w-full lg:w-56 shrink-0">
+      {/* 3-column grid: Image | Info | Skills */}
+      <div className="grid grid-cols-1 md:grid-cols-[auto_auto_1fr] gap-6 items-start">
+
+        {/* Column 1: Hunter Image */}
+        <div className="w-full md:w-52 shrink-0">
           <div className="aspect-[4/5] rounded-lg overflow-hidden border border-border bg-secondary">
             {item.image_url ? (
               <img src={item.image_url} alt={item.name} className="h-full w-full object-contain" />
@@ -167,9 +168,8 @@ function HunterDetailView({
           </div>
         </div>
 
-        {/* Right side — everything aligns to a consistent internal grid */}
-        <div className="min-w-0 space-y-0">
-          {/* Rarity label */}
+        {/* Column 2: Hunter Info */}
+        <div className="min-w-0">
           {item.rarity != null && (
             <p className={`text-[11px] font-bold uppercase tracking-[0.15em] leading-none mb-1.5 ${
               item.rarity === 5 ? "text-[hsl(45,100%,55%)]" :
@@ -180,17 +180,14 @@ function HunterDetailView({
             </p>
           )}
 
-          {/* Name */}
           <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight leading-tight">
             {item.name}
           </h1>
 
-          {/* Subtitle */}
           {item.subtitle && (
             <p className="text-sm text-muted-foreground mt-0.5">{item.subtitle}</p>
           )}
 
-          {/* Tags */}
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2.5">
               {tags.map((t: any) => (
@@ -203,54 +200,48 @@ function HunterDetailView({
             </div>
           )}
 
-          {/* Stats + Skills — aligned grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-4 mt-4">
-            {/* Stats column */}
-            {(() => {
-              const stats = [
-                { label: "Level", value: item.level },
-                { label: "Power", value: item.power },
-                { label: "Attack", value: item.attack },
-                { label: "Defense", value: item.defense },
-                { label: "Health", value: item.health },
-                { label: "Speed", value: item.speed },
-              ].filter((s) => s.value != null);
-              if (stats.length === 0) return null;
-              return (
-                <div className="self-start">
-                  <table className="text-sm">
-                    <tbody>
-                      {stats.map((s) => (
-                        <tr key={s.label}>
-                          <td className="py-[5px] pr-5 text-[11px] text-muted-foreground uppercase tracking-wider font-medium text-right whitespace-nowrap">{s.label}</td>
-                          <td className="py-[5px] font-display font-bold text-foreground tabular-nums">{s.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            })()}
-
-            {/* Skills grid */}
-            {skills && skills.length > 0 && (
-              <div className="min-w-0">
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 items-start">
-                  {skills.map((skill) => (
-                    <SkillInfoBox key={skill.id} skill={skill as any} compact />
+          {/* Stats table */}
+          {(() => {
+            const stats = [
+              { label: "Level", value: item.level },
+              { label: "Power", value: item.power },
+              { label: "Attack", value: item.attack },
+              { label: "Defense", value: item.defense },
+              { label: "Health", value: item.health },
+              { label: "Speed", value: item.speed },
+            ].filter((s) => s.value != null);
+            if (stats.length === 0) return null;
+            return (
+              <table className="text-sm mt-4">
+                <tbody>
+                  {stats.map((s) => (
+                    <tr key={s.label}>
+                      <td className="py-[5px] pr-5 text-[11px] text-muted-foreground uppercase tracking-wider font-medium text-right whitespace-nowrap">{s.label}</td>
+                      <td className="py-[5px] font-display font-bold text-foreground tabular-nums">{s.value}</td>
+                    </tr>
                   ))}
-                </div>
-              </div>
-            )}
-          </div>
+                </tbody>
+              </table>
+            );
+          })()}
 
-          {/* Description */}
           {item.description && (
-            <p className="text-sm text-secondary-foreground leading-relaxed whitespace-pre-wrap mt-4 max-w-prose">
+            <p className="text-sm text-secondary-foreground leading-relaxed whitespace-pre-wrap mt-4 max-w-[280px]">
               {item.description}
             </p>
           )}
         </div>
+
+        {/* Column 3: Skills (2-col sub-grid, masonry-style) */}
+        {skills && skills.length > 0 && (
+          <div className="min-w-0" style={{ columns: "2 220px", columnGap: "0.75rem" }}>
+            {skills.map((skill) => (
+              <div key={skill.id} className="mb-3 break-inside-avoid">
+                <SkillInfoBox skill={skill as any} compact />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
