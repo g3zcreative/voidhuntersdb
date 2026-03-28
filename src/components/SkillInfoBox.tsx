@@ -35,7 +35,7 @@ interface SkillData {
  * icon + name (Lv.X), subtitle, type badges, description, level progression.
  * Auto-detects buff/debuff names in text and renders clickable highlights.
  */
-export function SkillInfoBox({ skill }: { skill: SkillData }) {
+export function SkillInfoBox({ skill, compact = false }: { skill: SkillData; compact?: boolean }) {
   const maxLvl = skill.max_level ?? 5;
   const displayCooldown = skill.max_cd ?? skill.cooldown;
 

@@ -151,11 +151,11 @@ function HunterDetailView({
   });
 
   return (
-    <div className="space-y-8">
-      {/* Hero */}
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Image */}
-        <div className="w-full md:w-72 shrink-0">
+    <div className="space-y-6">
+      {/* Main layout: image + info/skills side by side on desktop */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left column: Image */}
+        <div className="w-full lg:w-64 shrink-0">
           <div className="aspect-[4/5] rounded-lg overflow-hidden border border-border bg-secondary">
             {item.image_url ? (
               <img src={item.image_url} alt={item.name} className="h-full w-full object-contain" />
@@ -167,8 +167,9 @@ function HunterDetailView({
           </div>
         </div>
 
-        {/* Info */}
+        {/* Right column: Info + Skills */}
         <div className="flex-1 min-w-0">
+          {/* Name + Rarity */}
           <div className="flex items-baseline gap-3 mb-1">
             <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
               {item.name}
@@ -184,12 +185,12 @@ function HunterDetailView({
             )}
           </div>
           {item.subtitle && (
-            <p className="text-lg text-muted-foreground mb-4">{item.subtitle}</p>
+            <p className="text-base text-muted-foreground mb-3">{item.subtitle}</p>
           )}
 
           {/* Tags */}
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-5">
+            <div className="flex flex-wrap gap-2 mb-4">
               {tags.map((t: any) => (
                 <Link key={t.id} to={`/database/hunters?tag=${t.id}`}>
                   <Badge variant="secondary" className="hover:bg-primary/20 transition-colors cursor-pointer">
@@ -200,61 +201,57 @@ function HunterDetailView({
             </div>
           )}
 
-          {/* Stats table */}
-          {(() => {
-            const stats = [
-              { label: "Level", value: item.level },
-              { label: "Power", value: item.power },
-              { label: "Attack", value: item.attack },
-              { label: "Defense", value: item.defense },
-              { label: "Health", value: item.health },
-              { label: "Speed", value: item.speed },
-            ].filter((s) => s.value != null);
-            if (stats.length === 0) return null;
-            return (
-              <Table className="w-auto">
-                <TableBody>
-                  {stats.map((s) => (
-                    <TableRow key={s.label} className="border-border/50">
-                      <TableCell className="py-1.5 px-3 text-xs text-muted-foreground uppercase tracking-wider font-medium">{s.label}</TableCell>
-                      <TableCell className="py-1.5 px-3 font-display font-bold text-foreground">{s.value}</TableCell>
-                    </TableRow>
+          {/* Stats + Skills in a two-column grid on desktop */}
+          <div className="flex flex-col xl:flex-row gap-5">
+            {/* Stats table */}
+            {(() => {
+              const stats = [
+                { label: "Level", value: item.level },
+                { label: "Power", value: item.power },
+                { label: "Attack", value: item.attack },
+                { label: "Defense", value: item.defense },
+                { label: "Health", value: item.health },
+                { label: "Speed", value: item.speed },
+              ].filter((s) => s.value != null);
+              if (stats.length === 0) return null;
+              return (
+                <div className="shrink-0">
+                  <Table className="w-auto">
+                    <TableBody>
+                      {stats.map((s) => (
+                        <TableRow key={s.label} className="border-border/50">
+                          <TableCell className="py-1.5 px-3 text-xs text-muted-foreground uppercase tracking-wider font-medium">{s.label}</TableCell>
+                          <TableCell className="py-1.5 px-3 font-display font-bold text-foreground">{s.value}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              );
+            })()}
+
+            {/* Skills inline on desktop */}
+            {skills && skills.length > 0 && (
+              <div className="flex-1 min-w-0">
+                <div className="grid gap-3 sm:grid-cols-2 items-start">
+                  {skills.map((skill) => (
+                    <SkillInfoBox key={skill.id} skill={skill as any} compact />
                   ))}
-                </TableBody>
-              </Table>
-            );
-          })()}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Description */}
           {item.description && (
-            <div className="mt-5">
-              <p className="text-secondary-foreground leading-relaxed whitespace-pre-wrap">
+            <div className="mt-4">
+              <p className="text-secondary-foreground leading-relaxed whitespace-pre-wrap text-sm">
                 {item.description}
               </p>
             </div>
           )}
         </div>
       </div>
-
-      {/* Skills section */}
-      {skills && skills.length > 0 && (
-        <>
-          <Separator />
-          <div>
-            <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-              <Swords className="h-5 w-5 text-primary" />
-              Skills
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-              {skills.map((skill) => (
-                <div key={skill.id} className="flex">
-                  <SkillInfoBox skill={skill as any} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 }
