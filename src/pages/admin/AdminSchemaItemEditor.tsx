@@ -796,6 +796,59 @@ export default function AdminSchemaItemEditor() {
       };
 
       await saveInlineChildren(inlineChildRelations, inlineChildrenRef.current, itemId!);
+
+      // Sync skill_tags text field to skill_tags table for each saved skill
+      if (inlineChildRelations.some((r) => r.childTable === "skills")) {
+        const skillRows = (inlineChildrenRef.current["skills"] || []) as unknown as InlineSkill[];
+        for (const skill of skillRows) {
+          if (skill._status === "deleted" || !skill.id) continue;
+          // For newly inserted skills, we need their DB id — but new rows got inserted above
+          // and their id was returned. However our local rows don't get updated with the new id.
+          // We only sync for existing skills that have an id.
+          const skillId = skill.id;
+          
+          // Delete existing skill_tags for this skill
+          await supabase.from("skill_tags" as any).delete().eq("skill_id", skillId);
+          
+          // Insert new tags from comma-separated string
+          const tagsStr = skill.skill_tags;
+          if (tagsStr) {
+            const tagNames = tagsStr.split(",").map((t: string) => t.trim()).filter(Boolean);
+            if (tagNames.length > 0) {
+              const tagRows = tagNames.map((name: string) => ({
+                skill_id: skillId,
+                skill_tag_name: name,
+              }));
+              await supabase.from("skill_tags" as any).insert(tagRows);
+            }
+          }
+        }
+        
+        // For newly inserted skills, we need to fetch them by hunter_id and sync
+        const newSkills = skillRows.filter((s) => s._status === "new" && s.skill_tags);
+        if (newSkills.length > 0) {
+          // Fetch all skills for this hunter to find newly created ones
+          const { data: dbSkills } = await supabase
+            .from("skills" as any)
+            .select("id, name, skill_tags")
+            .eq("hunter_id", itemId!);
+          if (dbSkills) {
+            for (const newSkill of newSkills) {
+              const match = (dbSkills as any[]).find((ds: any) => ds.name === newSkill.name);
+              if (match) {
+                const tagNames = (newSkill.skill_tags as string).split(",").map((t: string) => t.trim()).filter(Boolean);
+                if (tagNames.length > 0) {
+                  const tagRows = tagNames.map((name: string) => ({
+                    skill_id: match.id,
+                    skill_tag_name: name,
+                  }));
+                  await supabase.from("skill_tags" as any).insert(tagRows);
+                }
+              }
+            }
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schema-data", tableName] });
