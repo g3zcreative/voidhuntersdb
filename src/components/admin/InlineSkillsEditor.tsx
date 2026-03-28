@@ -148,6 +148,14 @@ function InlineImageUpload({ value, onChange }: { value: string | null; onChange
   );
 }
 
+export interface InlineAwakening {
+  _key: string;
+  _status: "new" | "existing" | "deleted";
+  id?: string;
+  awakening_level: number | null;
+  effect: string | null;
+}
+
 export interface InlineSkill {
   _key: string; // local tracking key
   _status: "new" | "existing" | "deleted";
@@ -172,6 +180,8 @@ export interface InlineSkill {
   hit2_percent: number | null;
   hit2_count: number | null;
   hit2_book_bonus: number | null;
+  // Nested awakenings
+  _children_awakenings?: InlineAwakening[];
 }
 
 function slugify(text: string): string {
