@@ -63,6 +63,10 @@ export default function AdminGuides() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      // Extract YouTube thumbnail
+      const ytMatch = videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+      const thumbnailUrl = ytMatch ? `https://img.youtube.com/vi/${ytMatch[1]}/maxresdefault.jpg` : undefined;
+
       setDefaults({
         title: data.title || "",
         slug: data.slug || "",
@@ -70,6 +74,8 @@ export default function AdminGuides() {
         content: data.content || "",
         author: data.author || "",
         category: selectedCategory,
+        video_url: videoUrl.trim(),
+        image_url: thumbnailUrl,
         published: false,
         published_at: new Date().toISOString(),
       });
