@@ -76,6 +76,7 @@ function AppRoutes() {
 
         {/* Official Posts */}
         <Route path="/official-posts" element={<OfficialPostsPage />} />
+        <Route path="/official-posts/:id" element={<OfficialPostDetail />} />
 
         <Route path="/discord" element={<DiscordRedirect />} />
         <Route path="/changelog" element={<ChangelogPage />} />

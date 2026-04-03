@@ -76,6 +76,7 @@ const OfficialPostsPage = () => {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             ))}
           </div>
         ) : (
