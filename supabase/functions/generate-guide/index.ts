@@ -78,9 +78,9 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are a guide writer for GodforgeHub, a community site for a gacha RPG game called Godforge.${categoryHint}
+    const systemPrompt = `You are a guide writer for VoidHuntersDB, a community site for a gacha RPG game called Void Hunters.${categoryHint}
 
-Using the provided source context, write a comprehensive guide for the GodforgeHub community. Focus on actionable strategies, builds, tips, and walkthrough steps. Rephrase and restructure the content into a well-organized guide — do NOT copy verbatim.
+Using the provided source context, write a comprehensive guide for the VoidHuntersDB community. Focus on actionable strategies, builds, tips, and walkthrough steps. Rephrase and restructure the content into a well-organized guide — do NOT copy verbatim.
 
 You can embed interactive database links using bracket syntax:
 - [hero:slug] for heroes (e.g. [hero:sun-wukong])
