@@ -45,7 +45,8 @@ const OfficialPostsPage = () => {
         ) : posts && posts.length > 0 ? (
           <div className="space-y-3">
             {posts.map((post) => (
-              <Card key={post.id} className="hover:border-primary/30 transition-colors">
+              <Link key={post.id} to={`/official-posts/${post.id}`} className="block group">
+              <Card className="hover:border-primary/30 transition-colors">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-primary">{sourceIcons[post.source] || <MessageSquare className="h-4 w-4" />}</span>
