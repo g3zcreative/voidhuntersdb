@@ -54,7 +54,7 @@ const OfficialPostsPage = () => {
                     {post.author_role && <span className="text-xs text-muted-foreground">· {post.author_role}</span>}
                     {post.is_edited && <span className="text-xs text-muted-foreground italic">(edited)</span>}
                   </div>
-                  {post.title && <h2 className="text-base font-semibold mb-1">{post.title}</h2>}
+                  {post.title && <h2 className="text-base font-semibold mb-1 group-hover:text-primary transition-colors">{post.title}</h2>}
                   {post.image_url && (
                     <img src={post.image_url} alt={post.title || "Post image"} className="rounded-md mb-3 max-h-64 object-cover w-full" />
                   )}
