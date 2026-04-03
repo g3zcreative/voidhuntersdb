@@ -133,9 +133,9 @@ Return your response by calling the create_article function. The content should 
       userMessage = sourceContent;
     } else {
       // Prompt mode
-      systemPrompt = `You are a gaming news writer for GodforgeHub, a community site for a gacha RPG game called Godforge.${categoryHint}
+      systemPrompt = `You are a gaming news writer for VoidHuntersDB, a community site for a gacha RPG game called Void Hunters.${categoryHint}
 
-Write a news article for a gaming community site (GodforgeHub) based on the following bullet points or notes.
+Write a news article for a gaming community site (VoidHuntersDB) based on the following bullet points or notes.
 
 Return your response by calling the create_article function. The content should be well-structured markdown with headers, and the slug should be a URL-friendly lowercase version of the title. Keep the excerpt under 200 characters.`;
 
