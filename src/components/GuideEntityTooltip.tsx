@@ -22,28 +22,35 @@ interface EntityData {
   subtitle?: string | null;
 }
 
-const TYPE_TO_TABLE: Record<string, string> = {
-  hero: "hunters",
-  skill: "skills",
-  "boss-skill": "boss_skills",
-  boss: "bosses",
-  mechanic: "effects",
-};
+async function fetchEntity(type: string, slug: string): Promise<EntityData | null> {
+  let query;
+  switch (type) {
+    case "hero":
+      query = supabase.from("hunters").select("name, description, image_url, rarity, subtitle").eq("slug", slug).maybeSingle();
+      break;
+    case "skill":
+      query = supabase.from("skills").select("name, description, icon, type").eq("slug", slug).maybeSingle();
+      break;
+    case "boss-skill":
+      query = supabase.from("boss_skills").select("name, description, type").eq("slug", slug).maybeSingle();
+      break;
+    case "boss":
+      query = supabase.from("bosses").select("name, description, image_url").eq("slug", slug).maybeSingle();
+      break;
+    case "mechanic":
+      query = supabase.from("effects").select("name, description, icon, type").eq("slug", slug).maybeSingle();
+      break;
+    default:
+      return null;
+  }
+  const { data } = await query;
+  return data as EntityData | null;
+}
 
 function useEntityData(entity: EntityInfo | null) {
   return useQuery({
     queryKey: ["entity-tooltip", entity?.type, entity?.slug],
-    queryFn: async () => {
-      if (!entity) return null;
-      const table = TYPE_TO_TABLE[entity.type];
-      if (!table) return null;
-      const { data } = await supabase
-        .from(table)
-        .select("*")
-        .eq("slug", entity.slug)
-        .maybeSingle();
-      return data as EntityData | null;
-    },
+    queryFn: () => fetchEntity(entity!.type, entity!.slug),
     enabled: !!entity,
     staleTime: 5 * 60 * 1000,
   });
