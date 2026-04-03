@@ -192,13 +192,7 @@ const Index = () => {
           ) : (
             <div className="space-y-3">
               {posts?.map((post) => (
-                <a
-                  key={post.id}
-                  href={post.message_url || "/official-posts"}
-                  target={post.message_url ? "_blank" : undefined}
-                  rel={post.message_url ? "noopener noreferrer" : undefined}
-                  className="group block"
-                >
+                <Link key={post.id} to={`/official-posts/${post.id}`} className="group block">
                   <Card className="hover:border-primary/30 transition-colors cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
@@ -213,7 +207,7 @@ const Index = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </a>
+                </Link>
               ))}
             </div>
           )}
