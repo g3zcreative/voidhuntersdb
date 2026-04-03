@@ -16,6 +16,7 @@ const NewsDetail = lazy(() => import("./pages/NewsDetail"));
 const ComingSoonPage = lazy(() => import("./pages/ComingSoon"));
 
 const OfficialPostsPage = lazy(() => import("./pages/OfficialPosts"));
+const OfficialPostDetail = lazy(() => import("./pages/OfficialPostDetail"));
 const GuidesPage = lazy(() => import("./pages/Guides"));
 const GuideDetail = lazy(() => import("./pages/GuideDetail"));
 const ChangelogPage = lazy(() => import("./pages/Changelog"));
