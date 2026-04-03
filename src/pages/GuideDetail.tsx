@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import MDEditor from "@uiw/react-md-editor";
 import rehypeRaw from "rehype-raw";
 import { SEO } from "@/components/SEO";
 import { preprocessMarkup } from "@/lib/guide-markup";
+import { GuideEntityTooltip } from "@/components/GuideEntityTooltip";
 
 function extractYouTubeId(url: string): string {
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
@@ -18,6 +20,7 @@ function extractYouTubeId(url: string): string {
 
 export default function GuideDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const { data: guide, isLoading } = useQuery({
     queryKey: ["guide", slug],
@@ -97,12 +100,13 @@ export default function GuideDetail() {
               </div>
             ) : null}
             {guide.content && (
-              <div className="[&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
+              <div ref={contentRef} className="[&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
                 <MDEditor.Markdown
                   source={preprocessMarkup(guide.content)}
                   rehypePlugins={[rehypeRaw]}
                   className="!bg-transparent !text-foreground"
                 />
+                <GuideEntityTooltip containerRef={contentRef} />
               </div>
             )}
           </>
