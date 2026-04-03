@@ -192,20 +192,28 @@ const Index = () => {
           ) : (
             <div className="space-y-3">
               {posts?.map((post) => (
-                <Card key={post.id} className="hover:border-primary/30 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-primary">{sourceIcons[post.source] || <MessageSquare className="h-4 w-4" />}</span>
-                      <span className="text-sm font-semibold">{post.author}</span>
-                      {post.author_role && <span className="text-xs text-muted-foreground">· {post.author_role}</span>}
-                    </div>
-                    <p className="text-sm text-foreground line-clamp-3">{post.content}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className="text-xs">{post.source}</Badge>
-                      {post.region && <span className="text-xs text-muted-foreground">{post.region}</span>}
-                    </div>
-                  </CardContent>
-                </Card>
+                <a
+                  key={post.id}
+                  href={post.message_url || "/official-posts"}
+                  target={post.message_url ? "_blank" : undefined}
+                  rel={post.message_url ? "noopener noreferrer" : undefined}
+                  className="group block"
+                >
+                  <Card className="hover:border-primary/30 transition-colors cursor-pointer">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-primary">{sourceIcons[post.source] || <MessageSquare className="h-4 w-4" />}</span>
+                        <span className="text-sm font-semibold">{post.author}</span>
+                        {post.author_role && <span className="text-xs text-muted-foreground">· {post.author_role}</span>}
+                      </div>
+                      <p className="text-sm text-foreground line-clamp-3 group-hover:text-primary transition-colors">{post.content}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className="text-xs">{post.source}</Badge>
+                        {post.region && <span className="text-xs text-muted-foreground">{post.region}</span>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </a>
               ))}
             </div>
           )}
