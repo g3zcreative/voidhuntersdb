@@ -1,55 +1,46 @@
 
 
-## Skill Efficiency Data System
+## Create Official Post from Discord Link (Manual Paste + AI)
 
-Add new fields to the `skills` table to capture damage hit data, then compute efficiency ratings (WEAK / AVERAGE / STRONG / GOD-TIER) based on your formulas, update the admin form, import the CSV data, and display ratings on the hunter detail page.
+Since we don't have a Discord bot token, the flow will be: admin pastes the Discord link and the message content, then AI structures it into a complete official post.
 
-### New Columns on `skills` Table
+### UX Flow
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `skill_levels` | integer | Number of skill upgrade levels |
-| `base_cooldown` | integer | Starting cooldown (already exists as `cooldown` — will reuse) |
-| `max_cd` | integer | Cooldown at max skill level |
-| `skill_tags` | text | Comma-separated tags (Melee, Damage, etc.) |
-| `awakening_level` | integer | Awakening level that modifies this skill |
-| `awakening_effect` | text | Description of awakening bonus |
-| `target_type` | text | ST, AoE, or RND |
-| `hit1_percent` | numeric | Hit 1 ATK % multiplier |
-| `hit1_count` | integer | Number of Hit 1 strikes |
-| `hit1_book_bonus` | numeric | Hit 1 book bonus % |
-| `hit2_percent` | numeric | Hit 2 ATK % multiplier |
-| `hit2_count` | integer | Number of Hit 2 strikes |
-| `hit2_book_bonus` | numeric | Hit 2 book bonus % |
+Similar to how AdminGuides has a "From Video URL" creation mode, AdminOfficialPosts will get a "From Discord" creation mode:
 
-**Not stored** (computed at display time):
-- **Min Mult** = `(hit1_percent * hit1_count) + (hit2_percent * hit2_count)`
-- **Max Mult** = `(hit1_percent * hit1_count * (1 + hit1_book_bonus)) + (hit2_percent * hit2_count * (1 + hit2_book_bonus))`
-- **Efficiency** = based on target_type:
-  - ST: ≥4 GOD-TIER, ≥3.3 STRONG, ≥2.5 AVERAGE, else WEAK
-  - AoE: ≥2.5 GOD-TIER, ≥2 STRONG, ≥1.4 AVERAGE, else WEAK
+1. Admin clicks "New" and sees a picker: **"From Discord Message"** or **"Blank"**
+2. Choosing "From Discord Message" opens a dialog with:
+   - **Discord Message URL** (text input) — parsed to extract `discord_message_id` and reconstruct `message_url`
+   - **Message Content** (textarea) — admin pastes the raw message text
+   - **Author Name** (text input, optional) — admin can type who posted it
+   - **Author Role** (text input, optional)
+   - **Channel Name** (text input, optional)
+   - A **"Generate Post"** button
+3. An edge function (`generate-official-post`) receives the pasted content + metadata and uses Lovable AI to:
+   - Generate a cleaned-up `title` from the content
+   - Format the `content` as clean markdown
+   - Extract any image URLs from the pasted text
+   - Return structured JSON matching the `official_posts` schema
+4. The generated data pre-fills the AdminCrudPage create form for review before saving
 
-### Steps
+### Technical Changes
 
-**1. Database migration** — Add the 13 new columns to `skills` (all nullable).
+**1. New edge function: `supabase/functions/generate-official-post/index.ts`**
+- Accepts: `{ content, author, author_role, channel_name, message_url, discord_message_id }`
+- Uses Lovable AI (gemini-3-flash-preview) with tool calling to extract structured output: `{ title, content (markdown), image_url }`
+- Returns the complete post object ready to populate the form
 
-**2. Import CSV data** — Match skills by hunter name + skill name, update the new columns with values from your spreadsheet (44 rows).
+**2. Update `src/pages/admin/AdminOfficialPosts.tsx`**
+- Add state management and dialog UI (mirroring AdminGuides pattern)
+- Mode picker dialog: "From Discord Message" | "Blank"
+- Discord input dialog: URL + content textarea + optional author fields
+- Parse Discord URL to extract `discord_message_id` (last segment) and set `message_url`
+- On generate: call edge function, set defaults, trigger create via `triggerCreate`
 
-**3. Update `InlineSkillsEditor`** — Add input fields for all new columns in the skill accordion form, organized in a logical group:
-- Target Type (select: ST / AoE / RND)
-- Skill Levels, Max CD
-- Hit 1 section: Percent, Count, Book Bonus
-- Hit 2 section: Percent, Count, Book Bonus
-- Awakening Level, Awakening Effect
-- Skill Tags (text input)
-- Computed preview showing Min Mult, Max Mult, and Efficiency Rating badge
+### Discord URL Parsing
 
-**4. Hunter detail page** — Update `SkillInfoBox` to show an efficiency badge (color-coded: GOD-TIER gold, STRONG purple, AVERAGE blue, WEAK gray) alongside damage multiplier numbers, so users can assess skill power at a glance.
-
-### Technical Details
-
-- The `cooldown` column already exists on `skills` — it maps to "Base Cooldown" in your CSV. No need to add a duplicate.
-- Efficiency rating is computed client-side from the stored hit data, not stored as a column — keeps it automatically consistent.
-- The entity editor schema definition won't need updating since the `InlineSkillsEditor` is a custom component that bypasses the generic schema form.
-- All new columns are nullable so existing skills without damage data won't break.
+From `https://discord.com/channels/1451.../1451.../1489...`:
+- `discord_message_id` = last path segment (`1489520003052208138`)
+- `message_url` = the full URL
+- `channel_name` can be left for admin to fill or derived from context
 
