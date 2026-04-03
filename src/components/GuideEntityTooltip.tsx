@@ -93,7 +93,7 @@ function EntityCard({ entity, data, onClose }: { entity: EntityInfo; data: Entit
         </p>
       )}
       <a
-        href={`/database/${TYPE_TO_TABLE[entity.type] === "hunters" ? "heroes" : entity.type + "s"}/${entity.slug}`}
+        href={`/database/${entity.type === "hero" ? "heroes" : entity.type === "boss-skill" ? "boss-skills" : entity.type + "s"}/${entity.slug}`}
         className="inline-block text-xs text-primary hover:underline"
       >
         View full details →
