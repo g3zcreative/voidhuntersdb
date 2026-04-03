@@ -100,12 +100,13 @@ export default function GuideDetail() {
               </div>
             ) : null}
             {guide.content && (
-              <div className="[&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
+              <div ref={contentRef} className="[&_.wmde-markdown]:!bg-transparent" data-color-mode="dark">
                 <MDEditor.Markdown
                   source={preprocessMarkup(guide.content)}
                   rehypePlugins={[rehypeRaw]}
                   className="!bg-transparent !text-foreground"
                 />
+                <GuideEntityTooltip containerRef={contentRef} />
               </div>
             )}
           </>
