@@ -74,9 +74,9 @@ serve(async (req) => {
 
       const contextHint = prompt ? `\n\nAdditional context from the author: ${prompt}` : "";
 
-      systemPrompt = `You are a gaming news writer for GodforgeHub, a community site for a gacha RPG game called Godforge.${categoryHint}
+      systemPrompt = `You are a gaming news writer for VoidHuntersDB, a community site for a gacha RPG game called Void Hunters.${categoryHint}
 
-Using the provided source context from a YouTube video page, write a comprehensive news article summarizing its content for the GodforgeHub community. Focus on game-related announcements, updates, tips, or information discussed in the video. Rephrase and restructure the content into a well-written article — do NOT copy verbatim.${contextHint}
+Using the provided source context from a YouTube video page, write a comprehensive news article summarizing its content for the VoidHuntersDB community. Focus on game-related announcements, updates, tips, or information discussed in the video. Rephrase and restructure the content into a well-written article — do NOT copy verbatim.${contextHint}
 
 Return your response by calling the create_article function. The content should be well-structured markdown with headers, and the slug should be a URL-friendly lowercase version of the title. Keep the excerpt under 200 characters.`;
 
