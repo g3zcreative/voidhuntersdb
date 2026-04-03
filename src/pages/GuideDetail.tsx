@@ -20,6 +20,7 @@ function extractYouTubeId(url: string): string {
 
 export default function GuideDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const { data: guide, isLoading } = useQuery({
     queryKey: ["guide", slug],
