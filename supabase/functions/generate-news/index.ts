@@ -74,9 +74,9 @@ serve(async (req) => {
 
       const contextHint = prompt ? `\n\nAdditional context from the author: ${prompt}` : "";
 
-      systemPrompt = `You are a gaming news writer for GodforgeHub, a community site for a gacha RPG game called Godforge.${categoryHint}
+      systemPrompt = `You are a gaming news writer for VoidHuntersDB, a community site for a gacha RPG game called Void Hunters.${categoryHint}
 
-Using the provided source context from a YouTube video page, write a comprehensive news article summarizing its content for the GodforgeHub community. Focus on game-related announcements, updates, tips, or information discussed in the video. Rephrase and restructure the content into a well-written article — do NOT copy verbatim.${contextHint}
+Using the provided source context from a YouTube video page, write a comprehensive news article summarizing its content for the VoidHuntersDB community. Focus on game-related announcements, updates, tips, or information discussed in the video. Rephrase and restructure the content into a well-written article — do NOT copy verbatim.${contextHint}
 
 Return your response by calling the create_article function. The content should be well-structured markdown with headers, and the slug should be a URL-friendly lowercase version of the title. Keep the excerpt under 200 characters.`;
 
@@ -124,18 +124,18 @@ Return your response by calling the create_article function. The content should 
         });
       }
 
-      systemPrompt = `You are a gaming news writer for GodforgeHub, a community site for a gacha RPG game called Godforge.${categoryHint}
+      systemPrompt = `You are a gaming news writer for VoidHuntersDB, a community site for a gacha RPG game called Void Hunters.${categoryHint}
 
-Summarize and rewrite the following scraped web content into a news article for a gaming community site (GodforgeHub). Do NOT copy verbatim — rephrase and restructure.
+Summarize and rewrite the following scraped web content into a news article for a gaming community site (VoidHuntersDB). Do NOT copy verbatim — rephrase and restructure.
 
 Return your response by calling the create_article function. The content should be well-structured markdown with headers, and the slug should be a URL-friendly lowercase version of the title. Keep the excerpt under 200 characters.`;
 
       userMessage = sourceContent;
     } else {
       // Prompt mode
-      systemPrompt = `You are a gaming news writer for GodforgeHub, a community site for a gacha RPG game called Godforge.${categoryHint}
+      systemPrompt = `You are a gaming news writer for VoidHuntersDB, a community site for a gacha RPG game called Void Hunters.${categoryHint}
 
-Write a news article for a gaming community site (GodforgeHub) based on the following bullet points or notes.
+Write a news article for a gaming community site (VoidHuntersDB) based on the following bullet points or notes.
 
 Return your response by calling the create_article function. The content should be well-structured markdown with headers, and the slug should be a URL-friendly lowercase version of the title. Keep the excerpt under 200 characters.`;
 

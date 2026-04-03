@@ -26,8 +26,8 @@ export function useSeoTemplate(entityType: string | undefined) {
 
 /**
  * Interpolates a template string with variables.
- * E.g. "{name} Godforge | GodforgeHub.com" with { name: "Artemis" }
- * → "Artemis Godforge | GodforgeHub.com"
+ * E.g. "{name} | VoidHuntersDB.com" with { name: "Artemis" }
+ * → "Artemis | VoidHuntersDB.com"
  */
 export function interpolateTemplate(
   template: string | null | undefined,

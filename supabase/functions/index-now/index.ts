@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const INDEXNOW_KEY = "6f8b2d4e1a3c5f7e9b0d2f4a6c8e0b1d";
-const SITE_HOST = "godforgehub.com";
+const SITE_HOST = "voidhuntersdb.com";
 const KEY_LOCATION = `https://${SITE_HOST}/${INDEXNOW_KEY}.txt`;
 
 Deno.serve(async (req) => {
